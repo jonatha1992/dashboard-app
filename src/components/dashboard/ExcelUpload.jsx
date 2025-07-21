@@ -73,11 +73,10 @@ export default function ExcelUpload({ onDataUpload }) {
                     }
 
                     setMessage(`✅ Archivo cargado exitosamente. ${validData.length} registros procesados.`);
+                    setUploading(false); // End loading state before uploading data
                     
-                    // Pequeño delay para mejorar la experiencia del usuario
-                    setTimeout(() => {
-                        onDataUpload(validData);
-                    }, 100);
+                    // Upload the processed data
+                    onDataUpload(validData);
                     
                     // Limpiar el input file
                     if (fileInputRef.current) {
