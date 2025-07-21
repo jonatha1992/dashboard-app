@@ -39,14 +39,13 @@ export default function Dashboard() {
     }, []);
 
     const handleDataUpload = useCallback((newData) => {
-        // Agregar un pequeño delay para mostrar que se está procesando
-        setTimeout(() => {
-            setData(newData);
-            
-            // Calcular estadísticas con los nuevos datos
-            const statistics = getStatistics(newData);
-            setStats(statistics);
-        }, 100);
+        setProcessing(true); // Indicate that processing has started
+        setData(newData);
+        
+        // Calcular estadísticas con los nuevos datos
+        const statistics = getStatistics(newData);
+        setStats(statistics);
+        setProcessing(false); // Indicate that processing has finished
     }, []);
 
     if (loading) {
