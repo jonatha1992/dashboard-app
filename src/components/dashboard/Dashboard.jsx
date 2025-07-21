@@ -1,5 +1,5 @@
 // Componente principal del dashboard
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MapComponent from '../map/MapComponent';
 import StatCard from './StatCard';
@@ -38,13 +38,16 @@ export default function Dashboard() {
         fetchData();
     }, []);
 
-    const handleDataUpload = (newData) => {
-        setData(newData);
-        
-        // Calcular estadísticas con los nuevos datos
-        const statistics = getStatistics(newData);
-        setStats(statistics);
-    };
+    const handleDataUpload = useCallback((newData) => {
+        // Agregar un pequeño delay para mostrar que se está procesando
+        setTimeout(() => {
+            setData(newData);
+            
+            // Calcular estadísticas con los nuevos datos
+            const statistics = getStatistics(newData);
+            setStats(statistics);
+        }, 100);
+    }, []);
 
     if (loading) {
         return (
