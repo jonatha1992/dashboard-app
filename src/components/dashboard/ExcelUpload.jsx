@@ -49,8 +49,8 @@ export default function ExcelUpload({ onDataUpload }) {
                     // Procesar los datos para que coincidan con el formato esperado
                     const processedData = jsonData.map(item => ({
                         ...item,
-                        LATITUD: parseFloat(item.LATITUD || item['Latitud Decimal'] || item.latitud || item.lat || 0),
-                        LONGITUD: parseFloat(item.LONGITUD || item.longitud || item.lng || item.lon || 0),
+                        LATITUD: parseFloat(item.LATITUD || item['Latitud Decimal'] || item.latitud || item.lat) || null,
+                        LONGITUD: parseFloat(item.LONGITUD || item.longitud || item.lng || item.lon) || null,
                         FECHA: item.FECHA || item.fecha || '',
                         HORA: item.HORA || item.hora || '',
                         DESCRIPCION: item.DESCRIPCIÓN || item.DESCRIPCION || item.descripcion || '',
