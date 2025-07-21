@@ -20,7 +20,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 export default function MapComponent({ data }) {
     const [mapCenter, setMapCenter] = useState([-34.6037, -58.3816]); // Buenos Aires por defecto
-    const [mapZoom, setMapZoom] = useState(5);
+    const [mapZoom] = useState(5);
     const [map, setMap] = useState(null);
 
     // Si hay datos, centrar el mapa en el primer punto
