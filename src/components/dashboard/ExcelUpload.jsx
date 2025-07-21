@@ -108,12 +108,12 @@ export default function ExcelUpload({ onDataUpload }) {
 
     return (
         <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Cargar Archivo Excel</h3>
+            <div className="flex items-center justify-between mb-4 gap-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex-1 min-w-0">Cargar Archivo Excel</h3>
                 <button
                     onClick={handleButtonClick}
                     disabled={uploading}
-                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                    className={`px-6 py-2 rounded-md font-medium transition-colors min-w-fit whitespace-nowrap ${
                         uploading
                             ? 'bg-gray-400 cursor-not-allowed text-white'
                             : 'bg-green-600 hover:bg-green-700 text-white'
