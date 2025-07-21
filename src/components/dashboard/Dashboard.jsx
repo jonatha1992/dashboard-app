@@ -1,9 +1,10 @@
 // Componente principal del dashboard
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MapComponent from '../map/MapComponent';
 import StatCard from './StatCard';
 import DataTable from './DataTable';
+import ExcelUpload from './ExcelUpload';
 import { loadData, getStatistics } from '../../services/dataService';
 import logo from '../../assets/react.svg';
 
@@ -35,6 +36,16 @@ export default function Dashboard() {
         };
 
         fetchData();
+    }, []);
+
+    const handleDataUpload = useCallback((newData) => {
+        setProcessing(true); // Indicate that processing has started
+        setData(newData);
+        
+        // Calcular estadísticas con los nuevos datos
+        const statistics = getStatistics(newData);
+        setStats(statistics);
+        setProcessing(false); // Indicate that processing has finished
     }, []);
 
     if (loading) {
@@ -117,6 +128,9 @@ export default function Dashboard() {
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     {activeNav === 'general' && (
                         <>
+                            {/* Componente de carga de Excel */}
+                            <ExcelUpload onDataUpload={handleDataUpload} />
+                            
                             {/* Estadísticas */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                 <StatCard
