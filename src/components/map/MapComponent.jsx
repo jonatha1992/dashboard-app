@@ -30,9 +30,17 @@ L.Marker.prototype.options.icon = DefaultIcon;
 const clusterPoints = (points, zoom) => {
     if (!points || points.length === 0) return [];
     
+    // Constantes para el cálculo de la distancia de clustering
+    const MIN_CLUSTER_DISTANCE = 0.1; // Distancia mínima absoluta entre puntos (en grados)
+    const BASE_CLUSTER_DISTANCE = 2; // Distancia base para el cálculo dinámico
+    const ZOOM_OFFSET = 3; // Offset para ajustar el efecto del zoom en la distancia
+    
     // Distancia mínima entre puntos para considerar clustering (en grados)
     // A menor zoom, mayor distancia para agrupar más puntos
-    const clusterDistance = Math.max(0.1, 2 / Math.pow(2, zoom - 3));
+    const clusterDistance = Math.max(
+        MIN_CLUSTER_DISTANCE, 
+        BASE_CLUSTER_DISTANCE / Math.pow(2, zoom - ZOOM_OFFSET)
+    );
     
     const clusters = [];
     const processed = new Set();
