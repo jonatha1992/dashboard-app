@@ -4,13 +4,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import MapComponent from '../map/MapComponent';
 import StatCard from './StatCard';
 import DataTable from './DataTable';
-import { loadData, getStatistics } from '../../services/dataService';
+import CategoryCharts from '../charts/CategoryCharts';
+import { loadData, getStatistics, getCategorizedData } from '../../services/dataService';
 import logo from '../../assets/react.svg';
 
 export default function Dashboard() {
     const { logout } = useAuth();
     const [data, setData] = useState([]);
     const [stats, setStats] = useState({});
+    const [categorizedData, setCategorizedData] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeNav, setActiveNav] = useState('general');
@@ -25,6 +27,10 @@ export default function Dashboard() {
                 // Calcular estadísticas
                 const statistics = getStatistics(result);
                 setStats(statistics);
+
+                // Categorizar datos
+                const categorized = getCategorizedData(result);
+                setCategorizedData(categorized);
 
                 setLoading(false);
             } catch (err) {
@@ -80,16 +86,40 @@ export default function Dashboard() {
                     General
                 </button>
                 <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'controles' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('controles')}
-                >
-                    Controles
-                </button>
-                <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'detenidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('detenidos')}
                 >
                     Detenidos
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'controlados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('controlados')}
+                >
+                    Controlados
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'afectados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('afectados')}
+                >
+                    Afectados
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'procedimientos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('procedimientos')}
+                >
+                    Procedimientos
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'abatidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('abatidos')}
+                >
+                    Abatidos
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'trata' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('trata')}
+                >
+                    Trata
                 </button>
                 <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'incautaciones' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
@@ -154,15 +184,75 @@ export default function Dashboard() {
                             </div>
                         </>
                     )}
-                    {/* Aquí puedes agregar el contenido de las otras secciones */}
-                    {activeNav === 'controles' && (
-                        <div className="text-center text-2xl text-gray-700 py-20">Sección Controles (por implementar)</div>
-                    )}
+
                     {activeNav === 'detenidos' && (
-                        <div className="text-center text-2xl text-gray-700 py-20">Sección Detenidos (por implementar)</div>
+                        <CategoryCharts 
+                            data={categorizedData.detenidos || []}
+                            categoryName="Detenidos"
+                            title="Detenidos"
+                            icon="👮‍♂️"
+                            color="bg-red-500"
+                        />
                     )}
+
+                    {activeNav === 'controlados' && (
+                        <CategoryCharts 
+                            data={categorizedData.controlados || []}
+                            categoryName="Controlados"
+                            title="Controlados"
+                            icon="🔍"
+                            color="bg-blue-500"
+                        />
+                    )}
+
+                    {activeNav === 'afectados' && (
+                        <CategoryCharts 
+                            data={categorizedData.afectados || []}
+                            categoryName="Afectados"
+                            title="Afectados"
+                            icon="🚨"
+                            color="bg-orange-500"
+                        />
+                    )}
+
+                    {activeNav === 'procedimientos' && (
+                        <CategoryCharts 
+                            data={categorizedData.procedimientos || []}
+                            categoryName="Procedimientos"
+                            title="Procedimientos"
+                            icon="📋"
+                            color="bg-indigo-500"
+                        />
+                    )}
+
+                    {activeNav === 'abatidos' && (
+                        <CategoryCharts 
+                            data={categorizedData.abatidos || []}
+                            categoryName="Abatidos"
+                            title="Abatidos"
+                            icon="⚠️"
+                            color="bg-gray-600"
+                        />
+                    )}
+
+                    {activeNav === 'trata' && (
+                        <CategoryCharts 
+                            data={categorizedData.trata || []}
+                            categoryName="Trata"
+                            title="Trata de Personas"
+                            icon="🚫"
+                            color="bg-pink-500"
+                        />
+                    )}
+
                     {activeNav === 'incautaciones' && (
-                        <div className="text-center text-2xl text-gray-700 py-20">Sección Incautaciones (por implementar)</div>
+                        <CategoryCharts 
+                            data={categorizedData.incautaciones || []}
+                            categoryName="Incautaciones"
+                            title="Incautaciones"
+                            icon="📦"
+                            color="bg-yellow-500"
+                        />
                     )}
                 </main>
             </div>
