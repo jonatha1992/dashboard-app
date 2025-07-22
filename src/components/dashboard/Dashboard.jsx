@@ -5,16 +5,28 @@ import MapComponent from '../map/MapComponent';
 import StatCard from './StatCard';
 import DataTable from './DataTable';
 import ExcelUpload from './ExcelUpload';
-import { loadData, getStatistics } from '../../services/dataService';
+import { loadData, getStatistics, categorizeData } from '../../services/dataService';
+
+// Import chart components
+import DetenidosChart from '../charts/DetenidosChart';
+import ControladosChart from '../charts/ControladosChart';
+import AfectadosChart from '../charts/AfectadosChart';
+import ProcedimientosChart from '../charts/ProcedimientosChart';
+import AbatidosChart from '../charts/AbatidosChart';
+import TrateChart from '../charts/TrateChart';
+import IncautacionesChart from '../charts/IncautacionesChart';
+
 import logo from '../../assets/react.svg';
 
 export default function Dashboard() {
     const { logout } = useAuth();
     const [data, setData] = useState([]);
     const [stats, setStats] = useState({});
+    const [categorizedData, setCategorizedData] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeNav, setActiveNav] = useState('general');
+    const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -26,6 +38,10 @@ export default function Dashboard() {
                 // Calcular estadísticas
                 const statistics = getStatistics(result);
                 setStats(statistics);
+
+                // Categorizar datos
+                const categories = categorizeData(result);
+                setCategorizedData(categories);
 
                 setLoading(false);
             } catch (err) {
@@ -45,8 +61,24 @@ export default function Dashboard() {
         // Calcular estadísticas con los nuevos datos
         const statistics = getStatistics(newData);
         setStats(statistics);
+
+        // Categorizar datos
+        const categories = categorizeData(newData);
+        setCategorizedData(categories);
+        
         setProcessing(false); // Indicate that processing has finished
     }, []);
+
+    const navigationItems = [
+        { key: 'general', label: 'General', icon: '📊' },
+        { key: 'detenidos', label: 'Detenidos', icon: '🚫' },
+        { key: 'controlados', label: 'Controlados', icon: '🛡️' },
+        { key: 'afectados', label: 'Afectados', icon: '👥' },
+        { key: 'procedimientos', label: 'Procedimientos', icon: '📋' },
+        { key: 'abatidos', label: 'Abatidos', icon: '⚠️' },
+        { key: 'trata', label: 'Trata', icon: '🚨' },
+        { key: 'incautaciones', label: 'Incautaciones', icon: '📦' }
+    ];
 
     if (loading) {
         return (
@@ -84,30 +116,27 @@ export default function Dashboard() {
                     <img src={logo} alt="Logo" className="h-16 w-16 mb-2" />
                     <h2 className="text-lg font-bold text-gray-800">Menú</h2>
                 </div>
-                <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'general' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('general')}
-                >
-                    General
-                </button>
-                <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'controles' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('controles')}
-                >
-                    Controles
-                </button>
-                <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'detenidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('detenidos')}
-                >
-                    Detenidos
-                </button>
-                <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'incautaciones' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('incautaciones')}
-                >
-                    Incautaciones
-                </button>
+                
+                {navigationItems.map((item) => (
+                    <button
+                        key={item.key}
+                        className={`text-left px-4 py-2 rounded-md mb-2 font-medium flex items-center ${
+                            activeNav === item.key 
+                                ? 'bg-blue-600 text-white' 
+                                : 'text-gray-700 hover:bg-blue-100'
+                        }`}
+                        onClick={() => setActiveNav(item.key)}
+                    >
+                        <span className="mr-2">{item.icon}</span>
+                        {item.label}
+                        {item.key !== 'general' && (
+                            <span className="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded">
+                                {categorizedData[item.key]?.length || 0}
+                            </span>
+                        )}
+                    </button>
+                ))}
+                
                 <div className="flex-1" />
                 <button
                     onClick={logout}
@@ -122,17 +151,24 @@ export default function Dashboard() {
                 <header className="bg-white shadow-md">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                         <h1 className="text-xl font-bold text-gray-800">Sistema de Monitoreo</h1>
+                        {processing && (
+                            <div className="flex items-center">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                                <span className="text-sm text-gray-600">Procesando...</span>
+                            </div>
+                        )}
                     </div>
                 </header>
 
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    {/* General Section */}
                     {activeNav === 'general' && (
                         <>
                             {/* Componente de carga de Excel */}
                             <ExcelUpload onDataUpload={handleDataUpload} />
                             
-                            {/* Estadísticas */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            {/* Estadísticas generales */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                                 <StatCard
                                     title="Total de Registros"
                                     value={stats.total || 0}
@@ -151,6 +187,28 @@ export default function Dashboard() {
                                     icon="🛡️"
                                     color="bg-purple-500"
                                 />
+                                <StatCard
+                                    title="Categorías Activas"
+                                    value={Object.values(categorizedData).filter(arr => arr.length > 0).length}
+                                    icon="📋"
+                                    color="bg-orange-500"
+                                />
+                            </div>
+
+                            {/* Resumen por categorías */}
+                            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Resumen por Categorías</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {navigationItems.slice(1).map((item) => (
+                                        <div key={item.key} className="text-center p-4 bg-gray-50 rounded-lg">
+                                            <div className="text-2xl mb-2">{item.icon}</div>
+                                            <div className="text-lg font-semibold text-gray-800">
+                                                {categorizedData[item.key]?.length || 0}
+                                            </div>
+                                            <div className="text-sm text-gray-600">{item.label}</div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* Mapa */}
@@ -168,15 +226,34 @@ export default function Dashboard() {
                             </div>
                         </>
                     )}
-                    {/* Aquí puedes agregar el contenido de las otras secciones */}
-                    {activeNav === 'controles' && (
-                        <div className="text-center text-2xl text-gray-700 py-20">Sección Controles (por implementar)</div>
-                    )}
+
+                    {/* Category-specific sections with charts */}
                     {activeNav === 'detenidos' && (
-                        <div className="text-center text-2xl text-gray-700 py-20">Sección Detenidos (por implementar)</div>
+                        <DetenidosChart data={categorizedData.detenidos || []} />
                     )}
+
+                    {activeNav === 'controlados' && (
+                        <ControladosChart data={categorizedData.controlados || []} />
+                    )}
+
+                    {activeNav === 'afectados' && (
+                        <AfectadosChart data={categorizedData.afectados || []} />
+                    )}
+
+                    {activeNav === 'procedimientos' && (
+                        <ProcedimientosChart data={categorizedData.procedimientos || []} />
+                    )}
+
+                    {activeNav === 'abatidos' && (
+                        <AbatidosChart data={categorizedData.abatidos || []} />
+                    )}
+
+                    {activeNav === 'trata' && (
+                        <TrateChart data={categorizedData.trata || []} />
+                    )}
+
                     {activeNav === 'incautaciones' && (
-                        <div className="text-center text-2xl text-gray-700 py-20">Sección Incautaciones (por implementar)</div>
+                        <IncautacionesChart data={categorizedData.incautaciones || []} />
                     )}
                 </main>
             </div>
