@@ -41,21 +41,11 @@ export default function Dashboard() {
     }, []);
 
     // Filter handling function
-    const handleFiltersChange = useCallback(({ type, filter }) => {
-        setFilters(prevFilters => {
-            if (type === 'date') {
-                return {
-                    ...prevFilters,
-                    fromDate: filter.fromDate,
-                    toDate: filter.toDate
-                };
-            } else if (type === 'province') {
-                return {
-                    ...prevFilters,
-                    province: filter
-                };
-            }
-            return prevFilters;
+    const handleFiltersChange = useCallback((filters) => {
+        setFilters({
+            fromDate: filters.fromDate || '',
+            toDate: filters.toDate || '',
+            province: filters.province || ''
         });
     }, []);
 

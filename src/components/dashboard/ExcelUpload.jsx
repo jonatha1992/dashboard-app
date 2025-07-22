@@ -148,11 +148,6 @@ export default function ExcelUpload({ onDataUpload }) {
                 className="hidden"
             />
             
-            <p className="text-sm text-gray-600 mb-2">
-                Seleccione un archivo Excel (.xlsx o .xls) con datos de operativos. 
-                El archivo debe contener columnas como LATITUD, LONGITUD, FECHA, HORA, DESCRIPCIÓN, etc.
-            </p>
-            
             {message && (
                 <div className={`p-3 rounded-md text-sm ${
                     message.includes('✅') 
