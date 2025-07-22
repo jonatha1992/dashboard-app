@@ -1,10 +1,13 @@
 // Componente principal del dashboard
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MapComponent from '../map/MapComponent';
 import StatCard from './StatCard';
 import DataTable from './DataTable';
 import ExcelUpload from './ExcelUpload';
+
+import FilterPanel from './FilterPanel';
+
 import SecuritySection from '../security/SecuritySection';
 import { loadData, getStatistics } from '../../services/dataService';
 import { getAllSecurityStats } from '../../services/securityStatsService';
@@ -13,11 +16,19 @@ import logo from '../../assets/react.svg';
 export default function Dashboard() {
     const { logout } = useAuth();
     const [data, setData] = useState([]);
+
     const [stats, setStats] = useState({});
     const [securityStats, setSecurityStats] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeNav, setActiveNav] = useState('general');
+    
+    // Filter states
+    const [filters, setFilters] = useState({
+        fromDate: '',
+        toDate: '',
+        province: ''
+    });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -25,6 +36,7 @@ export default function Dashboard() {
                 setLoading(true);
                 const result = await loadData();
                 setData(result);
+
 
                 // Calcular estadísticas
                 const statistics = getStatistics(result);
@@ -45,6 +57,89 @@ export default function Dashboard() {
         fetchData();
     }, []);
 
+    // Filter handling function
+    const handleFiltersChange = useCallback((filters) => {
+        setFilters({
+            fromDate: filters.fromDate || '',
+            toDate: filters.toDate || '',
+            province: filters.province || ''
+        });
+    }, []);
+
+    // Function to parse date from various formats
+    const parseDate = (dateString) => {
+        if (!dateString) return null;
+        
+        // Handle different date formats
+        const formats = [
+            /^\d{2}\/\d{2}\/\d{4}$/, // DD/MM/YYYY
+            /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
+            /^\d{1,2}\/\d{1,2}\/\d{4}$/, // D/M/YYYY or DD/M/YYYY or D/MM/YYYY
+        ];
+        
+        try {
+            // Try to parse DD/MM/YYYY format first
+            if (formats[0].test(dateString) || formats[2].test(dateString)) {
+                const [day, month, year] = dateString.split('/');
+                return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            }
+            // Try YYYY-MM-DD format
+            else if (formats[1].test(dateString)) {
+                return new Date(dateString);
+            }
+            // Fallback to standard parsing
+            else {
+                const parsed = new Date(dateString);
+                return isNaN(parsed) ? null : parsed;
+            }
+        } catch {
+            return null;
+        }
+    };
+
+    // Filtered data using useMemo for performance
+    const filteredData = useMemo(() => {
+        let filtered = [...data];
+
+        // Apply date filters
+        if (filters.fromDate || filters.toDate) {
+            filtered = filtered.filter(item => {
+                const itemDate = parseDate(item.FECHA);
+                if (!itemDate) return false;
+
+                let withinRange = true;
+                
+                if (filters.fromDate) {
+                    const fromDate = new Date(filters.fromDate);
+                    withinRange = withinRange && itemDate >= fromDate;
+                }
+                
+                if (filters.toDate) {
+                    const toDate = new Date(filters.toDate);
+                    // Set time to end of day for inclusive comparison
+                    toDate.setHours(23, 59, 59, 999);
+                    withinRange = withinRange && itemDate <= toDate;
+                }
+                
+                return withinRange;
+            });
+        }
+
+        // Apply province filter
+        if (filters.province) {
+            filtered = filtered.filter(item => 
+                item.PROVINCIA && item.PROVINCIA.toLowerCase().includes(filters.province.toLowerCase())
+            );
+        }
+
+        return filtered;
+    }, [data, filters]);
+
+    // Calculate statistics for filtered data
+    const filteredStats = useMemo(() => {
+        return getStatistics(filteredData);
+    }, [filteredData]);
+
     const handleDataUpload = useCallback((newData) => {
         setData(newData);
         
@@ -55,6 +150,7 @@ export default function Dashboard() {
         // Actualizar estadísticas de seguridad
         const securityStatistics = getAllSecurityStats();
         setSecurityStats(securityStatistics);
+
     }, []);
 
     if (loading) {
@@ -149,26 +245,29 @@ export default function Dashboard() {
                 <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     {activeNav === 'general' && (
                         <>
-                            {/* Componente de carga de Excel */}
+                            {/* Componente de carga de Excel - movido al tope */}
                             <ExcelUpload onDataUpload={handleDataUpload} />
+                            
+                            {/* Panel de filtros */}
+                            <FilterPanel onFiltersChange={handleFiltersChange} />
                             
                             {/* Estadísticas */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                                 <StatCard
                                     title="Total de Registros"
-                                    value={stats.total || 0}
+                                    value={filteredStats.total || 0}
                                     icon="📊"
                                     color="bg-blue-500"
                                 />
                                 <StatCard
                                     title="Provincias"
-                                    value={Object.keys(stats.provinceCounts || {}).length}
+                                    value={Object.keys(filteredStats.provinceCounts || {}).length}
                                     icon="🗺️"
                                     color="bg-green-500"
                                 />
                                 <StatCard
                                     title="Tipos de Intervención"
-                                    value={Object.keys(stats.interventionCounts || {}).length}
+                                    value={Object.keys(filteredStats.interventionCounts || {}).length}
                                     icon="🛡️"
                                     color="bg-purple-500"
                                 />
@@ -215,14 +314,14 @@ export default function Dashboard() {
                             <div className="mb-8">
                                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Mapa de Eventos</h2>
                                 <div className="bg-white rounded-lg shadow-md p-4" style={{ height: '500px' }}>
-                                    <MapComponent data={data} />
+                                    <MapComponent data={filteredData} />
                                 </div>
                             </div>
 
                             {/* Tabla de datos */}
                             <div>
                                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Registros</h2>
-                                <DataTable data={data} />
+                                <DataTable data={filteredData} />
                             </div>
                         </>
                     )}

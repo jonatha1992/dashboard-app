@@ -113,24 +113,31 @@ export default function ExcelUpload({ onDataUpload }) {
         <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
             <div className="flex items-center justify-between mb-4 gap-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex-1 min-w-0">Cargar Archivo Excel</h3>
-                <button
-                    onClick={handleButtonClick}
-                    disabled={uploading}
-                    className={`px-6 py-2 rounded-md font-medium transition-colors min-w-fit whitespace-nowrap ${
-                        uploading
-                            ? 'bg-gray-400 cursor-not-allowed text-white'
-                            : 'bg-green-600 hover:bg-green-700 text-white'
-                    }`}
-                >
-                    {uploading ? (
-                        <div className="flex items-center">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Procesando...
-                        </div>
-                    ) : (
-                        '📊 Subir Excel'
-                    )}
-                </button>
+                <div className="relative group">
+                    <button
+                        onClick={handleButtonClick}
+                        disabled={uploading}
+                        className={`px-6 py-2 rounded-md font-medium transition-colors min-w-fit whitespace-nowrap ${
+                            uploading
+                                ? 'bg-gray-400 cursor-not-allowed text-white'
+                                : 'bg-green-600 hover:bg-green-700 text-white'
+                        }`}
+                        title="Seleccione un archivo Excel (.xlsx o .xls) con datos de operativos. El archivo debe contener columnas como LATITUD, LONGITUD, FECHA, HORA, DESCRIPCIÓN, etc."
+                    >
+                        {uploading ? (
+                            <div className="flex items-center">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Procesando...
+                            </div>
+                        ) : (
+                            '📊 Subir Excel'
+                        )}
+                    </button>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 max-w-xs">
+                        Seleccione un archivo Excel (.xlsx o .xls) con datos de operativos. El archivo debe contener columnas como LATITUD, LONGITUD, FECHA, HORA, DESCRIPCIÓN, etc.
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                </div>
             </div>
             
             <input
@@ -140,11 +147,6 @@ export default function ExcelUpload({ onDataUpload }) {
                 onChange={handleFileUpload}
                 className="hidden"
             />
-            
-            <p className="text-sm text-gray-600 mb-2">
-                Seleccione un archivo Excel (.xlsx o .xls) con datos de operativos. 
-                El archivo debe contener columnas como LATITUD, LONGITUD, FECHA, HORA, DESCRIPCIÓN, etc.
-            </p>
             
             {message && (
                 <div className={`p-3 rounded-md text-sm ${
