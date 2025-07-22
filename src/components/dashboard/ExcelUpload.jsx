@@ -8,7 +8,7 @@ export default function ExcelUpload({ onDataUpload }) {
 
     const handleFileUpload = async (event) => {
         const file = event.target.files[0];
-        
+
         if (!file) return;
 
         // Validar que sea un archivo Excel
@@ -16,7 +16,7 @@ export default function ExcelUpload({ onDataUpload }) {
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'application/vnd.ms-excel'
         ];
-        
+
         if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls)$/i)) {
             setMessage('Por favor seleccione un archivo Excel válido (.xlsx o .xls)');
             return;
@@ -27,7 +27,7 @@ export default function ExcelUpload({ onDataUpload }) {
 
         try {
             const reader = new FileReader();
-            
+
             reader.onload = (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
@@ -61,8 +61,8 @@ export default function ExcelUpload({ onDataUpload }) {
                     }));
 
                     // Filtrar registros que tengan al menos coordenadas válidas
-                    const validData = processedData.filter(item => 
-                        item.LATITUD && item.LONGITUD && 
+                    const validData = processedData.filter(item =>
+                        item.LATITUD && item.LONGITUD &&
                         !isNaN(item.LATITUD) && !isNaN(item.LONGITUD)
                     );
 
@@ -74,10 +74,10 @@ export default function ExcelUpload({ onDataUpload }) {
 
                     setMessage(`✅ Archivo cargado exitosamente. ${validData.length} registros procesados.`);
                     setUploading(false); // End loading state before uploading data
-                    
+
                     // Upload the processed data
                     onDataUpload(validData);
-                    
+
                     // Limpiar el input file
                     if (fileInputRef.current) {
                         fileInputRef.current.value = '';
@@ -110,36 +110,37 @@ export default function ExcelUpload({ onDataUpload }) {
     };
 
     return (
-        <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
-            <div className="flex items-center justify-between mb-4 gap-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex-1 min-w-0">Cargar Archivo Excel</h3>
-                <div className="relative group">
-                    <button
-                        onClick={handleButtonClick}
-                        disabled={uploading}
-                        className={`px-6 py-2 rounded-md font-medium transition-colors min-w-fit whitespace-nowrap ${
-                            uploading
-                                ? 'bg-gray-400 cursor-not-allowed text-white'
-                                : 'bg-green-600 hover:bg-green-700 text-white'
-                        }`}
-                        title="Seleccione un archivo Excel (.xlsx o .xls) con datos de operativos. El archivo debe contener columnas como LATITUD, LONGITUD, FECHA, HORA, DESCRIPCIÓN, etc."
-                    >
-                        {uploading ? (
-                            <div className="flex items-center">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                Procesando...
-                            </div>
-                        ) : (
-                            '📊 Subir Excel'
-                        )}
-                    </button>
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 max-w-xs">
-                        Seleccione un archivo Excel (.xlsx o .xls) con datos de operativos. El archivo debe contener columnas como LATITUD, LONGITUD, FECHA, HORA, DESCRIPCIÓN, etc.
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                    </div>
-                </div>
+        <div className="relative group">
+            <button
+                onClick={handleButtonClick}
+                disabled={uploading}
+                className={`flex items-center px-3 py-2 rounded-md font-medium transition-colors min-w-fit whitespace-nowrap ${uploading
+                    ? 'bg-gray-400 cursor-not-allowed text-white'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
+                title="Subir datos desde Excel"
+            >
+                {uploading ? (
+                    <>
+                        <div className="w-4 h-4 mr-2 border-b-2 border-white rounded-full animate-spin"></div>
+                        Procesando...
+                    </>
+                ) : (
+                    <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Importar Excel
+                    </>
+                )}
+            </button>
+
+            {/* Tooltip */}
+            <div className="absolute z-20 w-64 px-3 py-2 mb-2 text-xs text-white transition-all duration-200 transform -translate-x-1/2 bg-gray-900 rounded-md opacity-0 pointer-events-none bottom-full left-1/2 scale-90 group-hover:opacity-100 group-hover:scale-100">
+                Seleccione un archivo Excel (.xlsx o .xls) con datos de operativos.
+                <div className="absolute w-0 h-0 transform -translate-x-1/2 border-t-4 border-l-4 border-r-4 border-transparent top-full left-1/2 border-t-gray-900"></div>
             </div>
-            
+
             <input
                 ref={fileInputRef}
                 type="file"
@@ -147,14 +148,15 @@ export default function ExcelUpload({ onDataUpload }) {
                 onChange={handleFileUpload}
                 className="hidden"
             />
-            
+
             {message && (
-                <div className={`p-3 rounded-md text-sm ${
-                    message.includes('✅') 
+                <div className="absolute z-10 right-0 top-full mt-1 w-64">
+                    <div className={`p-2 rounded-md text-xs shadow-lg ${message.includes('✅')
                         ? 'bg-green-100 text-green-800 border border-green-200'
                         : 'bg-red-100 text-red-800 border border-red-200'
-                }`}>
-                    {message}
+                        }`}>
+                        {message}
+                    </div>
                 </div>
             )}
         </div>

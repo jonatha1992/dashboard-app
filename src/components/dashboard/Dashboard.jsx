@@ -22,7 +22,7 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeNav, setActiveNav] = useState('general');
-    
+
     // Filter states
     const [filters, setFilters] = useState({
         fromDate: '',
@@ -69,14 +69,14 @@ export default function Dashboard() {
     // Function to parse date from various formats
     const parseDate = (dateString) => {
         if (!dateString) return null;
-        
+
         // Handle different date formats
         const formats = [
             /^\d{2}\/\d{2}\/\d{4}$/, // DD/MM/YYYY
             /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
             /^\d{1,2}\/\d{1,2}\/\d{4}$/, // D/M/YYYY or DD/M/YYYY or D/MM/YYYY
         ];
-        
+
         try {
             // Try to parse DD/MM/YYYY format first
             if (formats[0].test(dateString) || formats[2].test(dateString)) {
@@ -108,26 +108,26 @@ export default function Dashboard() {
                 if (!itemDate) return false;
 
                 let withinRange = true;
-                
+
                 if (filters.fromDate) {
                     const fromDate = new Date(filters.fromDate);
                     withinRange = withinRange && itemDate >= fromDate;
                 }
-                
+
                 if (filters.toDate) {
                     const toDate = new Date(filters.toDate);
                     // Set time to end of day for inclusive comparison
                     toDate.setHours(23, 59, 59, 999);
                     withinRange = withinRange && itemDate <= toDate;
                 }
-                
+
                 return withinRange;
             });
         }
 
         // Apply province filter
         if (filters.province) {
-            filtered = filtered.filter(item => 
+            filtered = filtered.filter(item =>
                 item.PROVINCIA && item.PROVINCIA.toLowerCase().includes(filters.province.toLowerCase())
             );
         }
@@ -142,7 +142,7 @@ export default function Dashboard() {
 
     const handleDataUpload = useCallback((newData) => {
         setData(newData);
-        
+
         // Calcular estadísticas con los nuevos datos
         const statistics = getStatistics(newData);
         setStats(statistics);
@@ -155,9 +155,9 @@ export default function Dashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="flex items-center justify-center min-h-screen bg-gray-100">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+                    <div className="w-16 h-16 mx-auto border-b-2 border-blue-600 rounded-full animate-spin"></div>
                     <p className="mt-4 text-gray-700">Cargando datos...</p>
                 </div>
             </div>
@@ -166,13 +166,13 @@ export default function Dashboard() {
 
     if (error) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="flex items-center justify-center min-h-screen bg-gray-100">
                 <div className="text-center">
-                    <div className="text-red-500 mb-4">❌</div>
+                    <div className="mb-4 text-red-500">❌</div>
                     <p className="text-red-500">{error}</p>
                     <button
                         onClick={() => window.location.reload()}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        className="px-4 py-2 mt-4 text-white bg-blue-600 rounded-md hover:bg-blue-700"
                     >
                         Reintentar
                     </button>
@@ -182,53 +182,81 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 flex">
+        <div className="flex min-h-screen bg-gray-100">
             {/* Sidebar */}
-            <nav className="w-48 bg-white shadow-md flex flex-col py-8 px-4 min-h-screen">
+            <nav className="flex flex-col w-48 min-h-screen px-4 py-8 bg-white shadow-md">
                 <div className="flex flex-col items-center mb-8">
-                    <img src={logo} alt="Logo" className="h-16 w-16 mb-2" />
+                    <img src={logo} alt="Logo" className="w-16 h-16 mb-2" />
                     <h2 className="text-lg font-bold text-gray-800">Menú</h2>
                 </div>
                 <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'general' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('general')}
                 >
-                    General
+                    <span className="flex items-center justify-between w-full">
+                        <span>General</span>
+                        <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">{filteredStats.total || 0}</span>
+                    </span>
                 </button>
                 <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'controles' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('controles')}
                 >
-                    🔍 Controles
+                    <span className="flex items-center justify-between w-full">
+                        <span>🔍 Controles</span>
+                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeNav === 'controles' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {securityStats.controlados?.total || 0}
+                        </span>
+                    </span>
                 </button>
                 <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'detenidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('detenidos')}
                 >
-                    🚨 Detenidos
+                    <span className="flex items-center justify-between w-full">
+                        <span>🚨 Detenidos</span>
+                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeNav === 'detenidos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {securityStats.detenidos?.total || 0}
+                        </span>
+                    </span>
                 </button>
                 <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'incautaciones' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('incautaciones')}
                 >
-                    📦 Incautaciones
+                    <span className="flex items-center justify-between w-full">
+                        <span>📦 Incautaciones</span>
+                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeNav === 'incautaciones' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {securityStats.incautaciones?.total || 0}
+                        </span>
+                    </span>
                 </button>
                 <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'afectados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('afectados')}
                 >
-                    👥 Afectados
+                    <span className="flex items-center justify-between w-full">
+                        <span>👥 Afectados</span>
+                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeNav === 'afectados' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {securityStats.afectados?.total || 0}
+                        </span>
+                    </span>
                 </button>
                 <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'abatidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('abatidos')}
                 >
-                    💀 Abatidos
+                    <span className="flex items-center justify-between w-full">
+                        <span>💀 Abatidos</span>
+                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeNav === 'abatidos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {securityStats.abatidos?.total || 0}
+                        </span>
+                    </span>
                 </button>
                 <div className="flex-1" />
                 <button
                     onClick={logout}
-                    className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 mt-8"
+                    className="w-full px-4 py-2 mt-8 text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
                 >
                     Cerrar Sesión
                 </button>
@@ -237,90 +265,65 @@ export default function Dashboard() {
             {/* Main content */}
             <div className="flex-1">
                 <header className="bg-white shadow-md">
-                    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-                        <h1 className="text-xl font-bold text-gray-800">Sistema de Monitoreo</h1>
+                    <div className="px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex items-center space-x-4">
+                                <div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-full">
+                                    <span className="text-xl text-white">📊</span>
+                                </div>
+                                <h1 className="text-xl font-bold text-gray-800">Sistema de Monitoreo</h1>
+                            </div>
+
+                            <div className="flex items-center space-x-4">
+                                <FilterPanel onFiltersChange={handleFiltersChange} />
+                                <ExcelUpload onDataUpload={handleDataUpload} />
+                            </div>
+                        </div>
                     </div>
                 </header>
 
-                <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                {/* Stats bar */}
+                <div className="px-4 py-3 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+                    <div className="flex flex-wrap items-center justify-around mx-auto max-w-7xl">
+                        <div className="flex items-center px-4 py-1">
+                            <div className="flex items-center justify-center w-8 h-8 mr-3 text-blue-600 bg-blue-100 rounded-full">📊</div>
+                            <div>
+                                <p className="text-xs text-gray-600">Registros</p>
+                                <p className="font-semibold text-gray-800">{filteredStats.total || 0}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center px-4 py-1">
+                            <div className="flex items-center justify-center w-8 h-8 mr-3 text-green-600 bg-green-100 rounded-full">🗺️</div>
+                            <div>
+                                <p className="text-xs text-gray-600">Provincias</p>
+                                <p className="font-semibold text-gray-800">{Object.keys(filteredStats.provinceCounts || {}).length}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center px-4 py-1">
+                            <div className="flex items-center justify-center w-8 h-8 mr-3 text-purple-600 bg-purple-100 rounded-full">🛡️</div>
+                            <div>
+                                <p className="text-xs text-gray-600">Tipos de Intervención</p>
+                                <p className="font-semibold text-gray-800">{Object.keys(filteredStats.interventionCounts || {}).length}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <main className="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {activeNav === 'general' && (
                         <>
-                            {/* Componente de carga de Excel - movido al tope */}
-                            <ExcelUpload onDataUpload={handleDataUpload} />
-                            
-                            {/* Panel de filtros */}
-                            <FilterPanel onFiltersChange={handleFiltersChange} />
-                            
-                            {/* Estadísticas */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                                <StatCard
-                                    title="Total de Registros"
-                                    value={filteredStats.total || 0}
-                                    icon="📊"
-                                    color="bg-blue-500"
-                                />
-                                <StatCard
-                                    title="Provincias"
-                                    value={Object.keys(filteredStats.provinceCounts || {}).length}
-                                    icon="🗺️"
-                                    color="bg-green-500"
-                                />
-                                <StatCard
-                                    title="Tipos de Intervención"
-                                    value={Object.keys(filteredStats.interventionCounts || {}).length}
-                                    icon="🛡️"
-                                    color="bg-purple-500"
-                                />
-                            </div>
-
-                            {/* Estadísticas de Seguridad */}
-                            <div className="mb-8">
-                                <h2 className="text-lg font-semibold text-gray-800 mb-4">Resumen de Estadísticas de Seguridad</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                                    <StatCard
-                                        title="Controles"
-                                        value={securityStats.controlados?.total || 0}
-                                        icon="🔍"
-                                        color="bg-blue-500"
-                                    />
-                                    <StatCard
-                                        title="Detenidos"
-                                        value={securityStats.detenidos?.total || 0}
-                                        icon="🚨"
-                                        color="bg-red-500"
-                                    />
-                                    <StatCard
-                                        title="Incautaciones"
-                                        value={securityStats.incautaciones?.total || 0}
-                                        icon="📦"
-                                        color="bg-yellow-500"
-                                    />
-                                    <StatCard
-                                        title="Afectados"
-                                        value={securityStats.afectados?.total || 0}
-                                        icon="👥"
-                                        color="bg-purple-500"
-                                    />
-                                    <StatCard
-                                        title="Abatidos"
-                                        value={securityStats.abatidos?.total || 0}
-                                        icon="💀"
-                                        color="bg-gray-700"
-                                    />
-                                </div>
-                            </div>
 
                             {/* Mapa */}
                             <div className="mb-8">
-                                <h2 className="text-lg font-semibold text-gray-800 mb-4">Mapa de Eventos</h2>
-                                <div className="bg-white rounded-lg shadow-md p-4" style={{ height: '500px' }}>
+                                <h2 className="mb-4 text-lg font-semibold text-gray-800">Mapa de Eventos</h2>
+                                <div className="p-4 bg-white rounded-lg shadow-md" style={{ height: '500px' }}>
                                     <MapComponent data={filteredData} />
                                 </div>
                             </div>
 
                             {/* Tabla de datos */}
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-800 mb-4">Registros</h2>
+                                <h2 className="mb-4 text-lg font-semibold text-gray-800">Registros</h2>
                                 <DataTable data={filteredData} />
                             </div>
                         </>
