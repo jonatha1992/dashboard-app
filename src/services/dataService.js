@@ -95,7 +95,6 @@ export const categorizeData = (data) => {
     data.forEach(item => {
         const description = (item.DESCRIPCION || '').toUpperCase();
         const type = (item.TIPO_INTERVENCION || '').toUpperCase();
-        const id = item.ID_OPERATIVO || '';
 
         // Categorization logic based on description and type keywords
         if (description.includes('DETENIDO') || description.includes('DETENCIÓN') || description.includes('ARRESTADO')) {
@@ -253,7 +252,7 @@ const getMonthlyChartData = (data) => {
     data.forEach(item => {
         const date = item.FECHA || '';
         if (date) {
-            const [day, month, year] = date.split('/');
+            const [, month, year] = date.split('/');
             if (month && year) {
                 const monthKey = `${month}/${year}`;
                 monthlyCounts[monthKey] = (monthlyCounts[monthKey] || 0) + 1;

@@ -11,7 +11,6 @@ export default function ControladosChart({ data, title = "Análisis de Controles
     );
   }
 
-  const temporalData = getChartData(data, 'temporal');
   const provincialData = getChartData(data, 'provincial');
   const monthlyData = getChartData(data, 'monthly');
 
