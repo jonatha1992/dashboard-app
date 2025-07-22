@@ -5,13 +5,16 @@ import MapComponent from '../map/MapComponent';
 import StatCard from './StatCard';
 import DataTable from './DataTable';
 import ExcelUpload from './ExcelUpload';
+import SecuritySection from '../security/SecuritySection';
 import { loadData, getStatistics } from '../../services/dataService';
+import { getAllSecurityStats } from '../../services/securityStatsService';
 import logo from '../../assets/react.svg';
 
 export default function Dashboard() {
     const { logout } = useAuth();
     const [data, setData] = useState([]);
     const [stats, setStats] = useState({});
+    const [securityStats, setSecurityStats] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeNav, setActiveNav] = useState('general');
@@ -26,6 +29,10 @@ export default function Dashboard() {
                 // Calcular estadísticas
                 const statistics = getStatistics(result);
                 setStats(statistics);
+
+                // Cargar estadísticas de seguridad
+                const securityStatistics = getAllSecurityStats();
+                setSecurityStats(securityStatistics);
 
                 setLoading(false);
             } catch (err) {
@@ -44,6 +51,10 @@ export default function Dashboard() {
         // Calcular estadísticas con los nuevos datos
         const statistics = getStatistics(newData);
         setStats(statistics);
+
+        // Actualizar estadísticas de seguridad
+        const securityStatistics = getAllSecurityStats();
+        setSecurityStats(securityStatistics);
     }, []);
 
     if (loading) {
@@ -92,19 +103,31 @@ export default function Dashboard() {
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'controles' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('controles')}
                 >
-                    Controles
+                    🔍 Controles
                 </button>
                 <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'detenidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('detenidos')}
                 >
-                    Detenidos
+                    🚨 Detenidos
                 </button>
                 <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'incautaciones' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('incautaciones')}
                 >
-                    Incautaciones
+                    📦 Incautaciones
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'afectados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('afectados')}
+                >
+                    👥 Afectados
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'abatidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('abatidos')}
+                >
+                    💀 Abatidos
                 </button>
                 <div className="flex-1" />
                 <button
@@ -151,6 +174,43 @@ export default function Dashboard() {
                                 />
                             </div>
 
+                            {/* Estadísticas de Seguridad */}
+                            <div className="mb-8">
+                                <h2 className="text-lg font-semibold text-gray-800 mb-4">Resumen de Estadísticas de Seguridad</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                                    <StatCard
+                                        title="Controles"
+                                        value={securityStats.controlados?.total || 0}
+                                        icon="🔍"
+                                        color="bg-blue-500"
+                                    />
+                                    <StatCard
+                                        title="Detenidos"
+                                        value={securityStats.detenidos?.total || 0}
+                                        icon="🚨"
+                                        color="bg-red-500"
+                                    />
+                                    <StatCard
+                                        title="Incautaciones"
+                                        value={securityStats.incautaciones?.total || 0}
+                                        icon="📦"
+                                        color="bg-yellow-500"
+                                    />
+                                    <StatCard
+                                        title="Afectados"
+                                        value={securityStats.afectados?.total || 0}
+                                        icon="👥"
+                                        color="bg-purple-500"
+                                    />
+                                    <StatCard
+                                        title="Abatidos"
+                                        value={securityStats.abatidos?.total || 0}
+                                        icon="💀"
+                                        color="bg-gray-700"
+                                    />
+                                </div>
+                            </div>
+
                             {/* Mapa */}
                             <div className="mb-8">
                                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Mapa de Eventos</h2>
@@ -168,13 +228,19 @@ export default function Dashboard() {
                     )}
                     {/* Aquí puedes agregar el contenido de las otras secciones */}
                     {activeNav === 'controles' && (
-                        <div className="text-center text-2xl text-gray-700 py-20">Sección Controles (por implementar)</div>
+                        <SecuritySection category="controlados" />
                     )}
                     {activeNav === 'detenidos' && (
-                        <div className="text-center text-2xl text-gray-700 py-20">Sección Detenidos (por implementar)</div>
+                        <SecuritySection category="detenidos" />
                     )}
                     {activeNav === 'incautaciones' && (
-                        <div className="text-center text-2xl text-gray-700 py-20">Sección Incautaciones (por implementar)</div>
+                        <SecuritySection category="incautaciones" />
+                    )}
+                    {activeNav === 'afectados' && (
+                        <SecuritySection category="afectados" />
+                    )}
+                    {activeNav === 'abatidos' && (
+                        <SecuritySection category="abatidos" />
                     )}
                 </main>
             </div>
