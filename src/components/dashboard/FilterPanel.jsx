@@ -75,7 +75,7 @@ export default function FilterPanel({ onFiltersChange }) {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg z-10 p-4 w-72 border border-gray-200">
+                <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg z-50 p-4 w-72 border border-gray-200">
                     <div className="mb-3">
                         <label htmlFor="province" className="block text-xs font-medium text-gray-700 mb-1">
                             Provincia

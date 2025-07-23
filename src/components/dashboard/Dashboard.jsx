@@ -17,7 +17,7 @@ export default function Dashboard() {
     const { logout } = useAuth();
     const [data, setData] = useState([]);
 
-    const [stats, setStats] = useState({});
+    const [_stats, setStats] = useState({});
     const [securityStats, setSecurityStats] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -182,9 +182,9 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="flex min-h-screen bg-gray-100">
-            {/* Sidebar */}
-            <nav className="flex flex-col w-48 min-h-screen px-4 py-8 bg-white shadow-md">
+        <div className="min-h-screen bg-gray-100">
+            {/* Fixed Sidebar */}
+            <nav className="fixed left-0 top-0 z-40 flex flex-col w-48 h-screen px-4 py-8 bg-white shadow-md">
                 <div className="flex flex-col items-center mb-8">
                     <img src={logo} alt="Logo" className="w-16 h-16 mb-2" />
                     <h2 className="text-lg font-bold text-gray-800">Menú</h2>
@@ -262,9 +262,9 @@ export default function Dashboard() {
                 </button>
             </nav>
 
-            {/* Main content */}
-            <div className="flex-1">
-                <header className="bg-white shadow-md">
+            {/* Main content with left margin for fixed sidebar */}
+            <div className="ml-48 flex-1">
+                <header className="fixed top-0 right-0 z-30 bg-white shadow-md" style={{ width: 'calc(100% - 12rem)' }}>
                     <div className="px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="flex items-center space-x-4">
@@ -282,8 +282,8 @@ export default function Dashboard() {
                     </div>
                 </header>
 
-                {/* Stats bar */}
-                <div className="px-4 py-3 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+                {/* Stats bar - with top margin for fixed header */}
+                <div className="px-4 py-3 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50" style={{ marginTop: '80px' }}>
                     <div className="flex flex-wrap items-center justify-around mx-auto max-w-7xl">
                         <div className="flex items-center px-4 py-1">
                             <div className="flex items-center justify-center w-8 h-8 mr-3 text-blue-600 bg-blue-100 rounded-full">📊</div>
