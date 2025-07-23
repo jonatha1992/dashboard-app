@@ -121,7 +121,9 @@ export default function Dashboard() {
         if (filters.fromDate || filters.toDate) {
             filtered = filtered.filter(item => {
                 const itemDate = parseDate(item.FECHA);
-                if (!itemDate) return false;
+
+                // Si no hay fecha válida, incluir el registro (no filtrar)
+                if (!itemDate) return true;
 
                 let withinRange = true;
 

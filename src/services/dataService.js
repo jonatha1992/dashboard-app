@@ -335,9 +335,23 @@ export const getChartData = (data, category) => {
 
     // Datos por mes
     const monthlyData = data.reduce((acc, item) => {
-        const date = new Date(item.FECHA || Date.now());
-        const month = date.toLocaleDateString('es-ES', { month: 'long' });
-        acc[month] = (acc[month] || 0) + 1;
+        // Skip items with invalid dates (like "-") for monthly charts
+        if (!item.FECHA || item.FECHA === '-' || item.FECHA.trim() === '') {
+            return acc;
+        }
+
+        try {
+            const date = new Date(item.FECHA);
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                return acc;
+            }
+            const month = date.toLocaleDateString('es-ES', { month: 'long' });
+            acc[month] = (acc[month] || 0) + 1;
+        } catch (error) {
+            // Skip invalid dates
+            return acc;
+        }
         return acc;
     }, {});
 
