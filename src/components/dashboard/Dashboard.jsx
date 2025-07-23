@@ -4,12 +4,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import MapComponent from '../map/MapComponent';
 import StatCard from './StatCard';
 import DataTable from './DataTable';
+
+import CategoryCharts from '../charts/CategoryCharts';
+import { loadData, getStatistics, getCategorizedData } from '../../services/dataService';
+
 import ExcelUpload from './ExcelUpload';
 
 import FilterPanel from './FilterPanel';
 
 import SecuritySection from '../security/SecuritySection';
-import { loadData, getStatistics } from '../../services/dataService';
 import { getAllSecurityStats } from '../../services/securityStatsService';
 import logo from '../../assets/react.svg';
 
@@ -18,6 +21,8 @@ export default function Dashboard() {
     const [data, setData] = useState([]);
 
     const [stats, setStats] = useState({});
+
+    const [categorizedData, setCategorizedData] = useState({});
     const [securityStats, setSecurityStats] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -42,6 +47,9 @@ export default function Dashboard() {
                 const statistics = getStatistics(result);
                 setStats(statistics);
 
+                // Categorizar datos
+                const categorized = getCategorizedData(result);
+                setCategorizedData(categorized);
                 // Cargar estadísticas de seguridad
                 const securityStatistics = getAllSecurityStats();
                 setSecurityStats(securityStatistics);
@@ -221,6 +229,36 @@ export default function Dashboard() {
                     </span>
                 </button>
                 <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'controlados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('controlados')}
+                >
+                    Controlados
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'afectados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('afectados')}
+                >
+                    Afectados
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'procedimientos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('procedimientos')}
+                >
+                    Procedimientos
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'abatidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('abatidos')}
+                >
+                    Abatidos
+                </button>
+                <button
+                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'trata' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('trata')}
+                >
+                    Trata
+                </button>
+                <button
                     className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'incautaciones' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('incautaciones')}
                 >
@@ -328,6 +366,66 @@ export default function Dashboard() {
                             </div>
                         </>
                     )}
+
+                    {activeNav === 'detenidos' && (
+                        <CategoryCharts
+                            data={categorizedData.detenidos || []}
+                            categoryName="Detenidos"
+                            title="Detenidos"
+                            icon="👮‍♂️"
+                            color="bg-red-500"
+                        />
+                    )}
+
+                    {activeNav === 'controlados' && (
+                        <CategoryCharts
+                            data={categorizedData.controlados || []}
+                            categoryName="Controlados"
+                            title="Controlados"
+                            icon="🔍"
+                            color="bg-blue-500"
+                        />
+                    )}
+
+                    {activeNav === 'afectados' && (
+                        <CategoryCharts
+                            data={categorizedData.afectados || []}
+                            categoryName="Afectados"
+                            title="Afectados"
+                            icon="🚨"
+                            color="bg-orange-500"
+                        />
+                    )}
+
+                    {activeNav === 'procedimientos' && (
+                        <CategoryCharts
+                            data={categorizedData.procedimientos || []}
+                            categoryName="Procedimientos"
+                            title="Procedimientos"
+                            icon="📋"
+                            color="bg-indigo-500"
+                        />
+                    )}
+
+                    {activeNav === 'abatidos' && (
+                        <CategoryCharts
+                            data={categorizedData.abatidos || []}
+                            categoryName="Abatidos"
+                            title="Abatidos"
+                            icon="⚠️"
+                            color="bg-gray-600"
+                        />
+                    )}
+
+                    {activeNav === 'trata' && (
+                        <CategoryCharts
+                            data={categorizedData.trata || []}
+                            categoryName="Trata"
+                            title="Trata de Personas"
+                            icon="🚫"
+                            color="bg-pink-500"
+                        />
+                    )}
                     {/* Aquí puedes agregar el contenido de las otras secciones */}
                     {activeNav === 'controles' && (
                         <SecuritySection category="controlados" />
@@ -335,8 +433,18 @@ export default function Dashboard() {
                     {activeNav === 'detenidos' && (
                         <SecuritySection category="detenidos" />
                     )}
+
                     {activeNav === 'incautaciones' && (
-                        <SecuritySection category="incautaciones" />
+                        <>
+                            <CategoryCharts
+                                data={categorizedData.incautaciones || []}
+                                categoryName="Incautaciones"
+                                title="Incautaciones"
+                                icon="📦"
+                                color="bg-yellow-500"
+                            />
+                            <SecuritySection category="incautaciones" />
+                        </>
                     )}
                     {activeNav === 'afectados' && (
                         <SecuritySection category="afectados" />
