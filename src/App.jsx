@@ -1,41 +1,23 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
-import Login from './components/auth/Login'
+import { AuthProvider } from './contexts/AuthContext'
 import Dashboard from './components/dashboard/Dashboard'
 
-// Componente para proteger rutas
-const ProtectedRoute = ({ children }) => {
-  const { authenticated } = useAuth();
-
-  if (!authenticated) {
-    return <Navigate to="/login" />;
-  }
-
-  return children;
-};
-
 function AppContent() {
-  const { authenticated } = useAuth();
-
   return (
     <BrowserRouter>
       <Routes>
         <Route
           path="/"
-          element={
-            authenticated ?
-              <Navigate to="/dashboard" /> :
-              <Navigate to="/login" />
-          }
+          element={<Navigate to="/dashboard" replace />}
         />
-        <Route path="/login" element={<Login />} />
         <Route
           path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
+          element={<Dashboard />}
+        />
+        {/* Redirect any other route to dashboard */}
+        <Route
+          path="*"
+          element={<Navigate to="/dashboard" replace />}
         />
       </Routes>
     </BrowserRouter>

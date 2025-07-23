@@ -1,6 +1,5 @@
 // Componente principal del dashboard
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import MapComponent from '../map/MapComponent';
 import StatCard from './StatCard';
 import DataTable from './DataTable';
@@ -14,10 +13,8 @@ import { getAllSecurityStats } from '../../services/securityStatsService';
 import logo from '../../assets/react.svg';
 
 export default function Dashboard() {
-    const { logout } = useAuth();
     const [data, setData] = useState([]);
 
-    const [stats, setStats] = useState({});
     const [securityStats, setSecurityStats] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -38,9 +35,8 @@ export default function Dashboard() {
                 setData(result);
 
 
-                // Calcular estadísticas
-                const statistics = getStatistics(result);
-                setStats(statistics);
+                // Calcular estadísticas (no almacenadas, se usan filteredStats)
+                getStatistics(result);
 
                 // Cargar estadísticas de seguridad
                 const securityStatistics = getAllSecurityStats();
@@ -143,9 +139,8 @@ export default function Dashboard() {
     const handleDataUpload = useCallback((newData) => {
         setData(newData);
 
-        // Calcular estadísticas con los nuevos datos
-        const statistics = getStatistics(newData);
-        setStats(statistics);
+        // Calcular estadísticas con los nuevos datos (no almacenadas, se usan filteredStats)
+        getStatistics(newData);
 
         // Actualizar estadísticas de seguridad
         const securityStatistics = getAllSecurityStats();
@@ -254,12 +249,6 @@ export default function Dashboard() {
                     </span>
                 </button>
                 <div className="flex-1" />
-                <button
-                    onClick={logout}
-                    className="w-full px-4 py-2 mt-8 text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
-                    Cerrar Sesión
-                </button>
             </nav>
 
             {/* Main content */}

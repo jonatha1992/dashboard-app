@@ -6,6 +6,12 @@ Este sistema está diseñado para la gestión, análisis y visualización de dat
 
 La plataforma integra un dashboard interactivo (visualización en mapa, tablas y estadísticas), herramientas de análisis automatizado y flujos de trabajo para gestionar la carga de información y la generación de reportes periódicos.
 
+## 🔓 Acceso Temporal Sin Autenticación
+
+**NOTA IMPORTANTE**: El sistema de autenticación (login/registro) ha sido temporalmente deshabilitado para facilitar las pruebas del sistema de carga de archivos y transcripciones. Al acceder a la aplicación, los usuarios son dirigidos directamente al dashboard principal sin necesidad de credenciales.
+
+Esta configuración es temporal y será reactivada una vez que se complete la implementación del registro de usuarios.
+
 ---
 
 ## Componentes del Sistema

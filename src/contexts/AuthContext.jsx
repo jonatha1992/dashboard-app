@@ -8,26 +8,22 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-    const [authenticated, setAuthenticated] = useState(false);
+    // Bypass authentication - always return authenticated=true for testing
+    const [authenticated, setAuthenticated] = useState(true);
     const [error, setError] = useState('');
 
-    // Función para iniciar sesión
-    const login = (password) => {
-        // Para simplificar, usaremos una contraseña fija
-        // En un caso real, esto se verificaría contra un backend seguro
-        if (password === "admin123") {
-            setAuthenticated(true);
-            setError('');
-            return true;
-        } else {
-            setError('Contraseña incorrecta');
-            return false;
-        }
+    // Función para iniciar sesión (mantenida para compatibilidad)
+    const login = () => {
+        // Always return true since authentication is bypassed
+        setAuthenticated(true);
+        setError('');
+        return true;
     };
 
-    // Función para cerrar sesión
+    // Función para cerrar sesión (mantenida para compatibilidad)
     const logout = () => {
-        setAuthenticated(false);
+        // No action needed since authentication is bypassed
+        setAuthenticated(true);
     };
 
     const value = {
