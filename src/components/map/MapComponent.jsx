@@ -29,61 +29,61 @@ L.Marker.prototype.options.icon = DefaultIcon;
 // Función para agrupar puntos cercanos (clustering simple)
 const clusterPoints = (points, zoom) => {
     if (!points || points.length === 0) return [];
-    
+
     // Constantes para el cálculo de la distancia de clustering
     const MIN_CLUSTER_DISTANCE = 0.1; // Distancia mínima absoluta entre puntos (en grados)
     const BASE_CLUSTER_DISTANCE = 2; // Distancia base para el cálculo dinámico
     const ZOOM_OFFSET = 3; // Offset para ajustar el efecto del zoom en la distancia
-    
+
     // Distancia mínima entre puntos para considerar clustering (en grados)
     // A menor zoom, mayor distancia para agrupar más puntos
     const clusterDistance = Math.max(
-        MIN_CLUSTER_DISTANCE, 
+        MIN_CLUSTER_DISTANCE,
         BASE_CLUSTER_DISTANCE / Math.pow(2, zoom - ZOOM_OFFSET)
     );
-    
+
     const clusters = [];
     const processed = new Set();
-    
+
     points.forEach((point, index) => {
         if (processed.has(index)) return;
-        
+
         const lat = point.latitud_decimal ?? point["Latitud Decimal"] ?? point.LATITUD;
         const lng = point.longitud_decimal ?? point["Longitud Decimal"] ?? point.LONGITUD;
-        
+
         if (!lat || !lng) return;
-        
+
         const cluster = {
             lat: parseFloat(lat),
             lng: parseFloat(lng),
             points: [point],
             id: `cluster-${index}`
         };
-        
+
         // Buscar puntos cercanos para agrupar
         points.forEach((otherPoint, otherIndex) => {
             if (processed.has(otherIndex) || index === otherIndex) return;
-            
+
             const otherLat = otherPoint.latitud_decimal ?? otherPoint["Latitud Decimal"] ?? otherPoint.LATITUD;
             const otherLng = otherPoint.longitud_decimal ?? otherPoint["Longitud Decimal"] ?? otherPoint.LONGITUD;
-            
+
             if (!otherLat || !otherLng) return;
-            
+
             const distance = Math.sqrt(
-                Math.pow(parseFloat(lat) - parseFloat(otherLat), 2) + 
+                Math.pow(parseFloat(lat) - parseFloat(otherLat), 2) +
                 Math.pow(parseFloat(lng) - parseFloat(otherLng), 2)
             );
-            
+
             if (distance < clusterDistance) {
                 cluster.points.push(otherPoint);
                 processed.add(otherIndex);
             }
         });
-        
+
         processed.add(index);
         clusters.push(cluster);
     });
-    
+
     return clusters;
 };
 
@@ -166,7 +166,7 @@ const MapComponent = memo(({ data }) => {
     // Filtrar y validar datos una sola vez
     const validData = useMemo(() => {
         if (!data || data.length === 0) return [];
-        
+
         return data.filter(point => {
             const lat = point.latitud_decimal ?? point["Latitud Decimal"] ?? point.LATITUD;
             const lng = point.longitud_decimal ?? point["Longitud Decimal"] ?? point.LONGITUD;
@@ -198,8 +198,11 @@ const MapComponent = memo(({ data }) => {
     };
 
     return (
-        <div className="w-full h-full">
-            <style jsx>{`
+        <div className="w-full h-full relative z-10" style={{
+            /* Controlar z-index de Leaflet para que no se superponga al header */
+        }}>
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 .cluster-marker {
                     background: #ff6b6b;
                     border-radius: 50%;
@@ -221,7 +224,21 @@ const MapComponent = memo(({ data }) => {
                     background: transparent !important;
                     border: none !important;
                 }
-            `}</style>
+                /* Controlar z-index de Leaflet para que no se superponga al header */
+                .leaflet-container {
+                    z-index: 10 !important;
+                }
+                .leaflet-control-container {
+                    z-index: 15 !important;
+                }
+                .leaflet-popup {
+                    z-index: 30 !important;
+                }
+                .leaflet-tooltip {
+                    z-index: 30 !important;
+                }
+                `
+            }} />
             <MapContainer
                 center={mapCenter}
                 zoom={mapZoom}
@@ -235,7 +252,7 @@ const MapComponent = memo(({ data }) => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
-                
+
                 <MapMarkers clusters={clusters} />
             </MapContainer>
         </div>

@@ -7,7 +7,7 @@ import { getSecurityStats, getCategoryConfig } from '../../services/securityStat
 const SecuritySection = ({ category }) => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   const config = getCategoryConfig(category);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ const SecuritySection = ({ category }) => {
           color={`bg-gradient-to-r from-${config.color.replace('#', '')}`}
         />
         <StatCard
-          title="Último Mes"
+          title="Reciente"
           value={stats.lastMonth}
           icon="📅"
           color="bg-gradient-to-r from-gray-500 to-gray-600"
@@ -78,7 +78,7 @@ const SecuritySection = ({ category }) => {
         <h3 className="text-lg font-semibold text-gray-800 mb-4">
           Distribución por Provincia
         </h3>
-        <ProvinceChart 
+        <ProvinceChart
           data={stats.provinceData}
           title={config.title}
           color={config.color}
@@ -90,7 +90,7 @@ const SecuritySection = ({ category }) => {
         <h3 className="text-lg font-semibold text-gray-800 mb-4">
           Tendencia Temporal
         </h3>
-        <TrendChart 
+        <TrendChart
           data={stats.trendData}
           title={config.title}
           color={config.color}
@@ -104,14 +104,14 @@ const SecuritySection = ({ category }) => {
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
           <div>
-            <span className="font-medium">Período:</span> Últimos 12 meses
+            <span className="font-medium">Período:</span> Datos recientes
           </div>
           <div>
             <span className="font-medium">Última actualización:</span> Datos de muestra
           </div>
           <div>
             <span className="font-medium">Provincia con mayor registro:</span>{' '}
-            {Object.entries(stats.provinceData).sort(([,a], [,b]) => b - a)[0]?.[0]}
+            {Object.entries(stats.provinceData).sort(([, a], [, b]) => b - a)[0]?.[0]}
           </div>
           <div>
             <span className="font-medium">Estado:</span> Versión inicial con datos de muestra

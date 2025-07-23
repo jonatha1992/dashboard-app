@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const ARGENTINE_PROVINCES = [
     'Buenos Aires', 'Catamarca', 'Chaco', 'Chubut', 'Ciudad Autónoma de Buenos Aires',
@@ -8,12 +8,34 @@ const ARGENTINE_PROVINCES = [
     'Tierra del Fuego', 'Tucumán'
 ].sort();
 
+// Función para obtener las fechas del mes actual
+const getCurrentMonthDates = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    const fromDate = new Date(year, month, 1).toISOString().split('T')[0];
+    const toDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+
+    return { fromDate, toDate };
+};
+
 export default function FilterPanel({ onFiltersChange }) {
     const [isOpen, setIsOpen] = useState(false);
-    const [fromDate, setFromDate] = useState('');
-    const [toDate, setToDate] = useState('');
+    const currentMonthDates = getCurrentMonthDates();
+    const [fromDate, setFromDate] = useState(currentMonthDates.fromDate);
+    const [toDate, setToDate] = useState(currentMonthDates.toDate);
     const [selectedProvince, setSelectedProvince] = useState('');
-    const [hasActiveFilters, setHasActiveFilters] = useState(false);
+    const [hasActiveFilters, setHasActiveFilters] = useState(true); // Inicializar como true porque tenemos fechas por defecto
+
+    // Inicializar filtros con las fechas del mes actual
+    useEffect(() => {
+        onFiltersChange({
+            fromDate: currentMonthDates.fromDate,
+            toDate: currentMonthDates.toDate,
+            province: ''
+        });
+    }, [onFiltersChange, currentMonthDates.fromDate, currentMonthDates.toDate]);
 
     const handleFromDateChange = (e) => {
         const newFromDate = e.target.value;
@@ -44,13 +66,14 @@ export default function FilterPanel({ onFiltersChange }) {
     };
 
     const clearAllFilters = () => {
-        setFromDate('');
-        setToDate('');
+        const currentMonth = getCurrentMonthDates();
+        setFromDate(currentMonth.fromDate);
+        setToDate(currentMonth.toDate);
         setSelectedProvince('');
-        setHasActiveFilters(false);
+        setHasActiveFilters(true); // Mantener activo porque tenemos las fechas del mes actual
         onFiltersChange({
-            fromDate: '',
-            toDate: '',
+            fromDate: currentMonth.fromDate,
+            toDate: currentMonth.toDate,
             province: ''
         });
     };
@@ -64,8 +87,8 @@ export default function FilterPanel({ onFiltersChange }) {
             <button
                 onClick={toggleFilterPanel}
                 className={`flex items-center px-3 py-2 border rounded-md transition-all ${hasActiveFilters
-                        ? 'bg-blue-600 text-white border-blue-700'
-                        : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                    ? 'bg-blue-600 text-white border-blue-700'
+                    : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
                     }`}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

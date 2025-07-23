@@ -2,7 +2,7 @@
 
 ## Descripción General
 
-Este sistema está diseñado para la gestión, análisis y visualización de datos de operativos de seguridad registrados en el archivo `INFORME ENERO 2025.xlsx`. El objetivo principal es brindar reportes automáticos, dashboards y análisis estadísticos que permitan identificar tendencias, recursos utilizados, incidencias y resultados de los procedimientos realizados durante enero de 2025.
+Este sistema está diseñado para la gestión, análisis y visualización de datos de operativos de seguridad. El objetivo principal es brindar reportes automáticos, dashboards y análisis estadísticos que permitan identificar tendencias, recursos utilizados, incidencias y resultados de los procedimientos realizados.
 
 La plataforma integra un dashboard interactivo (visualización en mapa, tablas y estadísticas), herramientas de análisis automatizado y flujos de trabajo para gestionar la carga de información y la generación de reportes periódicos.
 

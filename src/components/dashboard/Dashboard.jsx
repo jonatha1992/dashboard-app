@@ -20,7 +20,19 @@ export default function Dashboard() {
     const { logout } = useAuth();
     const [data, setData] = useState([]);
 
+    // Función para obtener las fechas del mes actual
+    const getCurrentMonthDates = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
 
+        const fromDate = new Date(year, month, 1).toISOString().split('T')[0];
+        const toDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+
+        return { fromDate, toDate };
+    };
+
+    const currentMonthDates = getCurrentMonthDates();
 
     const [categorizedData, setCategorizedData] = useState({});
     const [securityStats, setSecurityStats] = useState({});
@@ -28,10 +40,10 @@ export default function Dashboard() {
     const [error, setError] = useState(null);
     const [activeNav, setActiveNav] = useState('general');
 
-    // Filter states
+    // Filter states - inicializar con el mes actual
     const [filters, setFilters] = useState({
-        fromDate: '',
-        toDate: '',
+        fromDate: currentMonthDates.fromDate,
+        toDate: currentMonthDates.toDate,
         province: ''
     });
 
@@ -41,11 +53,6 @@ export default function Dashboard() {
                 setLoading(true);
                 const result = await loadData();
                 setData(result);
-
-
-                // Calcular estadísticas
-                const statistics = getStatistics(result);
-                setStats(statistics);
 
                 // Categorizar datos
                 const categorized = getCategorizedData(result);
@@ -66,11 +73,12 @@ export default function Dashboard() {
     }, []);
 
     // Filter handling function
-    const handleFiltersChange = useCallback((filters) => {
+    const handleFiltersChange = useCallback((newFilters) => {
+        const currentMonth = getCurrentMonthDates();
         setFilters({
-            fromDate: filters.fromDate || '',
-            toDate: filters.toDate || '',
-            province: filters.province || ''
+            fromDate: newFilters.fromDate || currentMonth.fromDate,
+            toDate: newFilters.toDate || currentMonth.toDate,
+            province: newFilters.province || ''
         });
     }, []);
 
@@ -88,8 +96,8 @@ export default function Dashboard() {
         try {
             // Try to parse DD/MM/YYYY format first
             if (formats[0].test(dateString) || formats[2].test(dateString)) {
-                const [day, month, year] = dateString.split('/');
-                return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                const [day, month, yearPart] = dateString.split('/');
+                return new Date(parseInt(yearPart), parseInt(month) - 1, parseInt(day));
             }
             // Try YYYY-MM-DD format
             else if (formats[1].test(dateString)) {
@@ -148,12 +156,13 @@ export default function Dashboard() {
         return getStatistics(filteredData);
     }, [filteredData]);
 
+    // Calculate categorized data for filtered data to update sidebar counters
+    const filteredCategorizedData = useMemo(() => {
+        return getCategorizedData(filteredData);
+    }, [filteredData]);
+
     const handleDataUpload = useCallback((newData) => {
         setData(newData);
-
-        // Calcular estadísticas con los nuevos datos
-        const statistics = getStatistics(newData);
-        setStats(statistics);
 
         // Actualizar estadísticas de seguridad
         const securityStatistics = getAllSecurityStats();
@@ -192,117 +201,120 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen bg-gray-100">
             {/* Fixed Sidebar */}
-            <nav className="fixed left-0 top-0 z-40 flex flex-col w-48 h-screen px-4 py-8 bg-white shadow-md">
-                <div className="flex flex-col items-center mb-8">
-                    <img src={logo} alt="Logo" className="w-16 h-16 mb-2" />
-                    <h2 className="text-lg font-bold text-gray-800">Menú</h2>
+            <nav className="fixed top-0 left-0 z-50 flex flex-col w-48 h-screen px-4 py-8 bg-white shadow-md">
+                <div className="flex flex-col items-center mb-6">
+                    <img src={logo} alt="Logo" className="w-12 h-12 mb-2" />
+                    <h2 className="text-base font-bold text-gray-800">Menú</h2>
                 </div>
                 <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'general' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'general' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('general')}
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>General</span>
-                        <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">{filteredStats.total || 0}</span>
+                        <span className="px-1 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">{filteredData.length}</span>
                     </span>
                 </button>
                 <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'controles' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'controles' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('controles')}
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>🔍 Controles</span>
-                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeNav === 'controles' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {securityStats.controlados?.total || 0}
+                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'controles' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {(filteredCategorizedData.controles || []).length}
                         </span>
                     </span>
                 </button>
                 <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'detenidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'detenidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('detenidos')}
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>🚨 Detenidos</span>
-                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeNav === 'detenidos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {securityStats.detenidos?.total || 0}
+                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'detenidos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {(filteredCategorizedData.detenidos || []).length}
                         </span>
                     </span>
                 </button>
                 <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'controlados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'controlados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('controlados')}
                 >
-                    Controlados
-                </button>
-                <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'afectados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('afectados')}
-                >
-                    Afectados
-                </button>
-                <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'procedimientos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('procedimientos')}
-                >
-                    Procedimientos
-                </button>
-                <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'abatidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('abatidos')}
-                >
-                    Abatidos
-                </button>
-                <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'trata' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('trata')}
-                >
-                    Trata
-                </button>
-                <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'incautaciones' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('incautaciones')}
-                >
                     <span className="flex items-center justify-between w-full">
-                        <span>📦 Incautaciones</span>
-                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeNav === 'incautaciones' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {securityStats.incautaciones?.total || 0}
+                        <span>👁️ Controlados</span>
+                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'controlados' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {(filteredCategorizedData.controlados || []).length}
                         </span>
                     </span>
                 </button>
                 <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'afectados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'afectados' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('afectados')}
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>👥 Afectados</span>
-                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeNav === 'afectados' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {securityStats.afectados?.total || 0}
+                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'afectados' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {(filteredCategorizedData.afectados || []).length}
                         </span>
                     </span>
                 </button>
                 <button
-                    className={`text-left px-4 py-2 rounded-md mb-2 font-medium ${activeNav === 'abatidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'procedimientos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('procedimientos')}
+                >
+                    <span className="flex items-center justify-between w-full">
+                        <span>📋 Procedimientos</span>
+                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'procedimientos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {(filteredCategorizedData.procedimientos || []).length}
+                        </span>
+                    </span>
+                </button>
+                <button
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'abatidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('abatidos')}
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>💀 Abatidos</span>
-                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeNav === 'abatidos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {securityStats.abatidos?.total || 0}
+                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'abatidos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {(filteredCategorizedData.abatidos || []).length}
+                        </span>
+                    </span>
+                </button>
+                <button
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'trata' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('trata')}
+                >
+                    <span className="flex items-center justify-between w-full">
+                        <span>🚫 Trata</span>
+                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'trata' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {(filteredCategorizedData.trata || []).length}
+                        </span>
+                    </span>
+                </button>
+                <button
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'incautaciones' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('incautaciones')}
+                >
+                    <span className="flex items-center justify-between w-full">
+                        <span>📦 Incautaciones</span>
+                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'incautaciones' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {(filteredCategorizedData.incautaciones || []).length}
                         </span>
                     </span>
                 </button>
                 <div className="flex-1" />
                 <button
                     onClick={logout}
-                    className="w-full px-4 py-2 mt-8 text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full px-3 py-2 mt-6 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
                 >
                     Cerrar Sesión
                 </button>
             </nav>
 
             {/* Main content with left margin for fixed sidebar */}
-            <div className="ml-48 flex-1">
-                <header className="fixed top-0 right-0 z-30 bg-white shadow-md" style={{ width: 'calc(100% - 12rem)' }}>
+            <div className="flex-1 ml-48">
+                <header className="fixed top-0 right-0 z-40 bg-white shadow-md" style={{ width: 'calc(100% - 12rem)' }}>
                     <div className="px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="flex items-center space-x-4">
@@ -369,7 +381,7 @@ export default function Dashboard() {
 
                     {activeNav === 'detenidos' && (
                         <CategoryCharts
-                            data={categorizedData.detenidos || []}
+                            data={filteredCategorizedData.detenidos || []}
                             categoryName="Detenidos"
                             title="Detenidos"
                             icon="👮‍♂️"
@@ -379,7 +391,7 @@ export default function Dashboard() {
 
                     {activeNav === 'controlados' && (
                         <CategoryCharts
-                            data={categorizedData.controlados || []}
+                            data={filteredCategorizedData.controlados || []}
                             categoryName="Controlados"
                             title="Controlados"
                             icon="🔍"
@@ -389,7 +401,7 @@ export default function Dashboard() {
 
                     {activeNav === 'afectados' && (
                         <CategoryCharts
-                            data={categorizedData.afectados || []}
+                            data={filteredCategorizedData.afectados || []}
                             categoryName="Afectados"
                             title="Afectados"
                             icon="🚨"
@@ -399,7 +411,7 @@ export default function Dashboard() {
 
                     {activeNav === 'procedimientos' && (
                         <CategoryCharts
-                            data={categorizedData.procedimientos || []}
+                            data={filteredCategorizedData.procedimientos || []}
                             categoryName="Procedimientos"
                             title="Procedimientos"
                             icon="📋"
@@ -409,7 +421,7 @@ export default function Dashboard() {
 
                     {activeNav === 'abatidos' && (
                         <CategoryCharts
-                            data={categorizedData.abatidos || []}
+                            data={filteredCategorizedData.abatidos || []}
                             categoryName="Abatidos"
                             title="Abatidos"
                             icon="⚠️"
@@ -419,7 +431,7 @@ export default function Dashboard() {
 
                     {activeNav === 'trata' && (
                         <CategoryCharts
-                            data={categorizedData.trata || []}
+                            data={filteredCategorizedData.trata || []}
                             categoryName="Trata"
                             title="Trata de Personas"
                             icon="🚫"
@@ -437,7 +449,7 @@ export default function Dashboard() {
                     {activeNav === 'incautaciones' && (
                         <>
                             <CategoryCharts
-                                data={categorizedData.incautaciones || []}
+                                data={filteredCategorizedData.incautaciones || []}
                                 categoryName="Incautaciones"
                                 title="Incautaciones"
                                 icon="📦"
