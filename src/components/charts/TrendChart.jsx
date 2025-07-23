@@ -52,7 +52,7 @@ const TrendChart = ({ data, title, color = '#3B82F6' }) => {
       },
       title: {
         display: true,
-        text: `Tendencia ${title} - Últimos 12 Meses`,
+        text: `Tendencia ${title}`,
         font: {
           size: 16,
           weight: 'bold'
@@ -62,7 +62,7 @@ const TrendChart = ({ data, title, color = '#3B82F6' }) => {
         mode: 'index',
         intersect: false,
         callbacks: {
-          label: function(context) {
+          label: function (context) {
             return `${context.dataset.label}: ${context.parsed.y}`;
           }
         }

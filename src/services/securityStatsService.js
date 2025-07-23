@@ -3,7 +3,7 @@
 
 // Provincias del Ecuador (muestra)
 const PROVINCES = [
-  'Pichincha', 'Guayas', 'Azuay', 'Tungurahua', 'Manabí', 
+  'Pichincha', 'Guayas', 'Azuay', 'Tungurahua', 'Manabí',
   'Los Ríos', 'El Oro', 'Esmeraldas', 'Imbabura', 'Santo Domingo'
 ];
 
@@ -13,7 +13,7 @@ const generateProvinceData = (category) => {
   PROVINCES.forEach(province => {
     // Generar números aleatorios apropiados para cada categoría
     let value;
-    switch(category) {
+    switch (category) {
       case 'controlados':
         value = Math.floor(Math.random() * 200) + 50; // 50-250
         break;
@@ -43,10 +43,10 @@ const generateTrendData = (category) => {
     'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
     'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
   ];
-  
+
   const data = months.map((month, index) => {
     let baseValue;
-    switch(category) {
+    switch (category) {
       case 'controlados':
         baseValue = 800 + Math.floor(Math.random() * 400); // 800-1200
         break;
@@ -65,15 +65,15 @@ const generateTrendData = (category) => {
       default:
         baseValue = 100 + Math.floor(Math.random() * 100);
     }
-    
-    // Añadir algo de tendencia (ligero aumento hacia el final del año)
+
+    // Añadir algo de tendencia
     const trend = Math.floor(index * 2);
     return {
       month,
       value: baseValue + trend
     };
   });
-  
+
   return data;
 };
 
@@ -83,7 +83,7 @@ export const getSecurityStats = (category) => {
     provinceData: generateProvinceData(category),
     trendData: generateTrendData(category),
     total: Object.values(generateProvinceData(category)).reduce((sum, value) => sum + value, 0),
-    lastMonth: generateTrendData(category)[11].value // Último mes
+    lastMonth: generateTrendData(category)[11].value // Datos recientes
   };
 };
 
@@ -91,11 +91,11 @@ export const getSecurityStats = (category) => {
 export const getAllSecurityStats = () => {
   const categories = ['controlados', 'detenidos', 'incautaciones', 'afectados', 'abatidos'];
   const stats = {};
-  
+
   categories.forEach(category => {
     stats[category] = getSecurityStats(category);
   });
-  
+
   return stats;
 };
 
@@ -133,6 +133,6 @@ export const getCategoryConfig = (category) => {
       title: 'Abatidos'
     }
   };
-  
+
   return configs[category] || configs.controlados;
 };
