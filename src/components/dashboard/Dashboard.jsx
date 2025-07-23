@@ -13,7 +13,6 @@ import ExcelUpload from './ExcelUpload';
 import FilterPanel from './FilterPanel';
 
 import SecuritySection from '../security/SecuritySection';
-import { loadData, getStatistics } from '../../services/dataService';
 import { getAllSecurityStats } from '../../services/securityStatsService';
 import logo from '../../assets/react.svg';
 
@@ -369,7 +368,7 @@ export default function Dashboard() {
                     )}
 
                     {activeNav === 'detenidos' && (
-                        <CategoryCharts 
+                        <CategoryCharts
                             data={categorizedData.detenidos || []}
                             categoryName="Detenidos"
                             title="Detenidos"
@@ -379,7 +378,7 @@ export default function Dashboard() {
                     )}
 
                     {activeNav === 'controlados' && (
-                        <CategoryCharts 
+                        <CategoryCharts
                             data={categorizedData.controlados || []}
                             categoryName="Controlados"
                             title="Controlados"
@@ -389,7 +388,7 @@ export default function Dashboard() {
                     )}
 
                     {activeNav === 'afectados' && (
-                        <CategoryCharts 
+                        <CategoryCharts
                             data={categorizedData.afectados || []}
                             categoryName="Afectados"
                             title="Afectados"
@@ -399,7 +398,7 @@ export default function Dashboard() {
                     )}
 
                     {activeNav === 'procedimientos' && (
-                        <CategoryCharts 
+                        <CategoryCharts
                             data={categorizedData.procedimientos || []}
                             categoryName="Procedimientos"
                             title="Procedimientos"
@@ -409,7 +408,7 @@ export default function Dashboard() {
                     )}
 
                     {activeNav === 'abatidos' && (
-                        <CategoryCharts 
+                        <CategoryCharts
                             data={categorizedData.abatidos || []}
                             categoryName="Abatidos"
                             title="Abatidos"
@@ -419,13 +418,14 @@ export default function Dashboard() {
                     )}
 
                     {activeNav === 'trata' && (
-                        <CategoryCharts 
+                        <CategoryCharts
                             data={categorizedData.trata || []}
                             categoryName="Trata"
                             title="Trata de Personas"
                             icon="🚫"
                             color="bg-pink-500"
                         />
+                    )}
                     {/* Aquí puedes agregar el contenido de las otras secciones */}
                     {activeNav === 'controles' && (
                         <SecuritySection category="controlados" />
@@ -435,14 +435,16 @@ export default function Dashboard() {
                     )}
 
                     {activeNav === 'incautaciones' && (
-                        <CategoryCharts 
-                            data={categorizedData.incautaciones || []}
-                            categoryName="Incautaciones"
-                            title="Incautaciones"
-                            icon="📦"
-                            color="bg-yellow-500"
-                        />
-                        <SecuritySection category="incautaciones" />
+                        <>
+                            <CategoryCharts
+                                data={categorizedData.incautaciones || []}
+                                categoryName="Incautaciones"
+                                title="Incautaciones"
+                                icon="📦"
+                                color="bg-yellow-500"
+                            />
+                            <SecuritySection category="incautaciones" />
+                        </>
                     )}
                     {activeNav === 'afectados' && (
                         <SecuritySection category="afectados" />
