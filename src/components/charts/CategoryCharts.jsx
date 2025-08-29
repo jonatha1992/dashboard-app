@@ -4,10 +4,11 @@ import StatCard from '../dashboard/StatCard';
 import DataTable from '../dashboard/DataTable';
 import { getChartData } from '../../services/dataService';
 
-const CategoryCharts = ({ data, categoryName, title, icon, color }) => {
+const CategoryCharts = ({ data, categoryName, title, icon, color, hideEmpty = false }) => {
     const [activeChart, setActiveChart] = useState('monthly');
     
     if (!data || data.length === 0) {
+        if (hideEmpty) return null;
         return (
             <div className="text-center py-12">
                 <div className="text-gray-400 text-6xl mb-4">{icon}</div>

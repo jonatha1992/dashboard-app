@@ -10,7 +10,17 @@ const PROVINCES = [
 // Generar datos aleatorios para gráficos por provincia
 const generateProvinceData = (category) => {
   const data = {};
-  PROVINCES.forEach(province => {
+  
+  // Asegurar que siempre haya al menos algunas provincias con datos
+  const activeProvinces = [...PROVINCES];
+  const numActive = Math.max(3, Math.floor(Math.random() * PROVINCES.length)); // Mínimo 3 provincias activas
+  
+  // Mezclar las provincias y tomar solo las activas
+  const shuffledProvinces = [...PROVINCES]
+    .sort(() => 0.5 - Math.random())
+    .slice(0, numActive);
+
+  shuffledProvinces.forEach(province => {
     // Generar números aleatorios apropiados para cada categoría
     let value;
     switch (category) {
@@ -32,8 +42,9 @@ const generateProvinceData = (category) => {
       default:
         value = Math.floor(Math.random() * 100) + 10;
     }
-    data[province] = value;
+    data[province] = value > 0 ? value : 0; // Asegurar que no haya valores negativos
   });
+  
   return data;
 };
 
@@ -44,46 +55,48 @@ const generateTrendData = (category) => {
     'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
   ];
 
-  const data = months.map((month, index) => {
-    let baseValue;
-    switch (category) {
-      case 'controlados':
-        baseValue = 800 + Math.floor(Math.random() * 400); // 800-1200
-        break;
-      case 'detenidos':
-        baseValue = 150 + Math.floor(Math.random() * 100); // 150-250
-        break;
-      case 'incautaciones':
-        baseValue = 300 + Math.floor(Math.random() * 200); // 300-500
-        break;
-      case 'afectados':
-        baseValue = 200 + Math.floor(Math.random() * 150); // 200-350
-        break;
-      case 'abatidos':
-        baseValue = 20 + Math.floor(Math.random() * 30); // 20-50
-        break;
-      default:
-        baseValue = 100 + Math.floor(Math.random() * 100);
-    }
+  // Valores base por categoría
+  const baseValues = {
+    controlados: { min: 800, range: 400 },
+    detenidos: { min: 150, range: 100 },
+    incautaciones: { min: 300, range: 200 },
+    afectados: { min: 200, range: 150 },
+    abatidos: { min: 20, range: 30 }
+  };
 
-    // Añadir algo de tendencia
-    const trend = Math.floor(index * 2);
+  const baseConfig = baseValues[category] || { min: 100, range: 100 };
+  let lastValue = baseConfig.min + Math.floor(Math.random() * baseConfig.range);
+
+  return months.map((month, index) => {
+    // Añadir variación aleatoria pero con cierta tendencia
+    const variation = Math.floor(Math.random() * 20) - 10; // -10 a +10
+    const trend = index * 2; // Tendencia creciente suave
+    
+    // Asegurar que el valor no sea negativo
+    const value = Math.max(0, lastValue + variation + trend);
+    lastValue = value;
+
     return {
       month,
-      value: baseValue + trend
+      value: Math.round(value)
     };
   });
-
-  return data;
 };
 
 // Función principal para obtener estadísticas de seguridad por categoría
 export const getSecurityStats = (category) => {
+  // Generar datos una sola vez para mantener consistencia
+  const provinceData = generateProvinceData(category);
+  const trendData = generateTrendData(category);
+  const total = Object.values(provinceData).reduce((sum, value) => sum + value, 0);
+  const lastMonth = trendData[11]?.value || 0;
+
   return {
-    provinceData: generateProvinceData(category),
-    trendData: generateTrendData(category),
-    total: Object.values(generateProvinceData(category)).reduce((sum, value) => sum + value, 0),
-    lastMonth: generateTrendData(category)[11].value // Datos recientes
+    provinceData,
+    trendData,
+    total,
+    lastMonth,
+    lastUpdated: new Date().toISOString()
   };
 };
 

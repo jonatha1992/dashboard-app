@@ -1,6 +1,6 @@
 // Componente principal del dashboard
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDashboard } from '../../contexts/DashboardContext';
 import MapComponent from '../map/MapComponent';
 import StatCard from './StatCard';
 import DataTable from './DataTable';
@@ -16,162 +16,40 @@ import SecuritySection from '../security/SecuritySection';
 import { getAllSecurityStats } from '../../services/securityStatsService';
 import logo from '../../assets/react.svg';
 
+
 export default function Dashboard() {
     const { logout } = useAuth();
-    const [data, setData] = useState([]);
+    const {
+        data,
+        setData,
+        loading,
+        error,
+        activeCategory,
+        setActiveCategory,
+        filters,
+        setFilters,
+        filteredData,
+        filteredCategorizedData
+    } = useDashboard();
 
-    // Función para obtener las fechas del mes actual
-    const getCurrentMonthDates = () => {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
+    // Para mantener compatibilidad con el resto del componente
+    const activeNav = activeCategory;
+    const setActiveNav = setActiveCategory;
 
-        const fromDate = new Date(year, month, 1).toISOString().split('T')[0];
-        const toDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
-
-        return { fromDate, toDate };
+    // Estadísticas rápidas para la vista general
+    const filteredStats = {
+        total: filteredData.length,
+        provinceCounts: filteredData.reduce((acc, item) => {
+            if (item.PROVINCIA) acc[item.PROVINCIA] = (acc[item.PROVINCIA] || 0) + 1;
+            return acc;
+        }, {}),
+        interventionCounts: filteredData.reduce((acc, item) => {
+            if (item.TIPO_INTERVENCION) acc[item.TIPO_INTERVENCION] = (acc[item.TIPO_INTERVENCION] || 0) + 1;
+            return acc;
+        }, {})
     };
 
-    const currentMonthDates = getCurrentMonthDates();
-
-    const [categorizedData, setCategorizedData] = useState({});
-    const [securityStats, setSecurityStats] = useState({});
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [activeNav, setActiveNav] = useState('general');
-
-    // Filter states - inicializar con el mes actual
-    const [filters, setFilters] = useState({
-        fromDate: currentMonthDates.fromDate,
-        toDate: currentMonthDates.toDate,
-        province: ''
-    });
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const result = await loadData();
-                setData(result);
-
-                // Categorizar datos
-                const categorized = getCategorizedData(result);
-                setCategorizedData(categorized);
-                // Cargar estadísticas de seguridad
-                const securityStatistics = getAllSecurityStats();
-                setSecurityStats(securityStatistics);
-
-                setLoading(false);
-            } catch (err) {
-                console.error('Error al cargar los datos:', err);
-                setError('Error al cargar los datos. Por favor, inténtelo de nuevo más tarde.');
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
-
-    // Filter handling function
-    const handleFiltersChange = useCallback((newFilters) => {
-        const currentMonth = getCurrentMonthDates();
-        setFilters({
-            fromDate: newFilters.fromDate || currentMonth.fromDate,
-            toDate: newFilters.toDate || currentMonth.toDate,
-            province: newFilters.province || ''
-        });
-    }, []);
-
-    // Function to parse date from various formats
-    const parseDate = (dateString) => {
-        if (!dateString) return null;
-
-        // Handle different date formats
-        const formats = [
-            /^\d{2}\/\d{2}\/\d{4}$/, // DD/MM/YYYY
-            /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
-            /^\d{1,2}\/\d{1,2}\/\d{4}$/, // D/M/YYYY or DD/M/YYYY or D/MM/YYYY
-        ];
-
-        try {
-            // Try to parse DD/MM/YYYY format first
-            if (formats[0].test(dateString) || formats[2].test(dateString)) {
-                const [day, month, yearPart] = dateString.split('/');
-                return new Date(parseInt(yearPart), parseInt(month) - 1, parseInt(day));
-            }
-            // Try YYYY-MM-DD format
-            else if (formats[1].test(dateString)) {
-                return new Date(dateString);
-            }
-            // Fallback to standard parsing
-            else {
-                const parsed = new Date(dateString);
-                return isNaN(parsed) ? null : parsed;
-            }
-        } catch {
-            return null;
-        }
-    };
-
-    // Filtered data using useMemo for performance
-    const filteredData = useMemo(() => {
-        let filtered = [...data];
-
-        // Apply date filters
-        if (filters.fromDate || filters.toDate) {
-            filtered = filtered.filter(item => {
-                const itemDate = parseDate(item.FECHA);
-
-                // Si no hay fecha válida, incluir el registro (no filtrar)
-                if (!itemDate) return true;
-
-                let withinRange = true;
-
-                if (filters.fromDate) {
-                    const fromDate = new Date(filters.fromDate);
-                    withinRange = withinRange && itemDate >= fromDate;
-                }
-
-                if (filters.toDate) {
-                    const toDate = new Date(filters.toDate);
-                    // Set time to end of day for inclusive comparison
-                    toDate.setHours(23, 59, 59, 999);
-                    withinRange = withinRange && itemDate <= toDate;
-                }
-
-                return withinRange;
-            });
-        }
-
-        // Apply province filter
-        if (filters.province) {
-            filtered = filtered.filter(item =>
-                item.PROVINCIA && item.PROVINCIA.toLowerCase().includes(filters.province.toLowerCase())
-            );
-        }
-
-        return filtered;
-    }, [data, filters]);
-
-    // Calculate statistics for filtered data
-    const filteredStats = useMemo(() => {
-        return getStatistics(filteredData);
-    }, [filteredData]);
-
-    // Calculate categorized data for filtered data to update sidebar counters
-    const filteredCategorizedData = useMemo(() => {
-        return getCategorizedData(filteredData);
-    }, [filteredData]);
-
-    const handleDataUpload = useCallback((newData) => {
-        setData(newData);
-
-        // Actualizar estadísticas de seguridad
-        const securityStatistics = getAllSecurityStats();
-        setSecurityStats(securityStatistics);
-
-    }, []);
-
+    // Manejar carga y error
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -217,17 +95,7 @@ export default function Dashboard() {
                         <span className="px-1 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">{filteredData.length}</span>
                     </span>
                 </button>
-                <button
-                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'controles' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('controles')}
-                >
-                    <span className="flex items-center justify-between w-full">
-                        <span>🔍 Controles</span>
-                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'controles' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {(filteredCategorizedData.controles || []).length}
-                        </span>
-                    </span>
-                </button>
+                {/* Controles / Controlados (único botón más abajo) */}
                 <button
                     className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'detenidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('detenidos')}
@@ -327,43 +195,38 @@ export default function Dashboard() {
                             </div>
 
                             <div className="flex items-center space-x-4">
-                                <FilterPanel onFiltersChange={handleFiltersChange} />
-                                <ExcelUpload onDataUpload={handleDataUpload} />
+                                <FilterPanel />
+                                <ExcelUpload />
                             </div>
                         </div>
                     </div>
                 </header>
 
-                {/* Stats bar - with top margin for fixed header */}
-                <div className="px-4 py-3 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50" style={{ marginTop: '80px' }}>
-                    <div className="flex flex-wrap items-center justify-around mx-auto max-w-7xl">
-                        <div className="flex items-center px-4 py-1">
-                            <div className="flex items-center justify-center w-8 h-8 mr-3 text-blue-600 bg-blue-100 rounded-full">📊</div>
-                            <div>
-                                <p className="text-xs text-gray-600">Registros</p>
-                                <p className="font-semibold text-gray-800">{filteredStats.total || 0}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center px-4 py-1">
-                            <div className="flex items-center justify-center w-8 h-8 mr-3 text-green-600 bg-green-100 rounded-full">🗺️</div>
-                            <div>
-                                <p className="text-xs text-gray-600">Provincias</p>
-                                <p className="font-semibold text-gray-800">{Object.keys(filteredStats.provinceCounts || {}).length}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center px-4 py-1">
-                            <div className="flex items-center justify-center w-8 h-8 mr-3 text-purple-600 bg-purple-100 rounded-full">🛡️</div>
-                            <div>
-                                <p className="text-xs text-gray-600">Tipos de Intervención</p>
-                                <p className="font-semibold text-gray-800">{Object.keys(filteredStats.interventionCounts || {}).length}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <main className="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {activeNav === 'general' && (
                         <>
+                            {/* Tarjetas de estadísticas */}
+                            <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-3">
+                                <StatCard
+                                    title="Total de Registros"
+                                    value={filteredData.length}
+                                    icon="📊"
+                                    color="bg-blue-500"
+                                />
+                                <StatCard
+                                    title="Provincias"
+                                    value={Object.keys(filteredStats.provinceCounts || {}).length}
+                                    icon="🗺️"
+                                    color="bg-green-500"
+                                />
+                                <StatCard
+                                    title="Tipos de Intervención"
+                                    value={Object.keys(filteredStats.interventionCounts || {}).length}
+                                    icon="🛡️"
+                                    color="bg-purple-500"
+                                />
+                            </div>
 
                             {/* Mapa */}
                             <div className="mb-8">
@@ -381,91 +244,62 @@ export default function Dashboard() {
                         </>
                     )}
 
-                    {activeNav === 'detenidos' && (
-                        <CategoryCharts
-                            data={filteredCategorizedData.detenidos || []}
-                            categoryName="Detenidos"
-                            title="Detenidos"
-                            icon="👮‍♂️"
-                            color="bg-red-500"
-                        />
-                    )}
+                    {['detenidos', 'controlados', 'afectados', 'procedimientos', 'abatidos', 'trata', 'incautaciones'].map(catKey => (
+                        activeNav === catKey && (() => {
+                            const catData = filteredCategorizedData[catKey] || [];
+                            const title = catKey.charAt(0).toUpperCase() + catKey.slice(1);
+                            const icon = (() => {
+                                switch (catKey) {
+                                    case 'detenidos': return '👮‍♂️';
+                                    case 'controlados': return '🔍';
+                                    case 'afectados': return '🚨';
+                                    case 'procedimientos': return '📋';
+                                    case 'abatidos': return '⚠️';
+                                    case 'trata': return '🚫';
+                                    case 'incautaciones': return '📦';
+                                    default: return '📊';
+                                }
+                            })();
+                            const color = (() => {
+                                switch (catKey) {
+                                    case 'detenidos': return 'bg-red-500';
+                                    case 'controlados': return 'bg-blue-500';
+                                    case 'afectados': return 'bg-orange-500';
+                                    case 'procedimientos': return 'bg-indigo-500';
+                                    case 'abatidos': return 'bg-gray-600';
+                                    case 'trata': return 'bg-pink-500';
+                                    case 'incautaciones': return 'bg-yellow-500';
+                                    default: return 'bg-blue-500';
+                                }
+                            })();
 
-                    {activeNav === 'controlados' && (
-                        <CategoryCharts
-                            data={filteredCategorizedData.controlados || []}
-                            categoryName="Controlados"
-                            title="Controlados"
-                            icon="🔍"
-                            color="bg-blue-500"
-                        />
-                    )}
+                            if (!catData || catData.length === 0) {
+                                return (
+                                    <div key={catKey} className="text-center py-12">
+                                        <div className="text-gray-400 text-6xl mb-4">{icon}</div>
+                                        <h3 className="text-xl text-gray-600 mb-2">No hay datos disponibles</h3>
+                                        <p className="text-gray-500">No se encontraron registros para {title.toLowerCase()}</p>
+                                    </div>
+                                );
+                            }
 
-                    {activeNav === 'afectados' && (
-                        <CategoryCharts
-                            data={filteredCategorizedData.afectados || []}
-                            categoryName="Afectados"
-                            title="Afectados"
-                            icon="🚨"
-                            color="bg-orange-500"
-                        />
-                    )}
+                            return (
+                                <div key={catKey}>
+                                    <CategoryCharts
+                                        data={catData}
+                                        categoryName={title}
+                                        title={title}
+                                        icon={icon}
+                                        color={color}
+                                        hideEmpty={true}
+                                    />
+                                    <SecuritySection category={catKey} hideEmpty={true} />
+                                </div>
+                            );
+                        })()
+                    ))}
 
-                    {activeNav === 'procedimientos' && (
-                        <CategoryCharts
-                            data={filteredCategorizedData.procedimientos || []}
-                            categoryName="Procedimientos"
-                            title="Procedimientos"
-                            icon="📋"
-                            color="bg-indigo-500"
-                        />
-                    )}
-
-                    {activeNav === 'abatidos' && (
-                        <CategoryCharts
-                            data={filteredCategorizedData.abatidos || []}
-                            categoryName="Abatidos"
-                            title="Abatidos"
-                            icon="⚠️"
-                            color="bg-gray-600"
-                        />
-                    )}
-
-                    {activeNav === 'trata' && (
-                        <CategoryCharts
-                            data={filteredCategorizedData.trata || []}
-                            categoryName="Trata"
-                            title="Trata de Personas"
-                            icon="🚫"
-                            color="bg-pink-500"
-                        />
-                    )}
-                    {/* Aquí puedes agregar el contenido de las otras secciones */}
-                    {activeNav === 'controles' && (
-                        <SecuritySection category="controlados" />
-                    )}
-                    {activeNav === 'detenidos' && (
-                        <SecuritySection category="detenidos" />
-                    )}
-
-                    {activeNav === 'incautaciones' && (
-                        <>
-                            <CategoryCharts
-                                data={filteredCategorizedData.incautaciones || []}
-                                categoryName="Incautaciones"
-                                title="Incautaciones"
-                                icon="📦"
-                                color="bg-yellow-500"
-                            />
-                            <SecuritySection category="incautaciones" />
-                        </>
-                    )}
-                    {activeNav === 'afectados' && (
-                        <SecuritySection category="afectados" />
-                    )}
-                    {activeNav === 'abatidos' && (
-                        <SecuritySection category="abatidos" />
-                    )}
+                    {/* Las secciones por categoría se manejan arriba con el map unificado */}
                 </main>
             </div>
         </div>

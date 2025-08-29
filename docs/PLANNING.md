@@ -1,4 +1,3 @@
-```markdown
 # Plan de Desarrollo del Proyecto
 
 Este documento define las fases y los hitos para el desarrollo del dashboard de análisis de operativos.
@@ -11,29 +10,38 @@ Este documento define las fases y los hitos para el desarrollo del dashboard de 
 -   [x] **Configuración Inicial del Proyecto**: Inicializar un proyecto React con Vite y configurar las herramientas básicas (ESLint, Tailwind CSS).
 -   [x] **Documentación Inicial**: Crear `README.md` y la estructura de la carpeta `docs`.
 
-## Fase 2: Desarrollo del Dashboard - Componentes Principales
+## Fase 2: Desarrollo del Dashboard - Componentes Principales (En Progreso)
 
--   [ ] **Componente de Mapa Interactivo**:
-    -   Mostrar los operativos como marcadores en el mapa usando las coordenadas de `GEOG._PROCEDIMIENTO.json`.
-    -   Al hacer clic en un marcador, mostrar información básica del operativo (fecha, provincia, descripción).
--   [ ] **Componente de Tabla de Datos**:
-    -   Mostrar una tabla con la lista de todos los operativos.
-    -   Incluir columnas clave como `ID_OPERATIVO`, `FECHA`, `PROVINCIA`, `DESCRIPCION`.
-    -   Implementar paginación y ordenamiento básico.
--   [ ] **Componente de Tarjetas de Estadísticas (StatCard)**:
-    -   Crear tarjetas que muestren métricas clave:
-        -   Total de Operativos.
-        -   Total de Detenidos.
-        -   Total de Incautaciones (en valor o cantidad).
--   [ ] **Servicio de Datos (`dataService.js`)**:
-    -   Crear funciones para cargar y combinar los datos de los diferentes archivos JSON.
-    -   Centralizar la lógica de acceso a datos para que los componentes sean más limpios.
+- [x] **Componente de Tabla de Datos**
+  - [x] Mostrar lista de operativos
+  - [x] Columnas: ID_OPERATIVO, FECHA, PROVINCIA, DESCRIPCION
+  - [x] Búsqueda y filtrado
+  - [x] Paginación
+
+- [x] **Panel de Filtros**
+  - [x] Búsqueda por texto
+  - [ ] Filtro por fechas
+  - [ ] Filtro por provincia
+  - [ ] Filtro por tipo de delito
+
+- [x] **Estadísticas**
+  - [x] Tarjetas con métricas
+  - [ ] Actualización con filtros
+
+- [ ] **Mapa Interactivo**
+  - [ ] Mostrar marcadores
+  - [ ] Interacción
+  - [ ] Sincronización con filtros
+
+- [x] **Servicios**
+  - [x] dataService.js creado
+  - [ ] Carga completa de datos
+  - [ ] Manejo de errores
 
 ## Fase 3: Desarrollo de Componentes de Análisis Detallado
 
 -   [ ] **Gráficos por Categoría**:
     -   Gráfico de barras/torta mostrando el número de operativos por `PROVINCIA`.
-    -   Gráfico de barras/torta mostrando la distribución de `DELITO_IMPUTADO` desde `DETENIDOS_Y_APREHENDIDOS.json`.
 -   [ ] **Gráfico de Tendencias**:
     -   Gráfico de líneas que muestre la cantidad de operativos a lo largo del tiempo (por mes/año).
 -   [ ] **Vista de Detalle del Operativo**:

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useDashboard } from '../../contexts/DashboardContext';
 
 const ARGENTINE_PROVINCES = [
     'Buenos Aires', 'Catamarca', 'Chaco', 'Chubut', 'Ciudad Autónoma de Buenos Aires',
@@ -13,71 +14,34 @@ const getCurrentMonthDates = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
-
     const fromDate = new Date(year, month, 1).toISOString().split('T')[0];
     const toDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
 
     return { fromDate, toDate };
 };
 
-export default function FilterPanel({ onFiltersChange }) {
+export default function FilterPanel() {
+    const { filters, setFilters } = useDashboard();
     const [isOpen, setIsOpen] = useState(false);
-    const currentMonthDates = getCurrentMonthDates();
-    const [fromDate, setFromDate] = useState(currentMonthDates.fromDate);
-    const [toDate, setToDate] = useState(currentMonthDates.toDate);
-    const [selectedProvince, setSelectedProvince] = useState('');
-    const [hasActiveFilters, setHasActiveFilters] = useState(true); // Inicializar como true porque tenemos fechas por defecto
-
-    // Inicializar filtros con las fechas del mes actual
-    useEffect(() => {
-        onFiltersChange({
-            fromDate: currentMonthDates.fromDate,
-            toDate: currentMonthDates.toDate,
-            province: ''
-        });
-    }, [onFiltersChange, currentMonthDates.fromDate, currentMonthDates.toDate]);
+    const hasActiveFilters = Boolean(filters.fromDate || filters.toDate || filters.province);
 
     const handleFromDateChange = (e) => {
-        const newFromDate = e.target.value;
-        setFromDate(newFromDate);
-        updateFilters(newFromDate, toDate, selectedProvince);
+        setFilters({ ...filters, fromDate: e.target.value });
     };
-
     const handleToDateChange = (e) => {
-        const newToDate = e.target.value;
-        setToDate(newToDate);
-        updateFilters(fromDate, newToDate, selectedProvince);
+        setFilters({ ...filters, toDate: e.target.value });
     };
-
     const handleProvinceChange = (e) => {
-        const newProvince = e.target.value;
-        setSelectedProvince(newProvince);
-        updateFilters(fromDate, toDate, newProvince);
+        setFilters({ ...filters, province: e.target.value });
     };
-
-    const updateFilters = (from, to, province) => {
-        const hasFilters = from || to || province;
-        setHasActiveFilters(hasFilters);
-        onFiltersChange({
-            fromDate: from,
-            toDate: to,
-            province: province
-        });
-    };
-
     const clearAllFilters = () => {
         const currentMonth = getCurrentMonthDates();
-        setFromDate(currentMonth.fromDate);
-        setToDate(currentMonth.toDate);
-        setSelectedProvince('');
-        setHasActiveFilters(true); // Mantener activo porque tenemos las fechas del mes actual
-        onFiltersChange({
+        setFilters({
             fromDate: currentMonth.fromDate,
             toDate: currentMonth.toDate,
             province: ''
         });
     };
-
     const toggleFilterPanel = () => {
         setIsOpen(!isOpen);
     };
@@ -105,7 +69,7 @@ export default function FilterPanel({ onFiltersChange }) {
                         </label>
                         <select
                             id="province"
-                            value={selectedProvince}
+                            value={filters.province || ''}
                             onChange={handleProvinceChange}
                             className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         >
@@ -126,7 +90,7 @@ export default function FilterPanel({ onFiltersChange }) {
                             <input
                                 id="fromDate"
                                 type="date"
-                                value={fromDate}
+                                value={filters.fromDate || ''}
                                 onChange={handleFromDateChange}
                                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                             />
@@ -139,7 +103,7 @@ export default function FilterPanel({ onFiltersChange }) {
                             <input
                                 id="toDate"
                                 type="date"
-                                value={toDate}
+                                value={filters.toDate || ''}
                                 onChange={handleToDateChange}
                                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                             />
