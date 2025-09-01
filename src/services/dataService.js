@@ -1,119 +1,9 @@
 // Servicio para cargar y procesar los datos del archivo Excel
 import * as XLSX from 'xlsx';
 
-// Datos de ejemplo en caso de que no haya datos disponibles
-const getSampleData = () => [
-    {
-        FECHA: '15/01/2023',
-        HORA: '14:30',
-        LATITUD: -34.6118,
-        LONGITUD: -58.3960,
-        PROVINCIA: 'Buenos Aires',
-        DEPARTAMENTO_O_PARTIDO: 'La Plata',
-        TIPO_INTERVENCION: 'Detención por robo',
-        DESCRIPCION: 'Detención de persona por robo en vía pública',
-        ID_OPERATIVO: 'OP-001'
-    },
-    {
-        FECHA: '20/01/2023',
-        HORA: '09:15',
-        LATITUD: -34.5997,
-        LONGITUD: -58.3731,
-        PROVINCIA: 'Buenos Aires',
-        DEPARTAMENTO_O_PARTIDO: 'Vicente López',
-        TIPO_INTERVENCION: 'Control vehicular',
-        DESCRIPCION: 'Control de documentación y estado del vehículo',
-        ID_OPERATIVO: 'OP-002'
-    },
-    {
-        FECHA: '01/02/2023',
-        HORA: '22:45',
-        LATITUD: -31.4201,
-        LONGITUD: -64.1888,
-        PROVINCIA: 'Córdoba',
-        DEPARTAMENTO_O_PARTIDO: 'Capital',
-        TIPO_INTERVENCION: 'Incautación de drogas',
-        DESCRIPCION: 'Incautación de sustancias estupefacientes',
-        ID_OPERATIVO: 'OP-003'
-    },
-    {
-        FECHA: '10/02/2023',
-        HORA: '16:20',
-        LATITUD: -32.8895,
-        LONGITUD: -68.8458,
-        PROVINCIA: 'Mendoza',
-        DEPARTAMENTO_O_PARTIDO: 'Capital',
-        TIPO_INTERVENCION: 'Procedimiento por trata',
-        DESCRIPCION: 'Operativo contra trata de personas',
-        ID_OPERATIVO: 'OP-004'
-    },
-    {
-        FECHA: '15/02/2023',
-        HORA: '11:30',
-        LATITUD: -24.7821,
-        LONGITUD: -65.4232,
-        PROVINCIA: 'Salta',
-        DEPARTAMENTO_O_PARTIDO: 'Capital',
-        TIPO_INTERVENCION: 'Enfrentamiento armado',
-        DESCRIPCION: 'Enfrentamiento con delincuentes, un abatido',
-        ID_OPERATIVO: 'OP-005'
-    },
-    {
-        FECHA: '01/03/2023',
-        HORA: '19:45',
-        LATITUD: -34.6037,
-        LONGITUD: -58.3816,
-        PROVINCIA: 'Buenos Aires',
-        DEPARTAMENTO_O_PARTIDO: 'Buenos Aires',
-        TIPO_INTERVENCION: 'Detención por hurto',
-        DESCRIPCION: 'Detención in fraganti por hurto',
-        ID_OPERATIVO: 'OP-006'
-    },
-    {
-        FECHA: '05/03/2023',
-        HORA: '08:15',
-        LATITUD: -27.3678,
-        LONGITUD: -55.8960,
-        PROVINCIA: 'Misiones',
-        DEPARTAMENTO_O_PARTIDO: 'Posadas',
-        TIPO_INTERVENCION: 'Control fronterizo',
-        DESCRIPCION: 'Control en puesto fronterizo',
-        ID_OPERATIVO: 'OP-007'
-    },
-    {
-        FECHA: '12/03/2023',
-        HORA: '15:30',
-        LATITUD: -34.6158,
-        LONGITUD: -58.5033,
-        PROVINCIA: 'Buenos Aires',
-        DEPARTAMENTO_O_PARTIDO: 'Tres de Febrero',
-        TIPO_INTERVENCION: 'Procedimiento judicial',
-        DESCRIPCION: 'Ejecución de orden judicial',
-        ID_OPERATIVO: 'OP-008'
-    },
-    {
-        FECHA: '18/03/2023',
-        HORA: '20:00',
-        LATITUD: -38.0023,
-        LONGITUD: -57.5575,
-        PROVINCIA: 'Buenos Aires',
-        DEPARTAMENTO_O_PARTIDO: 'General Pueyrredón',
-        TIPO_INTERVENCION: 'Víctima de violencia',
-        DESCRIPCION: 'Atención a víctima de violencia doméstica',
-        ID_OPERATIVO: 'OP-009'
-    },
-    {
-        FECHA: '25/03/2023',
-        HORA: '13:45',
-        LATITUD: -26.8241,
-        LONGITUD: -65.2226,
-        PROVINCIA: 'Tucumán',
-        DEPARTAMENTO_O_PARTIDO: 'Capital',
-        TIPO_INTERVENCION: 'Incautación de armas',
-        DESCRIPCION: 'Secuestro de armas de fuego',
-        ID_OPERATIVO: 'OP-010'
-    }
-];
+// NOTE: This module intentionally does NOT provide sample/demo data.
+// If no real data is available, `loadData` will return an empty processed array
+// so the UI can render appropriate "no data" states without showing fabricated results.
 
 // Procesamiento de datos
 export const loadData = async () => {
@@ -149,7 +39,7 @@ export const loadData = async () => {
                     };
 
                     reader.onerror = (error) => {
-                        console.error('Error al leer el archivo:', error);
+                        console.error('Error al leer el archivo (FileReader):', error);
                         reject(error);
                     };
 
@@ -167,39 +57,92 @@ export const loadData = async () => {
                 const response = await fetch('/data/bd.json');
                 const jsonData = await response.json();
 
-                // Si el JSON está vacío o no hay datos, usar datos de ejemplo
+                // Si el JSON está vacío o no hay datos, devolver arreglo vacío procesado
                 if (!jsonData || jsonData.length === 0) {
-                    console.log('Archivo JSON vacío, usando datos de ejemplo');
-                    return processJsonData(getSampleData());
+                    console.warn('Archivo JSON vacío: no hay datos reales disponibles');
+                    return processJsonData([]);
                 }
 
-                // Procesar los datos
+                // Procesar los datos reales
                 return processJsonData(jsonData);
             } catch (jsonError) {
-                console.log('No se pudo cargar el archivo JSON, usando datos de ejemplo', jsonError);
-                // Si no se puede cargar ningún archivo, usar datos de ejemplo
-                return processJsonData(getSampleData());
+                console.warn('No se pudo cargar el archivo JSON:', jsonError);
+                // Si no se puede cargar ningún archivo, devolver arreglo vacío procesado
+                return processJsonData([]);
             }
         }
     } catch (error) {
         console.error('Error al cargar los datos:', error);
-        throw error;
+        // Devolver arreglo vacío procesado para evitar inyectar datos de prueba
+        return processJsonData([]);
     }
 };
 
 // Función para procesar los datos JSON
 const processJsonData = (jsonData) => {
+    // Normalizar nombres de provincia: crear un nombre para mostrar (Title Case)
+    // y una clave (sin tildes, minúscula, espacios simples) para comparaciones.
+    const removeDiacritics = (str) => {
+        try {
+            return String(str).normalize('NFD').replace(/\p{M}/gu, '');
+        } catch {
+            // Fallback si el entorno no soporta \p{M}
+            return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+    };
+
+    const toDisplayName = (prov) => {
+        if (!prov && prov !== 0) return '';
+        const s = String(prov).trim().replace(/\s+/g, ' ');
+        return s.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    };
+
+    const toKey = (prov) => {
+        if (!prov && prov !== 0) return '';
+        let s = String(prov).trim().replace(/\s+/g, ' ');
+        s = removeDiacritics(s).toLowerCase();
+        // Mapear abreviaturas y variantes comunes a una clave canónica
+        if (s === 'caba' || s.includes('ciudad autonoma') || s.includes('ciudad autonoma de buenos aires') || s.includes('ciudad autonoma buenos aires')) {
+            return 'ciudad autonoma de buenos aires';
+        }
+        return s;
+    };
+
     return jsonData.map(item => ({
         ...item,
         // Asegurarse de que las coordenadas sean números
         LATITUD: parseFloat(item.LATITUD || item['Latitud Decimal'] || 0),
         LONGITUD: parseFloat(item.LONGITUD || 0),
         FECHA: item.FECHA || '',
+        // FECHA_ISO: normalizamos la fecha a yyyy-mm-dd cuando sea posible
+        FECHA_ISO: (function () {
+            const raw = item.FECHA || '';
+            if (!raw) return '';
+            // dd/mm/yyyy
+            const dmy = String(raw).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (dmy) {
+                const dd = dmy[1].padStart(2, '0');
+                const mm = dmy[2].padStart(2, '0');
+                const yyyy = dmy[3];
+                return `${yyyy}-${mm}-${dd}`;
+            }
+            // ISO-like or other parseable formats
+            const parsed = new Date(raw);
+            if (!isNaN(parsed.getTime())) {
+                const y = parsed.getFullYear();
+                const m = String(parsed.getMonth() + 1).padStart(2, '0');
+                const d = String(parsed.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            return '';
+        })(),
         HORA: item.HORA || '',
         DESCRIPCION: item.DESCRIPCIÓN || '',
         TIPO_INTERVENCION: item.TIPO_INTERVENCION || '',
         ID_OPERATIVO: item.ID_OPERATIVO || '',
-        PROVINCIA: item.PROVINCIA || '',
+        PROVINCIA: toDisplayName(item.PROVINCIA || ''),
+        // Clave normalizada sin tildes para comparaciones robustas
+        PROVINCIA_KEY: toKey(item.PROVINCIA || ''),
         DEPARTAMENTO_O_PARTIDO: item['DEPARTAMENTO O PARTIDO'] || '',
     }));
 };
@@ -221,7 +164,6 @@ export const getStatistics = (data) => {
         acc[province] = (acc[province] || 0) + 1;
         return acc;
     }, {});
-
     return {
         total: data.length,
         interventionCounts,
@@ -333,25 +275,27 @@ export const getCategorizedData = (data) => {
 export const getChartData = (data, category) => {
     if (!data || data.length === 0) return null;
 
-    // Datos por mes
-    const monthlyData = data.reduce((acc, item) => {
-        // Skip items with invalid dates (like "-") for monthly charts
-        if (!item.FECHA || item.FECHA === '-' || item.FECHA.trim() === '') {
-            return acc;
-        }
+    // Datos por mes: usamos FECHA_ISO para evitar parseos inconsistentes
+    const monthlyMap = data.reduce((acc, item) => {
+        const iso = item.FECHA_ISO || item.FECHA || '';
+        if (!iso) return acc;
+        // try to parse ISO or other parseable formats
+        const date = new Date(iso);
+        if (isNaN(date.getTime())) return acc;
+        const year = date.getFullYear();
+        const monthIndex = date.getMonth();
+        const key = `${year}-${String(monthIndex + 1).padStart(2, '0')}`; // e.g. 2025-01
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+    }, {});
 
-        try {
-            const date = new Date(item.FECHA);
-            // Check if date is valid
-            if (isNaN(date.getTime())) {
-                return acc;
-            }
-            const month = date.toLocaleDateString('es-ES', { month: 'long' });
-            acc[month] = (acc[month] || 0) + 1;
-        } catch (error) {
-            // Skip invalid dates
-            return acc;
-        }
+    // Convert monthlyMap into labels in locale order
+    const monthlyKeys = Object.keys(monthlyMap).sort();
+    const monthlyData = monthlyKeys.reduce((acc, key) => {
+        const [y, m] = key.split('-');
+        const date = new Date(Number(y), Number(m) - 1, 1);
+        const label = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        acc[label] = monthlyMap[key];
         return acc;
     }, {});
 
@@ -368,6 +312,30 @@ export const getChartData = (data, category) => {
         acc[department] = (acc[department] || 0) + 1;
         return acc;
     }, {});
+
+    // Prepare top-10 department labels/values and a color palette so each department
+    // is shown with a distinct color in charts (pie / bar)
+    const departmentLabels = Object.keys(departmentData).slice(0, 10); // Top 10 departments
+    const departmentValues = Object.values(departmentData).slice(0, 10);
+
+    // Reusable color palette (background alpha 0.6) and derived border colors (alpha 1)
+    const palette = [
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 205, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(199, 199, 199, 0.6)',
+        'rgba(83, 102, 255, 0.6)',
+        'rgba(255, 99, 71, 0.6)',
+        'rgba(60, 179, 113, 0.6)'
+    ];
+
+    const borderPalette = palette.map(c => c.replace(/0\.6\)$/, '1)'));
+
+    const departmentBackgroundColors = departmentLabels.map((_, i) => palette[i % palette.length]);
+    const departmentBorderColors = departmentLabels.map((_, i) => borderPalette[i % borderPalette.length]);
 
     return {
         monthly: {
@@ -399,12 +367,12 @@ export const getChartData = (data, category) => {
             }]
         },
         byDepartment: {
-            labels: Object.keys(departmentData).slice(0, 10), // Top 10 departments
+            labels: departmentLabels,
             datasets: [{
                 label: `${category} por departamento`,
-                data: Object.values(departmentData).slice(0, 10),
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                data: departmentValues,
+                backgroundColor: departmentBackgroundColors,
+                borderColor: departmentBorderColors,
                 borderWidth: 2
             }]
         }

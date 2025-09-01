@@ -76,3 +76,11 @@ Sigue estos pasos para configurar y ejecutar el proyecto en un entorno de desarr
 -   Estadísticas detalladas sobre recursos, controles, incautaciones y personas detenidas.
 -   Filtros dinámicos para analizar datos por tipo de intervención, provincia, fecha, etc.
 -   Arquitectura flexible para incorporar nuevas métricas y visualizaciones en el futuro.
+
+---
+
+## Nota importante sobre datos de ejemplo
+
+Se ha eliminado cualquier carga automática de datos de ejemplo/demo en la aplicación. Si no existen archivos reales en `public/data/bd.json` o `public/data/bd.xlsx`, la aplicación mostrará estados "No hay datos disponibles" en los gráficos y tablas en lugar de generar información ficticia.
+
+Para proporcionar datos reales siga el flujo descrito en la sección "Procesamiento y Conversión" (ejecutar `convert_excel.py` y colocar los JSON resultantes en `public/data/`) antes de iniciar la aplicación.

@@ -6,28 +6,23 @@ import StatCard from './StatCard';
 import DataTable from './DataTable';
 
 import CategoryCharts from '../charts/CategoryCharts';
-import { loadData, getStatistics, getCategorizedData } from '../../services/dataService';
+// removed unused imports from dataService; Dashboard uses the context to access data
 
 import ExcelUpload from './ExcelUpload';
 
 import FilterPanel from './FilterPanel';
 
 import SecuritySection from '../security/SecuritySection';
-import { getAllSecurityStats } from '../../services/securityStatsService';
 import logo from '../../assets/react.svg';
 
 
 export default function Dashboard() {
     const { logout } = useAuth();
     const {
-        data,
-        setData,
         loading,
         error,
         activeCategory,
         setActiveCategory,
-        filters,
-        setFilters,
         filteredData,
         filteredCategorizedData
     } = useDashboard();
@@ -203,7 +198,7 @@ export default function Dashboard() {
                 </header>
 
 
-                <main className="px-4 py-6 mx-auto mt-16 max-w-7xl sm:px-6 lg:px-8">
+                <main className="px-4 py-6 mx-auto mt-4 max-w-7xl sm:px-6 lg:px-8">
                     {activeNav === 'general' && (
                         <>
                             {/* Tarjetas de estadísticas */}
@@ -285,6 +280,8 @@ export default function Dashboard() {
 
                             return (
                                 <div key={catKey}>
+                                    <SecuritySection category={catKey} hideEmpty={true} showProvinceChart={false} showSummaryCards={false} />
+                                    {/* Gráficos (sin tabla dentro de CategoryCharts para evitar duplicación) */}
                                     <CategoryCharts
                                         data={catData}
                                         categoryName={title}
@@ -292,8 +289,15 @@ export default function Dashboard() {
                                         icon={icon}
                                         color={color}
                                         hideEmpty={true}
+                                        showTable={false}
                                     />
-                                    <SecuritySection category={catKey} hideEmpty={true} />
+
+
+                                    {/* Tabla de registros para la categoría (única tabla abajo) */}
+                                    <div className="mt-8">
+                                        <h2 className="mb-4 text-lg font-semibold text-gray-800">Registros - {title}</h2>
+                                        <DataTable data={catData} />
+                                    </div>
                                 </div>
                             );
                         })()

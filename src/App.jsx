@@ -15,26 +15,26 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function AppContent() {
-  const { authenticated } = useAuth();
+  // const { authenticated } = useAuth(); // not needed here (routing handled in routes)
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route
+        {/* <Route
           path="/"
           element={
             authenticated ?
               <Navigate to="/dashboard" /> :
               <Navigate to="/login" />
           }
-        />
+        /> */}
         <Route path="/login" element={<Login />} />
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
+            // <ProtectedRoute>
+            <Dashboard />
+            // </ProtectedRoute>
           }
         />
       </Routes>

@@ -25,7 +25,7 @@ ChartJS.register(
     LineElement
 );
 
-const BaseChart = ({ type = 'bar', data, options, title, className = '' }) => {
+const BaseChart = ({ type = 'bar', data, options, title, className = '', caption = '' }) => {
     const defaultOptions = {
         responsive: true,
         maintainAspectRatio: false,
@@ -62,6 +62,10 @@ const BaseChart = ({ type = 'bar', data, options, title, className = '' }) => {
             <div style={{ height: '400px' }}>
                 {renderChart()}
             </div>
+            {/* Optional caption / label shown below the chart (e.g., "Mes / Semana / Día", "Provincia", "Departamento") */}
+            {caption && (
+                <div className="mt-3 text-sm text-center text-gray-600">{caption}</div>
+            )}
         </div>
     );
 };

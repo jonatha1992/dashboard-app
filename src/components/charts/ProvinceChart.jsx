@@ -18,7 +18,7 @@ ChartJS.register(
   Legend
 );
 
-const ProvinceChart = ({ data, title, color = '#3B82F6' }) => {
+const ProvinceChart = ({ data, title, color = '#3B82F6', colors = null }) => {
   const provinces = Object.keys(data);
   const values = Object.values(data);
 
@@ -28,8 +28,10 @@ const ProvinceChart = ({ data, title, color = '#3B82F6' }) => {
       {
         label: title,
         data: values,
-        backgroundColor: color,
-        borderColor: color,
+        // If an explicit colors array is provided, use it (must match labels length).
+        // Otherwise fall back to a single color string for all bars.
+        backgroundColor: Array.isArray(colors) && colors.length >= provinces.length ? colors : color,
+        borderColor: Array.isArray(colors) && colors.length >= provinces.length ? colors : color,
         borderWidth: 1,
         borderRadius: 4,
       },
@@ -53,7 +55,7 @@ const ProvinceChart = ({ data, title, color = '#3B82F6' }) => {
       },
       tooltip: {
         callbacks: {
-          label: function(context) {
+          label: function (context) {
             return `${context.dataset.label}: ${context.parsed.y}`;
           }
         }

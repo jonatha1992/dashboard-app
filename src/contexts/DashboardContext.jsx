@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { loadData, getCategorizedData } from '../services/dataService';
 
 const DashboardContext = createContext();
@@ -66,6 +67,7 @@ export const DashboardProvider = ({ children }) => {
           }));
         }
       } catch (err) {
+        console.error('Error loading data in DashboardContext:', err);
         setError('No se pudieron cargar los datos');
       } finally {
         setLoading(false);
@@ -106,8 +108,27 @@ export const DashboardProvider = ({ children }) => {
       return true;
     });
 
+    // Comparación robusta: si los items contienen PROVINCIA_KEY (sin tildes, lower)
+    // usar esa clave para comparar; si no, caer al método simple normalizado.
+    const makeKey = (s) => {
+      if (!s && s !== 0) return '';
+      try {
+        const str = String(s).trim().replace(/\s+/g, ' ');
+        // remover tildes
+        const normalized = str.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+        if (normalized === 'caba' || normalized.includes('ciudad autonoma')) return 'ciudad autonoma de buenos aires';
+        return normalized;
+      } catch {
+        return String(s).toLowerCase();
+      }
+    };
+
     if (filters.province) {
-      filtered = filtered.filter(item => item.PROVINCIA === filters.province);
+      const filterKey = makeKey(filters.province);
+      filtered = filtered.filter(item => {
+        if (item.PROVINCIA_KEY) return item.PROVINCIA_KEY === filterKey;
+        return makeKey(item.PROVINCIA) === filterKey;
+      });
     }
 
     return filtered;

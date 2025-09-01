@@ -102,8 +102,8 @@ const MapMarkers = memo(({ clusters }) => {
                         >
                             <Popup>
                                 <div className="max-w-xs">
-                                    <h3 className="font-bold text-sm mb-2">{point.DESCRIPCION || 'Sin descripción'}</h3>
-                                    <div className="text-xs space-y-1">
+                                    <h3 className="mb-2 text-sm font-bold">{point.DESCRIPCION || 'Sin descripción'}</h3>
+                                    <div className="space-y-1 text-xs">
                                         <p><span className="font-medium">Tipo:</span> {point.TIPO_INTERVENCION || 'No especificado'}</p>
                                         <p><span className="font-medium">Fecha:</span> {point.FECHA || 'No especificada'}</p>
                                         <p><span className="font-medium">Hora:</span> {point.HORA || 'No especificada'}</p>
@@ -130,18 +130,18 @@ const MapMarkers = memo(({ clusters }) => {
                         >
                             <Popup maxWidth={300}>
                                 <div className="max-w-sm">
-                                    <h3 className="font-bold text-sm mb-2">
+                                    <h3 className="mb-2 text-sm font-bold">
                                         {cluster.points.length} eventos en esta área
                                     </h3>
-                                    <div className="max-h-32 overflow-y-auto space-y-2">
+                                    <div className="space-y-2 overflow-y-auto max-h-32">
                                         {cluster.points.slice(0, 5).map((point, idx) => (
-                                            <div key={idx} className="text-xs border-b border-gray-200 pb-1">
+                                            <div key={idx} className="pb-1 text-xs border-b border-gray-200">
                                                 <p className="font-medium">{point.DESCRIPCION || 'Sin descripción'}</p>
                                                 <p className="text-gray-600">{point.TIPO_INTERVENCION || 'No especificado'} - {point.FECHA || 'Sin fecha'}</p>
                                             </div>
                                         ))}
                                         {cluster.points.length > 5 && (
-                                            <p className="text-xs text-gray-500 italic">
+                                            <p className="text-xs italic text-gray-500">
                                                 +{cluster.points.length - 5} eventos más...
                                             </p>
                                         )}
@@ -198,7 +198,7 @@ const MapComponent = memo(({ data }) => {
     };
 
     return (
-        <div className="w-full h-full relative z-10" style={{
+        <div className="relative z-10 w-full h-full" style={{
             /* Controlar z-index de Leaflet para que no se superponga al header */
         }}>
             <style dangerouslySetInnerHTML={{
