@@ -203,7 +203,7 @@ export default function Dashboard() {
                 </header>
 
 
-                <main className="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <main className="px-4 py-6 mx-auto mt-16 max-w-7xl sm:px-6 lg:px-8">
                     {activeNav === 'general' && (
                         <>
                             {/* Tarjetas de estadísticas */}
@@ -275,9 +275,9 @@ export default function Dashboard() {
 
                             if (!catData || catData.length === 0) {
                                 return (
-                                    <div key={catKey} className="text-center py-12">
-                                        <div className="text-gray-400 text-6xl mb-4">{icon}</div>
-                                        <h3 className="text-xl text-gray-600 mb-2">No hay datos disponibles</h3>
+                                    <div key={catKey} className="py-12 text-center">
+                                        <div className="mb-4 text-6xl text-gray-400">{icon}</div>
+                                        <h3 className="mb-2 text-xl text-gray-600">No hay datos disponibles</h3>
                                         <p className="text-gray-500">No se encontraron registros para {title.toLowerCase()}</p>
                                     </div>
                                 );
