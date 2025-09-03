@@ -17,7 +17,7 @@ import logo from '../../assets/react.svg';
 
 
 export default function Dashboard() {
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
     const {
         loading,
         error,
@@ -190,6 +190,19 @@ export default function Dashboard() {
                             </div>
 
                             <div className="flex items-center space-x-4">
+                                {/* User Info */}
+                                <div className="flex items-center px-3 py-2 bg-gray-100 rounded-md">
+                                    <div className="flex items-center justify-center w-6 h-6 mr-2 bg-blue-600 rounded-full">
+                                        <span className="text-xs text-white">
+                                            {user?.role === 'admin' ? '👑' : '👤'}
+                                        </span>
+                                    </div>
+                                    <div className="text-sm">
+                                        <div className="font-medium text-gray-700">{user?.username}</div>
+                                        <div className="text-xs text-gray-500 capitalize">{user?.role}</div>
+                                    </div>
+                                </div>
+                                
                                 <FilterPanel />
                                 <ExcelUpload />
                             </div>
@@ -280,7 +293,7 @@ export default function Dashboard() {
 
                             return (
                                 <div key={catKey}>
-                                    <SecuritySection category={catKey} hideEmpty={true} showProvinceChart={false} showSummaryCards={false} />
+                                    <SecuritySection category={catKey} showProvinceChart={false} />
                                     {/* Gráficos (sin tabla dentro de CategoryCharts para evitar duplicación) */}
                                     <CategoryCharts
                                         data={catData}
@@ -288,7 +301,6 @@ export default function Dashboard() {
                                         title={title}
                                         icon={icon}
                                         color={color}
-                                        hideEmpty={true}
                                         showTable={false}
                                     />
 

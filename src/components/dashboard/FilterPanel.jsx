@@ -21,9 +21,28 @@ const getCurrentMonthDates = () => {
 };
 
 export default function FilterPanel() {
-    const { filters, setFilters } = useDashboard();
+    const { filters, setFilters, data } = useDashboard();
     const [isOpen, setIsOpen] = useState(false);
     const hasActiveFilters = Boolean(filters.fromDate || filters.toDate || filters.province);
+
+    // Obtener rango de fechas de los datos
+    const getDataDateRange = () => {
+        if (!data || data.length === 0) return null;
+        
+        const dates = data
+            .filter(item => item.FECHA_ISO)
+            .map(item => new Date(item.FECHA_ISO))
+            .sort((a, b) => a - b);
+        
+        if (dates.length === 0) return null;
+        
+        return {
+            from: dates[0].toLocaleDateString('es-AR'),
+            to: dates[dates.length - 1].toLocaleDateString('es-AR')
+        };
+    };
+
+    const dateRange = getDataDateRange();
 
     const handleFromDateChange = (e) => {
         setFilters({ ...filters, fromDate: e.target.value });
@@ -81,6 +100,18 @@ export default function FilterPanel() {
                             ))}
                         </select>
                     </div>
+
+                    {/* Información de rango de fechas disponibles */}
+                    {dateRange && (
+                        <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                            <div className="text-xs font-medium text-blue-800 mb-1">
+                                📅 Datos disponibles:
+                            </div>
+                            <div className="text-xs text-blue-700">
+                                {dateRange.from} - {dateRange.to}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-2 mb-4">
                         <div>

@@ -6,8 +6,8 @@ import { getCategoryConfig } from '../../services/securityStatsService';
 import { useDashboard } from '../../contexts/DashboardContext';
 
 
-const SecuritySection = ({ category, hideEmpty = false, showProvinceChart = true, showSummaryCards = true }) => {
-  const { filteredCategorizedData, loading, error } = useDashboard();
+const SecuritySection = ({ category, showProvinceChart = true }) => {
+  const { filteredCategorizedData, loading, error, filters } = useDashboard();
   const data = filteredCategorizedData[category] || [];
   const config = getCategoryConfig(category);
 
@@ -23,21 +23,46 @@ const SecuritySection = ({ category, hideEmpty = false, showProvinceChart = true
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-12 h-12 border-b-2 border-blue-600 rounded-full animate-spin"></div>
-        <p className="ml-4 text-gray-600">Cargando estadísticas...</p>
+      <div className="p-8 text-center">
+        <div className="inline-block w-8 h-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+        <p className="mt-2 text-sm text-gray-600">Cargando {category}...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="py-20 text-center">
-        <p className="text-red-500">{error}</p>
+      <div className="p-8 text-center">
+        <p className="text-red-600">{error}</p>
       </div>
     );
   }
-  if (!hasData && hideEmpty) return null;
+
+  // Nunca ocultar completamente - siempre mostrar con mensaje apropiado
+  if (!hasData) {
+    const hasActiveFilters = filters.fromDate || filters.toDate || filters.province;
+    return (
+      <div className="p-8 text-center">
+        <div className="mb-4 text-4xl text-gray-400">📊</div>
+        <h3 className="mb-2 text-lg font-medium text-gray-600">
+          {hasActiveFilters ? 'Sin datos para el filtro aplicado' : 'Sin datos disponibles'}
+        </h3>
+        <p className="text-sm text-gray-500">
+          {hasActiveFilters 
+            ? `No se encontraron registros de ${category} para los filtros seleccionados`
+            : `Use "Importar Excel" para cargar datos de ${category}`
+          }
+        </p>
+        {hasActiveFilters && (
+          <div className="mt-3 text-xs text-gray-400">
+            📅 Filtros activos: 
+            {filters.province && ` Provincia: ${filters.province}`}
+            {(filters.fromDate || filters.toDate) && ` • Fechas: ${filters.fromDate} al ${filters.toDate}`}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="mt-16 space-y-6">

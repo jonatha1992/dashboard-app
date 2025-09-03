@@ -64,7 +64,7 @@ export default function DataTable({ data }) {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.PROVINCIA || '-'}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {item.LATITUD && item.LONGITUD ?
-                                        `${item.LATITUD.toFixed(6)}, ${item.LONGITUD.toFixed(6)}` : '-'}
+                                        `${Number(item.LATITUD).toFixed(6)}, ${Number(item.LONGITUD).toFixed(6)}` : '-'}
                                 </td>
                             </tr>
                         ))}

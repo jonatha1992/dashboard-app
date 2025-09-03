@@ -1,7 +1,11 @@
 import { useState, useRef } from 'react';
-import * as XLSX from 'xlsx';
+import { useDashboard } from '../../contexts/DashboardContext';
+import { useAuth } from '../../contexts/AuthContext';
+import apiService from '../../services/apiService';
 
-export default function ExcelUpload({ onDataUpload }) {
+export default function ExcelUpload() {
+    const { setData } = useDashboard();
+    const { user } = useAuth();
     const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState('');
     const fileInputRef = useRef(null);
@@ -22,85 +26,39 @@ export default function ExcelUpload({ onDataUpload }) {
             return;
         }
 
+        // Verificar permisos de usuario
+        if (!user || user.role !== 'admin') {
+            setMessage('Solo los administradores pueden subir archivos');
+            return;
+        }
+
         setUploading(true);
-        setMessage('');
+        setMessage('Subiendo archivo al servidor...');
 
         try {
-            const reader = new FileReader();
+            const result = await apiService.uploadData(file);
+            
+            // Mostrar estadísticas del resultado
+            const { stats } = result;
+            setMessage(`✅ Importación completada:
+📊 ${stats.totalAdded} registros nuevos
+⚠️ ${stats.duplicatesSkipped} duplicados omitidos
+📁 Total de registros en sistema: ${stats.totalRecords}
+📋 Hojas procesadas: ${stats.sheetsProcessed.length}`);
 
-            reader.onload = (e) => {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+            // Recargar datos actualizados desde el backend
+            const updatedData = await apiService.getData();
+            setData(updatedData);
 
-                    // Obtener la primera hoja
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-
-                    // Convertir a JSON
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-                    if (jsonData.length === 0) {
-                        setMessage('El archivo Excel está vacío o no contiene datos válidos');
-                        setUploading(false);
-                        return;
-                    }
-
-                    // Procesar los datos para que coincidan con el formato esperado
-                    const processedData = jsonData.map(item => ({
-                        ...item,
-                        LATITUD: parseFloat(item.LATITUD || item['Latitud Decimal'] || item.latitud || item.lat) || null,
-                        LONGITUD: parseFloat(item.LONGITUD || item.longitud || item.lng || item.lon) || null,
-                        FECHA: item.FECHA || item.fecha || '',
-                        HORA: item.HORA || item.hora || '',
-                        DESCRIPCION: item.DESCRIPCIÓN || item.DESCRIPCION || item.descripcion || '',
-                        TIPO_INTERVENCION: item.TIPO_INTERVENCION || item['TIPO INTERVENCION'] || item.tipo_intervencion || '',
-                        ID_OPERATIVO: item.ID_OPERATIVO || item.id_operativo || '',
-                        PROVINCIA: item.PROVINCIA || item.provincia || '',
-                        DEPARTAMENTO_O_PARTIDO: item['DEPARTAMENTO O PARTIDO'] || item.DEPARTAMENTO_O_PARTIDO || item.departamento || '',
-                    }));
-
-                    // Filtrar registros que tengan al menos coordenadas válidas
-                    const validData = processedData.filter(item =>
-                        item.LATITUD && item.LONGITUD &&
-                        !isNaN(item.LATITUD) && !isNaN(item.LONGITUD)
-                    );
-
-                    if (validData.length === 0) {
-                        setMessage('No se encontraron registros con coordenadas válidas en el archivo');
-                        setUploading(false);
-                        return;
-                    }
-
-                    setMessage(`✅ Archivo cargado exitosamente. ${validData.length} registros procesados.`);
-                    setUploading(false); // End loading state before uploading data
-
-                    // Upload the processed data
-                    onDataUpload(validData);
-
-                    // Limpiar el input file
-                    if (fileInputRef.current) {
-                        fileInputRef.current.value = '';
-                    }
-
-                } catch (error) {
-                    console.error('Error al procesar el archivo Excel:', error);
-                    setMessage('Error al procesar el archivo Excel. Verifique el formato del archivo.');
-                } finally {
-                    setUploading(false);
-                }
-            };
-
-            reader.onerror = () => {
-                setMessage('Error al leer el archivo');
-                setUploading(false);
-            };
-
-            reader.readAsArrayBuffer(file);
+            // Limpiar el input file
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
 
         } catch (error) {
-            console.error('Error al cargar el archivo:', error);
-            setMessage('Error al cargar el archivo');
+            console.error('Error al subir archivo:', error);
+            setMessage(`❌ Error: ${error.message}`);
+        } finally {
             setUploading(false);
         }
     };
@@ -108,6 +66,11 @@ export default function ExcelUpload({ onDataUpload }) {
     const handleButtonClick = () => {
         fileInputRef.current?.click();
     };
+
+    // Solo mostrar el botón para administradores
+    if (!user || user.role !== 'admin') {
+        return null;
+    }
 
     return (
         <div className="relative group">
@@ -118,12 +81,12 @@ export default function ExcelUpload({ onDataUpload }) {
                     ? 'bg-gray-400 cursor-not-allowed text-white'
                     : 'bg-green-600 hover:bg-green-700 text-white'
                     }`}
-                title="Subir datos desde Excel"
+                title="Subir datos desde Excel (Solo Administradores)"
             >
                 {uploading ? (
                     <>
                         <div className="w-4 h-4 mr-2 border-b-2 border-white rounded-full animate-spin"></div>
-                        Procesando...
+                        Subiendo...
                     </>
                 ) : (
                     <>
@@ -150,12 +113,15 @@ export default function ExcelUpload({ onDataUpload }) {
             />
 
             {message && (
-                <div className="absolute z-10 right-0 top-full mt-1 w-64">
-                    <div className={`p-2 rounded-md text-xs shadow-lg ${message.includes('✅')
-                        ? 'bg-green-100 text-green-800 border border-green-200'
-                        : 'bg-red-100 text-red-800 border border-red-200'
+                <div className="absolute z-10 right-0 top-full mt-1 w-80">
+                    <div className={`p-3 rounded-md text-sm shadow-lg transition-all ${
+                        message.includes('✅') 
+                            ? 'bg-green-100 text-green-800 border border-green-200'
+                            : message.includes('⚠️')
+                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
+                            : 'bg-red-100 text-red-800 border border-red-200'
                         }`}>
-                        {message}
+                        <pre className="whitespace-pre-wrap font-mono text-xs">{message}</pre>
                     </div>
                 </div>
             )}

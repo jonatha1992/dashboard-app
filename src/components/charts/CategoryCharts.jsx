@@ -5,7 +5,7 @@ import StatCard from '../dashboard/StatCard';
 import DataTable from '../dashboard/DataTable';
 import { getChartData } from '../../services/dataService';
 
-const CategoryCharts = ({ data, categoryName, title, icon, color, hideEmpty = false, showTable = true }) => {
+const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = true }) => {
     const [activeChart, setActiveChart] = useState('monthly');
     const [timeGranularity, setTimeGranularity] = useState('month'); // 'day' | 'week' | 'month'
     const { filters } = useDashboard();
@@ -17,12 +17,19 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, hideEmpty = fa
     }, [timeGranularity]);
 
     if (!data || data.length === 0) {
-        if (hideEmpty) return null;
+        // Nunca ocultar completamente cuando hideEmpty es true
         return (
-            <div className="py-12 text-center">
-                <div className="mb-4 text-6xl text-gray-400">{icon}</div>
-                <h3 className="mb-2 text-xl text-gray-600">No hay datos disponibles</h3>
-                <p className="text-gray-500">No se encontraron registros para {title.toLowerCase()}</p>
+            <div className="py-8 text-center border rounded-lg bg-gray-50">
+                <div className="mb-3 text-4xl text-gray-400">{icon}</div>
+                <h3 className="mb-2 text-lg font-medium text-gray-600">
+                    0 registros de {title.toLowerCase()}
+                </h3>
+                <p className="text-sm text-gray-500">
+                    No hay datos disponibles para los filtros aplicados
+                </p>
+                <div className="mt-4 p-3 bg-white rounded border">
+                    <div className="text-sm text-gray-400">Gráfico vacío - Sin estadísticas para mostrar</div>
+                </div>
             </div>
         );
     }
@@ -72,17 +79,29 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, hideEmpty = fa
         // Sort keys chronologically
         const sortedKeys = Object.keys(map).sort();
 
+        // Check if all data is from the same year for smart date formatting
+        const years = sortedKeys.map(k => {
+            if (granularity === 'day' || granularity === 'month') {
+                return k.split('-')[0];
+            }
+            return null;
+        }).filter(Boolean);
+        const uniqueYears = [...new Set(years)];
+        const sameYear = uniqueYears.length === 1;
+
         const labels = sortedKeys.map(k => {
             if (granularity === 'day') {
                 const [y, m, d] = k.split('-');
-                return `${d}/${m}/${y}`;
+                return sameYear ? `${d}/${m}` : `${d}/${m}/${y}`;
             } else if (granularity === 'week') {
                 return k; // already in Y-W## format
             }
             // month
             const [y, m] = k.split('-');
             const date = new Date(Number(y), Number(m) - 1, 1);
-            return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            return sameYear ? 
+                date.toLocaleDateString('es-ES', { month: 'long' }) :
+                date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
         });
 
         const values = sortedKeys.map(k => map[k]);

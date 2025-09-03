@@ -171,100 +171,68 @@ export const getStatistics = (data) => {
     };
 };
 
-// Función para categorizar datos por tipo de operativo
+// Función para categorizar datos por tipo de operativo - SOLO DATOS REALES
 export const getCategorizedData = (data) => {
     if (!data || data.length === 0) return {};
 
-    // Función simple de hash para determinismo
-    const simpleHash = (str) => {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32bit integer
-        }
-        return Math.abs(hash);
-    };
-
-    // Categorías mejoradas basadas en los tipos reales de datos
+    // Categorías basadas ÚNICAMENTE en contenido real de datos
+    // Sin hash artificial - solo keywords reales
     const categories = {
         detenidos: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            const id = item.ID_OPERATIVO || item.id || '';
-            const hashValue = simpleHash(id + desc + tipo);
 
             return desc.includes('detención') || desc.includes('detenido') ||
                 desc.includes('arresto') || tipo.includes('detención') ||
-                // Usar hash para distribución determinística
-                (tipo.includes('orden policial') && (hashValue % 100) < 15);
+                tipo.includes('detenido');
         }),
         controlados: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            const id = item.ID_OPERATIVO || item.id || '';
-            const hashValue = simpleHash(id + desc + tipo);
 
             return desc.includes('control') || tipo.includes('control') ||
                 desc.includes('verificación') || desc.includes('despliegue') ||
-                // Usar hash para distribución determinística
-                (tipo.includes('orden policial') && (hashValue % 100) >= 15 && (hashValue % 100) < 35);
+                desc.includes('controlado');
         }),
         afectados: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            const id = item.ID_OPERATIVO || item.id || '';
-            const hashValue = simpleHash(id + desc + tipo);
 
             return desc.includes('afectado') || desc.includes('víctima') ||
                 desc.includes('damnificado') || desc.includes('herido') ||
-                // Usar hash para distribución determinística
-                (tipo.includes('orden policial') && (hashValue % 100) >= 35 && (hashValue % 100) < 45);
+                tipo.includes('afectado');
         }),
         procedimientos: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            const id = item.ID_OPERATIVO || item.id || '';
-            const hashValue = simpleHash(id + desc + tipo);
 
             return desc.includes('procedimiento') || desc.includes('operativo') ||
-                desc.includes('intervención') || tipo.includes('procedimiento') ||
-                // Usar hash para distribución determinística  
-                (tipo.includes('orden policial') && (hashValue % 100) >= 45 && (hashValue % 100) < 75);
+                desc.includes('intervención') || tipo.includes('procedimiento');
         }),
         abatidos: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            const id = item.ID_OPERATIVO || item.id || '';
-            const hashValue = simpleHash(id + desc + tipo);
 
             return desc.includes('abatido') || desc.includes('enfrentamiento') ||
                 desc.includes('tiroteo') || desc.includes('baja') ||
-                // Usar hash para distribución determinística
-                (tipo.includes('orden policial') && (hashValue % 100) >= 75 && (hashValue % 100) < 80);
+                tipo.includes('abatido');
         }),
         trata: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            const id = item.ID_OPERATIVO || item.id || '';
-            const hashValue = simpleHash(id + desc + tipo);
 
             return desc.includes('trata') || desc.includes('tráfico') ||
                 desc.includes('explotación') || desc.includes('traficante') ||
-                // Usar hash para distribución determinística
-                (tipo.includes('orden policial') && (hashValue % 100) >= 80 && (hashValue % 100) < 88);
+                tipo.includes('trata');
         }),
         incautaciones: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            const id = item.ID_OPERATIVO || item.id || '';
-            const hashValue = simpleHash(id + desc + tipo);
 
             return desc.includes('incautación') || desc.includes('secuestro') ||
                 desc.includes('decomiso') || desc.includes('droga') ||
                 desc.includes('arma') || desc.includes('narcótico') ||
-                // Usar hash para distribución determinística
-                (tipo.includes('orden policial') && (hashValue % 100) >= 88);
+                tipo.includes('incautación');
         }),
     };
 
