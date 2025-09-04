@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(venvScripts:*)",
+      "Bash(call venvScriptsactivate.bat)",
+      "Bash(source:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

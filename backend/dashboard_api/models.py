@@ -34,6 +34,9 @@ class User(AbstractUser):
         related_query_name='dashboard_user',
     )
     
+    class Meta:
+        db_table = 'user'
+    
     def __str__(self):
         return f"{self.username} ({self.role})"
 
@@ -157,3 +160,6 @@ class OperationalData(models.Model):
             pass
             
         return None
+
+# Import Data Warehouse models to register them for migrations
+from .dw_models import DimTiempo, DimGeografia, FactProcedimientos, AggMensualProvincia, AggMensualDepartamento

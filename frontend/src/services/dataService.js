@@ -207,7 +207,9 @@ export const getCategorizedData = (data) => {
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
 
             return desc.includes('procedimiento') || desc.includes('operativo') ||
-                desc.includes('intervención') || tipo.includes('procedimiento');
+                desc.includes('intervención') || tipo.includes('procedimiento') ||
+                tipo.includes('orden policial') || tipo.includes('orden judicial') ||
+                desc.includes('allanamiento') || desc.includes('mandato judicial');
         }),
         abatidos: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
@@ -232,6 +234,8 @@ export const getCategorizedData = (data) => {
             return desc.includes('incautación') || desc.includes('secuestro') ||
                 desc.includes('decomiso') || desc.includes('droga') ||
                 desc.includes('arma') || desc.includes('narcótico') ||
+                desc.includes('narcotrafico') || desc.includes('narcotráfico') ||
+                desc.includes('sustancia') || desc.includes('estupefaciente') ||
                 tipo.includes('incautación');
         }),
     };

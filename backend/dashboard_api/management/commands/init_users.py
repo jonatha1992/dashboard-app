@@ -23,11 +23,11 @@ class Command(BaseCommand):
                 )
                 created_users.append('admin')
                 self.stdout.write(
-                    self.style.SUCCESS('✅ Admin user created: admin/admin123')
+                    self.style.SUCCESS('Admin user created: admin/admin123')
                 )
             else:
                 self.stdout.write(
-                    self.style.WARNING('⚠️ Admin user already exists')
+                    self.style.WARNING('Admin user already exists')
                 )
             
             # Create default viewer user
@@ -39,18 +39,18 @@ class Command(BaseCommand):
                 )
                 created_users.append('viewer')
                 self.stdout.write(
-                    self.style.SUCCESS('✅ Viewer user created: viewer/viewer123')
+                    self.style.SUCCESS('Viewer user created: viewer/viewer123')
                 )
             else:
                 self.stdout.write(
-                    self.style.WARNING('⚠️ Viewer user already exists')
+                    self.style.WARNING('Viewer user already exists')
                 )
             
             if created_users:
                 self.stdout.write(
-                    self.style.SUCCESS(f'\n🎉 Successfully created {len(created_users)} user(s): {", ".join(created_users)}')
+                    self.style.SUCCESS(f'\nSuccessfully created {len(created_users)} user(s): {", ".join(created_users)}')
                 )
             else:
                 self.stdout.write(
-                    self.style.SUCCESS('\n✅ All default users already exist')
+                    self.style.SUCCESS('\nAll default users already exist')
                 )

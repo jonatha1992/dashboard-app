@@ -1,5 +1,10 @@
 from django.urls import path
 from . import views
+from .analysis_views import (
+    AnalisisTemporalView, AnalisisGeograficoView, 
+    ComparisonAnalysisView, DWStatusView, ETLExecutionView, 
+    ProvinciasListView
+)
 
 urlpatterns = [
     # Health check
@@ -14,4 +19,15 @@ urlpatterns = [
     path('data/stats', views.DataStatsView.as_view(), name='data-stats'),
     path('data/upload', views.DataUploadView.as_view(), name='data-upload'),
     path('data/clear', views.DataClearView.as_view(), name='data-clear'),
+    
+    # Data Warehouse endpoints
+    path('dw/status/', DWStatusView.as_view(), name='dw-status'),
+    path('dw/etl/run/', ETLExecutionView.as_view(), name='dw-etl-run'),
+    path('dw/etl/status/', ETLExecutionView.as_view(), name='dw-etl-status'),
+    path('dw/provincias/', ProvinciasListView.as_view(), name='dw-provincias'),
+    
+    # Analysis endpoints
+    path('dw/analysis/temporal/', AnalisisTemporalView.as_view(), name='analysis-temporal'),
+    path('dw/analysis/geografico/', AnalisisGeograficoView.as_view(), name='analysis-geografico'),  
+    path('dw/analysis/comparison/', ComparisonAnalysisView.as_view(), name='analysis-comparison'),
 ]

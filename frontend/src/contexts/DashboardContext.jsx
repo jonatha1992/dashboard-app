@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { getCategorizedData } from '../services/dataService';
 import apiService from '../services/apiService';
+import { analysisService } from '../services/analysisService';
 
 const DashboardContext = createContext();
 
@@ -17,6 +18,30 @@ export const DashboardProvider = ({ children }) => {
     fromDate: '',
     toDate: '',
     province: ''
+  });
+
+  // Estado del Data Warehouse
+  const [dwStatus, setDwStatus] = useState(null);
+  const [dwLoading, setDwLoading] = useState(false);
+  const [dwError, setDwError] = useState(null);
+  const [availableProvinces, setAvailableProvinces] = useState([]);
+  const [availableYears, setAvailableYears] = useState([2025]);
+  
+  // Estado de análisis dimensional
+  const [analysisView, setAnalysisView] = useState('temporal'); // temporal, geographic, comparison
+  const [analysisData, setAnalysisData] = useState({
+    temporal: null,
+    geographic: null,
+    comparison: null
+  });
+  
+  // Configuración de análisis
+  const [analysisConfig, setAnalysisConfig] = useState({
+    selectedProvinces: [],
+    selectedYear: '2025',
+    selectedPeriod: '2025-01',
+    selectedMetrics: ['total_procedimientos'],
+    viewType: 'chart' // chart, table, hybrid
   });
 
 
@@ -80,6 +105,131 @@ export const DashboardProvider = ({ children }) => {
     };
     fetchData();
   }, []);
+
+  // Cargar estado del Data Warehouse
+  useEffect(() => {
+    const loadDWStatus = async () => {
+      try {
+        setDwLoading(true);
+        setDwError(null);
+        
+        // Cargar estado DW y provincias disponibles en paralelo
+        const [status, provincias, years] = await Promise.all([
+          analysisService.getDWStatus(),
+          analysisService.getProvinciasDisponibles(),
+          analysisService.getAvailableYears()
+        ]);
+        
+        setDwStatus(status);
+        setAvailableProvinces(provincias);
+        setAvailableYears(years);
+        
+        // Actualizar configuración de análisis con datos reales
+        setAnalysisConfig(prev => ({
+          ...prev,
+          selectedYear: years.length > 0 ? Math.max(...years).toString() : '2025',
+          selectedPeriod: years.length > 0 ? `${Math.max(...years)}-01` : '2025-01'
+        }));
+        
+      } catch (error) {
+        console.error('Error cargando estado DW:', error);
+        setDwError('Error cargando Data Warehouse');
+      } finally {
+        setDwLoading(false);
+      }
+    };
+    
+    // Solo cargar si el usuario está autenticado
+    if (apiService.isAuthenticated()) {
+      loadDWStatus();
+    }
+  }, []);
+
+  // Funciones para manejo del Data Warehouse
+  const runETL = async () => {
+    try {
+      setDwLoading(true);
+      setDwError(null);
+      
+      const result = await analysisService.runETL();
+      
+      if (result.status === 'success') {
+        // Recargar estado después del ETL
+        const [status, provincias, years] = await Promise.all([
+          analysisService.getDWStatus(),
+          analysisService.getProvinciasDisponibles(),
+          analysisService.getAvailableYears()
+        ]);
+        
+        setDwStatus(status);
+        setAvailableProvinces(provincias);
+        setAvailableYears(years);
+        
+        return { success: true, message: 'ETL ejecutado correctamente' };
+      } else {
+        throw new Error(result.message || 'Error en ETL');
+      }
+      
+    } catch (error) {
+      console.error('Error ejecutando ETL:', error);
+      setDwError(error.message);
+      return { success: false, message: error.message };
+    } finally {
+      setDwLoading(false);
+    }
+  };
+
+  const loadAnalysisData = async (analysisType, filters) => {
+    try {
+      setDwLoading(true);
+      setDwError(null);
+      
+      let result;
+      
+      switch (analysisType) {
+        case 'temporal':
+          result = await analysisService.getAnalisisTemporal(filters);
+          break;
+        case 'geographic':
+          result = await analysisService.getAnalisisGeografico(filters);
+          break;
+        case 'comparison':
+          result = await analysisService.getComparisonAnalysis(filters);
+          break;
+        default:
+          throw new Error(`Tipo de análisis no válido: ${analysisType}`);
+      }
+      
+      if (result.status === 'success') {
+        setAnalysisData(prev => ({
+          ...prev,
+          [analysisType]: result.data
+        }));
+        return result.data;
+      } else {
+        throw new Error(result.message || 'Error cargando análisis');
+      }
+      
+    } catch (error) {
+      console.error(`Error cargando análisis ${analysisType}:`, error);
+      setDwError(error.message);
+      return null;
+    } finally {
+      setDwLoading(false);
+    }
+  };
+
+  const updateAnalysisConfig = (newConfig) => {
+    setAnalysisConfig(prev => ({ ...prev, ...newConfig }));
+  };
+
+  const clearAnalysisData = (analysisType) => {
+    if (analysisType) {
+      setAnalysisData(prev => ({ ...prev, [analysisType]: null }));
+    } else {
+      setAnalysisData({ temporal: null, geographic: null, comparison: null });
+    }
+  };
 
   // Filtrar datos según filtros
   const filteredData = useMemo(() => {
@@ -168,6 +318,7 @@ export const DashboardProvider = ({ children }) => {
 
   // Exponer todo el estado y funciones necesarias
   const contextValue = {
+    // Estado tradicional del dashboard
     data,
     setData,
     dataStats,
@@ -179,7 +330,29 @@ export const DashboardProvider = ({ children }) => {
     filters,
     setFilters: updateFilters,
     filteredData,
-    filteredCategorizedData
+    filteredCategorizedData,
+    
+    // Estado del Data Warehouse
+    dwStatus,
+    dwLoading,
+    dwError,
+    availableProvinces,
+    availableYears,
+    
+    // Estado de análisis dimensional
+    analysisView,
+    setAnalysisView,
+    analysisData,
+    analysisConfig,
+    
+    // Funciones del Data Warehouse
+    runETL,
+    loadAnalysisData,
+    updateAnalysisConfig,
+    clearAnalysisData,
+    
+    // Utilidades de análisis
+    analysisService
   };
 
   return (
