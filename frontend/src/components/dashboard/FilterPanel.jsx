@@ -21,24 +21,39 @@ const getCurrentMonthDates = () => {
 };
 
 export default function FilterPanel() {
-    const { filters, setFilters, data } = useDashboard();
+    const { filters, setFilters, dataStats } = useDashboard();
     const [isOpen, setIsOpen] = useState(false);
     const hasActiveFilters = Boolean(filters.fromDate || filters.toDate || filters.province);
 
-    // Obtener rango de fechas de los datos
+    // Obtener rango de fechas desde las estadísticas del backend
     const getDataDateRange = () => {
-        if (!data || data.length === 0) return null;
+        if (!dataStats || !dataStats.dateRange) return null;
         
-        const dates = data
-            .filter(item => item.FECHA_ISO)
-            .map(item => new Date(item.FECHA_ISO))
-            .sort((a, b) => a - b);
+        const { earliest, latest } = dataStats.dateRange;
         
-        if (dates.length === 0) return null;
+        // Manejar fechas inválidas como "-"
+        if (!earliest || !latest || earliest === '-' || latest === '-') {
+            return {
+                from: 'Sin datos de fecha válidos',
+                to: '',
+                totalRecords: dataStats.totalRecords || 0
+            };
+        }
+        
+        // Convertir las fechas del backend al formato deseado
+        const formatDate = (dateStr) => {
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('es-AR');
+            } catch {
+                return dateStr;
+            }
+        };
         
         return {
-            from: dates[0].toLocaleDateString('es-AR'),
-            to: dates[dates.length - 1].toLocaleDateString('es-AR')
+            from: formatDate(earliest),
+            to: formatDate(latest),
+            totalRecords: dataStats.totalRecords || 0
         };
     };
 
@@ -103,12 +118,15 @@ export default function FilterPanel() {
 
                     {/* Información de rango de fechas disponibles */}
                     {dateRange && (
-                        <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                            <div className="text-xs font-medium text-blue-800 mb-1">
-                                📅 Datos disponibles:
+                        <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md">
+                            <div className="text-xs font-semibold text-blue-900 mb-1">
+                                📊 Datos actualizados:
                             </div>
-                            <div className="text-xs text-blue-700">
-                                {dateRange.from} - {dateRange.to}
+                            <div className="text-sm font-medium text-blue-800 mb-1">
+                                {dateRange.to ? `${dateRange.from} - ${dateRange.to}` : dateRange.from}
+                            </div>
+                            <div className="text-xs text-blue-600">
+                                Total de registros: {dateRange.totalRecords.toLocaleString('es-AR')}
                             </div>
                         </div>
                     )}

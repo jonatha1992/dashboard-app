@@ -24,12 +24,64 @@ export default function Dashboard() {
         activeCategory,
         setActiveCategory,
         filteredData,
-        filteredCategorizedData
+        filteredCategorizedData,
+        dataStats
     } = useDashboard();
 
     // Para mantener compatibilidad con el resto del componente
     const activeNav = activeCategory;
     const setActiveNav = setActiveCategory;
+
+    // Formatear información de fechas para el navbar - calculado desde datos GEOG. PROCEDIMIENTO
+    const getDateRangeInfo = () => {
+        // Calcular directamente desde filteredData de GEOG. PROCEDIMIENTO
+        const geogData = filteredData.filter(item => 
+            item.HOJA === 'GEOG. PROCEDIMIENTO' || 
+            item.ARCHIVO_ORIGINAL || // Si no tiene HOJA, asumir que es GEOG
+            !item.HOJA // datos sin hoja específica
+        );
+        
+        if (geogData.length === 0) {
+            return { text: 'Sin datos de GEOG. PROCEDIMIENTO', totalRecords: 0 };
+        }
+        
+        // Obtener fechas válidas de GEOG. PROCEDIMIENTO
+        const validDates = geogData
+            .map(item => item.FECHA)
+            .filter(date => date && date !== '-' && date.trim() !== '')
+            .filter(date => /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(date))
+            .sort();
+        
+        if (validDates.length === 0) {
+            return { text: 'Sin fechas válidas en GEOG. PROCEDIMIENTO', totalRecords: geogData.length };
+        }
+        
+        // Formatear fechas para display
+        const formatDate = (dateStr) => {
+            try {
+                // Convertir dd/mm/yyyy a Date
+                const [day, month, year] = dateStr.split('/');
+                const date = new Date(year, month - 1, day);
+                return date.toLocaleDateString('es-AR', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric' 
+                });
+            } catch {
+                return dateStr;
+            }
+        };
+        
+        const earliest = validDates[0];
+        const latest = validDates[validDates.length - 1];
+        
+        return {
+            text: `${formatDate(earliest)} - ${formatDate(latest)}`,
+            totalRecords: dataStats?.totalRecords || geogData.length
+        };
+    };
+
+    const dateInfo = getDateRangeInfo();
 
     // Estadísticas rápidas para la vista general
     const filteredStats = {
@@ -190,6 +242,19 @@ export default function Dashboard() {
                             </div>
 
                             <div className="flex items-center space-x-4">
+                                {/* Date Range Info */}
+                                <div className="flex items-center px-3 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-md">
+                                    <div className="flex items-center justify-center w-6 h-6 mr-2 bg-green-600 rounded-full">
+                                        <span className="text-xs text-white">📅</span>
+                                    </div>
+                                    <div className="text-sm">
+                                        <div className="font-medium text-green-800">{dateInfo.text}</div>
+                                        <div className="text-xs text-green-600">
+                                            {dateInfo.totalRecords.toLocaleString('es-AR')} registros
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* User Info */}
                                 <div className="flex items-center px-3 py-2 bg-gray-100 rounded-md">
                                     <div className="flex items-center justify-center w-6 h-6 mr-2 bg-blue-600 rounded-full">
