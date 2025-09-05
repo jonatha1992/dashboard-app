@@ -1,15 +1,59 @@
 import pandas as pd
 from datetime import datetime, timedelta
-from django.db.models import Avg, Sum, Count, Q
+from django.db.models import Avg, Sum, Count, Q, Min, Max
 from .dw_models import DimTiempo, DimGeografia, FactProcedimientos, AggMensualProvincia, AggMensualDepartamento
-from .models import OperationalData
+from .models import GeografiaProcedimiento
 import unicodedata
 import re
+import logging
+
+logger = logging.getLogger('etl')
 
 class DimensionETLProcessor:
     
-    def populate_dim_tiempo(self, start_date='2025-01-01', end_date='2025-12-31'):
-        """Pobla la dimensión tiempo para el rango especificado"""
+    def get_dynamic_date_range(self):
+        """Detectar rango de fechas automáticamente desde datos reales"""
+        logger.info("Detectando rango de fechas dinámico desde datos operacionales")
+        
+        date_range = GeografiaProcedimiento.objects.filter(
+            fecha_iso__isnull=False
+        ).aggregate(
+            min_fecha=Min('fecha_iso'),
+            max_fecha=Max('fecha_iso')
+        )
+        
+        if not date_range['min_fecha'] or not date_range['max_fecha']:
+            # Fallback si no hay datos
+            logger.warning("No se encontraron fechas válidas, usando rango por defecto")
+            return '2025-01-01', '2025-12-31'
+        
+        # Extender el rango para tener buffer (1 mes antes y después)
+        min_date = date_range['min_fecha']
+        max_date = date_range['max_fecha']
+        
+        # Extender rango
+        extended_min = min_date.replace(day=1)  # Primer día del mes
+        if extended_min.month == 12:
+            extended_max = max_date.replace(year=max_date.year + 1, month=1, day=31)
+        else:
+            try:
+                extended_max = max_date.replace(month=max_date.month + 1, day=31)
+            except ValueError:
+                # Manejar meses con menos de 31 días
+                extended_max = max_date.replace(month=max_date.month + 1, day=28)
+        
+        start_str = extended_min.strftime('%Y-%m-%d')
+        end_str = extended_max.strftime('%Y-%m-%d')
+        
+        logger.info(f"Rango dinámico detectado: {start_str} a {end_str}")
+        return start_str, end_str
+    
+    def populate_dim_tiempo(self, start_date=None, end_date=None):
+        """Pobla la dimensión tiempo para el rango especificado o dinámico"""
+        if not start_date or not end_date:
+            start_date, end_date = self.get_dynamic_date_range()
+        
+        logger.info(f"Poblando dimensión tiempo desde {start_date} hasta {end_date} (dinámico)")
         print(f"Poblando dimensión tiempo desde {start_date} hasta {end_date}")
         
         start = datetime.strptime(start_date, '%Y-%m-%d').date()
@@ -72,10 +116,10 @@ class DimensionETLProcessor:
     
     def populate_dim_geografia(self):
         """Pobla dimensión geografía desde datos existentes"""
-        print("Poblando dimensión geografía desde OperationalData")
+        print("Poblando dimensión geografía desde GeografiaProcedimiento")
         
         # Obtener combinaciones únicas provincia/departamento
-        unique_geo = OperationalData.objects.values(
+        unique_geo = GeografiaProcedimiento.objects.values(
             'provincia', 'departamento_o_partido', 'localidad',
             'zona_seguridad_fronteras'
         ).distinct()
@@ -90,7 +134,7 @@ class DimensionETLProcessor:
                 
                 if not DimGeografia.objects.filter(provincia_departamento_key=combined_key).exists():
                     # Calcular coordenadas promedio para este departamento
-                    coords = OperationalData.objects.filter(
+                    coords = GeografiaProcedimiento.objects.filter(
                         provincia_key=provincia_key,
                         departamento_o_partido__icontains=geo['departamento_o_partido']
                     ).exclude(
@@ -122,7 +166,7 @@ class DimensionETLProcessor:
         """Transforma datos operacionales a tabla de hechos"""
         print("Transformando datos operacionales a tabla de hechos")
         
-        operational_data = OperationalData.objects.filter(
+        operational_data = GeografiaProcedimiento.objects.filter(
             fecha_iso__isnull=False,
             provincia__isnull=False
         )
@@ -295,6 +339,56 @@ class DimensionETLProcessor:
             return {
                 'status': 'error',
                 'message': str(e)
+            }
+    
+    def run_full_etl_auto(self):
+        """Ejecuta el ETL completo optimizado para post-upload automático"""
+        logger.info("=== INICIANDO ETL AUTOMÁTICO POST-UPLOAD ===")
+        print("=== INICIANDO ETL AUTOMÁTICO POST-UPLOAD ===")
+        
+        try:
+            # Detectar rango dinámico
+            start_date, end_date = self.get_dynamic_date_range()
+            
+            # Paso 1: Poblar dimensión tiempo (solo fechas necesarias)
+            logger.info("Paso 1: Poblando dimensión tiempo dinámicamente")
+            tiempo_count = self.populate_dim_tiempo(start_date, end_date)
+            
+            # Paso 2: Poblar dimensión geografía (incremental)
+            logger.info("Paso 2: Poblando dimensión geografía")
+            geo_count = self.populate_dim_geografia()
+            
+            # Paso 3: Transformar a hechos (incremental)
+            logger.info("Paso 3: Transformando datos a tabla de hechos")
+            fact_created, fact_updated = self.transform_to_facts()
+            
+            # Paso 4: Calcular agregaciones (regenerar completamente)
+            logger.info("Paso 4: Calculando agregaciones mensuales")
+            prov_agg, dept_agg = self.calculate_monthly_aggregations()
+            
+            result = {
+                'status': 'success',
+                'date_range': {'start': start_date, 'end': end_date},
+                'tiempo_records': tiempo_count,
+                'geografia_records': geo_count,
+                'facts_created': fact_created,
+                'facts_updated': fact_updated,
+                'provincial_aggs': prov_agg,
+                'departmental_aggs': dept_agg,
+                'auto_executed': True
+            }
+            
+            logger.info(f"ETL automático completado exitosamente: {result}")
+            print("=== ETL AUTOMÁTICO COMPLETADO EXITOSAMENTE ===")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error en ETL automático: {str(e)}")
+            print(f"Error en ETL automático: {str(e)}")
+            return {
+                'status': 'error',
+                'message': str(e),
+                'auto_executed': True
             }
     
     # Métodos auxiliares

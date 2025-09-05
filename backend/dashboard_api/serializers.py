@@ -1,6 +1,19 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User, OperationalData
+from .models import (
+    User, 
+    GeografiaProcedimiento,
+    VehiculosPersonasControladas,
+    PersonalElementosAfectados,
+    DetenidosAprehendidos,
+    Incautaciones,
+    TrataTraficPersonas,
+    OtrosDelitos,
+    OtrosEventos,
+    Fallecidos,
+    Abatidos,
+    CodigoOperativo
+)
 
 
 class LoginSerializer(serializers.Serializer):
@@ -39,16 +52,16 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
-class OperationalDataSerializer(serializers.ModelSerializer):
+class GeografiaProcedimientoSerializer(serializers.ModelSerializer):
     """
-    Serializer for OperationalData model
+    Serializer for GeografiaProcedimiento model (tabla maestra)
     """
     # Convert Decimal fields to float for JSON compatibility
     LATITUD = serializers.SerializerMethodField()
     LONGITUD = serializers.SerializerMethodField()
     
     class Meta:
-        model = OperationalData
+        model = GeografiaProcedimiento
         fields = '__all__'
         
     def get_LATITUD(self, obj):
@@ -65,11 +78,11 @@ class OperationalDataSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         """
-        Convert the model fields to match the Node.js backend format
+        Convert the model fields to match the frontend format
         """
         data = super().to_representation(instance)
         
-        # Map Django model fields to Node.js format
+        # Map Django model fields to frontend format
         mapped_data = {
             'FUERZA_INTERVINIENTE': data.get('fuerza_interviniente'),
             'ID_OPERATIVO': data.get('id_operativo'),
@@ -96,17 +109,73 @@ class OperationalDataSerializer(serializers.ModelSerializer):
             'FECHA_IMPORTACION': data.get('fecha_importacion'),
             'record_key': data.get('record_key'),
         }
-        
-        # Add any extra data
-        if data.get('extra_data'):
-            mapped_data.update(data['extra_data'])
             
         return mapped_data
 
 
+class VehiculosPersonasControladasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VehiculosPersonasControladas
+        fields = '__all__'
+
+
+class PersonalElementosAfectadosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PersonalElementosAfectados
+        fields = '__all__'
+
+
+class DetenidosAprehendidosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DetenidosAprehendidos
+        fields = '__all__'
+
+
+class IncautacionesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Incautaciones
+        fields = '__all__'
+
+
+class TrataTraficPersonasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrataTraficPersonas
+        fields = '__all__'
+
+
+class OtrosDelitosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OtrosDelitos
+        fields = '__all__'
+
+
+class OtrosEventosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OtrosEventos
+        fields = '__all__'
+
+
+class FallecidosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Fallecidos
+        fields = '__all__'
+
+
+class AbatidosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Abatidos
+        fields = '__all__'
+
+
+class CodigoOperativoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CodigoOperativo
+        fields = '__all__'
+
+
 class DataStatsSerializer(serializers.Serializer):
     """
-    Serializer for data statistics (equivalent to Node.js /api/data/stats)
+    Serializer for data statistics
     """
     totalRecords = serializers.IntegerField()
     sheets = serializers.ListField(child=serializers.CharField())

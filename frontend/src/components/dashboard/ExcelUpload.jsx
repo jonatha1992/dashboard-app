@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import apiService from '../../services/apiService';
 
 export default function ExcelUpload() {
-    const { setData } = useDashboard();
+    const { setData, setDataStats } = useDashboard();
     const { user } = useAuth();
     const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState('');
@@ -39,16 +39,31 @@ export default function ExcelUpload() {
             const result = await apiService.uploadData(file);
             
             // Mostrar estadísticas del resultado
-            const { stats } = result;
+            const { stats, etl_result } = result;
+            const etlStatus = etl_result ? 
+                (etl_result.status === 'success' ? 
+                    `🔄 ETL: ✅ Ejecutado automáticamente (${etl_result.facts_created} hechos creados)` : 
+                    `🔄 ETL: ⚠️ ${etl_result.message}`
+                ) : '🔄 ETL: No ejecutado';
+            
             setMessage(`✅ Importación completada:
 📊 ${stats.totalAdded} registros nuevos
 ⚠️ ${stats.duplicatesSkipped} duplicados omitidos
 📁 Total de registros en sistema: ${stats.totalRecords}
-📋 Hojas procesadas: ${stats.sheetsProcessed.length}`);
+📋 Hojas procesadas: ${stats.sheetsProcessed.length}
+${etlStatus}`);
 
-            // Recargar datos actualizados desde el backend
-            const updatedData = await apiService.getData();
+            // Recargar datos Y estadísticas actualizadas
+            const [updatedData, updatedStats] = await Promise.all([
+                apiService.getData(),
+                apiService.getDataStats()
+            ]);
             setData(updatedData);
+
+            // Actualizar estadísticas en el contexto global si está disponible
+            if (typeof setDataStats === 'function') {
+                setDataStats(updatedStats);
+            }
 
             // Limpiar el input file
             if (fileInputRef.current) {

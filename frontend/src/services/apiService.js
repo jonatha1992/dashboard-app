@@ -105,6 +105,33 @@ class ApiService {
     return await this.request('/data/stats');
   }
 
+  // HTTP method shortcuts
+  async get(endpoint) {
+    return await this.request(endpoint, {
+      method: 'GET',
+    });
+  }
+
+  async post(endpoint, data = null) {
+    return await this.request(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : null,
+    });
+  }
+
+  async put(endpoint, data = null) {
+    return await this.request(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : null,
+    });
+  }
+
+  async delete(endpoint) {
+    return await this.request(endpoint, {
+      method: 'DELETE',
+    });
+  }
+
   // Utility methods
   isAuthenticated() {
     return !!this.token;

@@ -20,6 +20,13 @@ urlpatterns = [
     path('data/upload', views.DataUploadView.as_view(), name='data-upload'),
     path('data/clear', views.DataClearView.as_view(), name='data-clear'),
     
+    # Specialized data endpoints
+    path('data/detenidos', views.DetenidosListView.as_view(), name='data-detenidos'),
+    path('data/incautaciones', views.IncautacionesListView.as_view(), name='data-incautaciones'),
+    path('data/trata', views.TrataListView.as_view(), name='data-trata'),
+    path('data/fallecidos', views.FallecidosListView.as_view(), name='data-fallecidos'),
+    path('data/abatidos', views.AbatidosListView.as_view(), name='data-abatidos'),
+    
     # Data Warehouse endpoints
     path('dw/status/', DWStatusView.as_view(), name='dw-status'),
     path('dw/etl/run/', ETLExecutionView.as_view(), name='dw-etl-run'),

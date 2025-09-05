@@ -8,9 +8,10 @@ import DataTable from './DataTable';
 import CategoryCharts from '../charts/CategoryCharts';
 // removed unused imports from dataService; Dashboard uses the context to access data
 
-import ExcelUpload from './ExcelUpload';
+
 
 import FilterPanel from './FilterPanel';
+import SystemStatusView from './SystemStatusView';
 
 import SecuritySection from '../security/SecuritySection';
 import logo from '../../assets/react.svg';
@@ -220,6 +221,22 @@ export default function Dashboard() {
                         </span>
                     </span>
                 </button>
+
+                {/* Sección de Estado - solo para administradores */}
+                {user?.role === 'admin' && (
+                    <>
+                        <div className="my-2 border-t border-gray-200"></div>
+                        <button
+                            className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'estado' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                            onClick={() => setActiveNav('estado')}
+                        >
+                            <span className="flex items-center justify-between w-full">
+                                <span>⚙️ Estado</span>
+                            </span>
+                        </button>
+                    </>
+                )}
+
                 <div className="flex-1" />
                 <button
                     onClick={logout}
@@ -269,7 +286,7 @@ export default function Dashboard() {
                                 </div>
                                 
                                 <FilterPanel />
-                                <ExcelUpload />
+                                
                             </div>
                         </div>
                     </div>
@@ -277,6 +294,8 @@ export default function Dashboard() {
 
 
                 <main className="px-4 py-6 mx-auto mt-4 max-w-7xl sm:px-6 lg:px-8">
+                    {activeNav === 'estado' && <SystemStatusView />}
+                    
                     {activeNav === 'general' && (
                         <>
                             {/* Tarjetas de estadísticas */}
