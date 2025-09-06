@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(python:*)",
+      "Bash(venvScripts:*)",
+      "Bash(./venv/Scripts/activate)",
+      "Bash(.venv/Scripts/activate)",
+      "Bash(npx:*)",
+      "Bash(uvx markitdown-mcp:*)",
+      "Bash(uvx imagesorcery-mcp:*)",
+      "Bash(uvx excel-mcp-server:*)",
+      "mcp__excel__get_workbook_metadata",
+      "mcp__excel__read_data_from_excel"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

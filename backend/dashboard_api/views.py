@@ -188,6 +188,11 @@ class DataUploadView(APIView):
                 }
             }
             
+            # PASO 1: Procesar primero la tabla maestra GEOG. PROCEDIMIENTO
+            master_table_processed = False
+            master_sheet_data = {}
+            
+            # Recopilar todos los datos de las hojas primero
             for sheet_name in workbook.sheetnames:
                 sheet = workbook[sheet_name]
                 
@@ -213,10 +218,39 @@ class DataUploadView(APIView):
                     
                     sheet_data.append(row_dict)
                 
-                if not sheet_data:
+                if sheet_data:
+                    master_sheet_data[sheet_name] = sheet_data
+            
+            # PASO 2: Procesar tabla maestra primero
+            for sheet_name, sheet_data in master_sheet_data.items():
+                if 'GEOG' in sheet_name.upper() and 'PROCEDIMIENTO' in sheet_name.upper():
+                    logger.info(f\"Procesando tabla maestra: {sheet_name}\")\
+                    sheet_stats = self._process_sheet_data_to_specialized_tables(
+                        sheet_data, sheet_name, file.name, stats
+                    )
+                    
+                    stats['sheetsProcessed'].append({
+                        'name': sheet_name,
+                        'totalRows': len(sheet_data),
+                        'added': sheet_stats['added'],
+                        'skipped': sheet_stats['skipped']
+                    })
+                    
+                    stats['totalAdded'] += sheet_stats['added']
+                    stats['duplicatesSkipped'] += sheet_stats['skipped']
+                    master_table_processed = True
+                    break
+            
+            if not master_table_processed:
+                logger.warning(\"No se encontró la hoja GEOG. PROCEDIMIENTO - procesando sin tabla maestra\")\
+            
+            # PASO 3: Procesar hojas especializadas
+            for sheet_name, sheet_data in master_sheet_data.items():
+                # Skip si ya procesamos la tabla maestra
+                if 'GEOG' in sheet_name.upper() and 'PROCEDIMIENTO' in sheet_name.upper():
                     continue
                 
-                # Process each row with intelligent distribution
+                logger.info(f\"Procesando hoja especializada: {sheet_name}\")\
                 sheet_stats = self._process_sheet_data_to_specialized_tables(
                     sheet_data, sheet_name, file.name, stats
                 )
@@ -592,6 +626,89 @@ class DataUploadView(APIView):
             return Decimal(clean_value)
         except (InvalidOperation, ValueError):
             return None
+    
+    def _process_master_table(self, sheet_data, sheet_name, original_filename, global_stats):
+        """
+        Procesar la hoja GEOG. PROCEDIMIENTO como tabla maestra
+        Crea TODOS los procedimientos base
+        """
+        sheet_stats = {'added': 0, 'skipped': 0}
+        
+        for row_data in sheet_data:
+            try:
+                # Crear registro en tabla maestra
+                procedimiento = self._create_or_update_geografia_procedimiento(
+                    row_data, sheet_name, original_filename
+                )
+                
+                if procedimiento:
+                    sheet_stats['added'] += 1
+                    global_stats['specialized_tables']['geografia_procedimientos'] += 1
+                else:
+                    sheet_stats['skipped'] += 1
+                    
+            except Exception as e:
+                print(f"Error procesando tabla maestra: {e}")
+                sheet_stats['skipped'] += 1
+        
+        return sheet_stats
+    
+    def _get_or_cache_master_procedure(self, id_operativo, id_procedimiento, cache):
+        """
+        Buscar procedimiento en tabla maestra usando cache para optimizar
+        """
+        cache_key = f"{id_operativo}_{id_procedimiento}"
+        
+        if cache_key not in cache:
+            try:
+                procedimiento = GeografiaProcedimiento.objects.filter(
+                    id_operativo=id_operativo,
+                    id_procedimiento=id_procedimiento
+                ).first()
+                cache[cache_key] = procedimiento
+            except Exception:
+                cache[cache_key] = None
+        
+        return cache[cache_key]
+    
+    def _has_meaningful_data(self, row_data, sheet_name):
+        """
+        Verificar si una fila tiene datos significativos para crear registro especializado
+        No crear registros vacíos o solo con valores "-", null, etc.
+        """
+        sheet_upper = sheet_name.upper()
+        
+        # Definir campos relevantes por tipo de hoja
+        meaningful_fields = {
+            'DETENIDOS': ['EDAD', 'SEXO', 'NACIONALIDAD', 'SITUACION_PROCESAL', 'DELITO_IMPUTADO'],
+            'INCAUTACIONES': ['INCAUTACIONES', 'TIPO', 'CANTIDAD', 'OBSERVACIONES'],
+            'TRATA': ['TIPO_DELITO', 'SEXO_VICTIMA', 'EDAD_VICTIMA'],
+            'OTROS DELITOS': ['TIPO_OTRO_DELITO', 'SEXO_VICTIMA', 'EDAD_VICTIMA'],
+            'OTROS EVENTOS': ['TIPO_SINIESTRO', 'CANT_ILESOS', 'CANT_LESIONADOS', 'CANT_MUERTOS'],
+            'FALLECIDOS': ['CANT_FALLECIDOS', 'CANT_LESIONADOS', 'FUERZA DE SEGURIDAD'],
+            'ABATIDOS': ['EDAD', 'SEXO', 'NACIONALIDAD', 'FUERZA DE SEGURIDAD'],
+            'VEHICULOS': ['VEHICULOS_CONTROLADOS', 'PERSONAS_CONTROLADAS'],
+            'PERSONAL': ['CANT_EFECTIVOS', 'CANT_AUTOS_CAMIONETAS'],
+            'CODIGO': ['CODIGO_OPERATIVO']
+        }
+        
+        # Determinar qué campos verificar según el tipo de hoja
+        fields_to_check = []
+        for key, fields in meaningful_fields.items():
+            if key in sheet_upper:
+                fields_to_check = fields
+                break
+        
+        if not fields_to_check:
+            return True  # Si no sabemos qué verificar, asumimos que tiene datos
+        
+        # Verificar si al menos un campo tiene datos reales
+        for field in fields_to_check:
+            value = row_data.get(field)
+            if value and str(value).strip() not in ['-', '', 'None', 'null']:
+                return True
+        
+        return False
 
 
 class DataClearView(APIView):

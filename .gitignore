@@ -10,6 +10,7 @@ lerna-debug.log*
 
 **/node_modules
 **/venv
+**/.venv
 **/**/**/*.pyc
 dist
 dist-ssr
