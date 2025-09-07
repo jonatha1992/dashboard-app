@@ -108,7 +108,32 @@ const processJsonData = (jsonData) => {
         return s;
     };
 
-    return jsonData.map(item => ({
+    // Filtrar registros con datos válidos (sin valores "-" o vacíos en campos clave)
+    const validData = jsonData.filter(item => {
+        // Filtrar registros con fechas inválidas
+        const fecha = item.FECHA || '';
+        if (!fecha || fecha.toString().trim() === '-' || fecha.toString().trim() === '') return false;
+        
+        // Validar formato de fecha dd/mm/yyyy
+        if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fecha.toString().trim())) return false;
+        
+        // Filtrar registros sin descripción válida
+        const desc = item.DESCRIPCIÓN || item.DESCRIPCION || '';
+        if (!desc || desc.toString().trim() === '-' || desc.toString().trim() === '') return false;
+        
+        // Filtrar registros con coordenadas inválidas
+        const lat = parseFloat(item.LATITUD || item['Latitud Decimal'] || 0);
+        const lng = parseFloat(item.LONGITUD || 0);
+        if (lat === 0 && lng === 0) return false; // Coordenadas (0,0) probablemente inválidas
+        
+        // Filtrar registros sin provincia válida
+        const provincia = item.PROVINCIA || '';
+        if (!provincia || provincia.toString().trim() === '-' || provincia.toString().trim() === '') return false;
+        
+        return true;
+    });
+
+    return validData.map(item => ({
         ...item,
         // Asegurarse de que las coordenadas sean números
         LATITUD: parseFloat(item.LATITUD || item['Latitud Decimal'] || 0),
@@ -183,8 +208,10 @@ export const getCategorizedData = (data) => {
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
 
             return desc.includes('detención') || desc.includes('detenido') ||
-                desc.includes('arresto') || tipo.includes('detención') ||
-                tipo.includes('detenido');
+                desc.includes('arresto') || desc.includes('aprehendido') ||
+                desc.includes('capturado') || desc.includes('arrestado') ||
+                tipo.includes('detención') || tipo.includes('detenido') ||
+                tipo.includes('aprehensión') || tipo.includes('arrestado');
         }),
         controlados: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
@@ -192,7 +219,9 @@ export const getCategorizedData = (data) => {
 
             return desc.includes('control') || tipo.includes('control') ||
                 desc.includes('verificación') || desc.includes('despliegue') ||
-                desc.includes('controlado');
+                desc.includes('controlado') || desc.includes('revisión') ||
+                desc.includes('inspección') || desc.includes('identificación') ||
+                tipo.includes('preventivo');
         }),
         afectados: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
@@ -236,7 +265,11 @@ export const getCategorizedData = (data) => {
                 desc.includes('arma') || desc.includes('narcótico') ||
                 desc.includes('narcotrafico') || desc.includes('narcotráfico') ||
                 desc.includes('sustancia') || desc.includes('estupefaciente') ||
-                tipo.includes('incautación');
+                desc.includes('cocaína') || desc.includes('marihuana') ||
+                desc.includes('cannabis') || desc.includes('heroína') ||
+                desc.includes('arma de fuego') || desc.includes('pistola') ||
+                desc.includes('revolver') || desc.includes('munición') ||
+                tipo.includes('incautación') || tipo.includes('secuestro');
         }),
     };
 
@@ -261,8 +294,11 @@ export const getChartData = (data, category) => {
         return acc;
     }, {});
 
-    // Convert monthlyMap into labels in locale order
-    const monthlyKeys = Object.keys(monthlyMap).sort();
+    // Solo incluir meses con datos reales (filtrar enero 2025 únicamente basado en datos de DB)
+    const monthlyKeys = Object.keys(monthlyMap)
+        .filter(key => monthlyMap[key] > 0) // Solo períodos con datos
+        .filter(key => key.startsWith('2025-01')) // Solo enero 2025
+        .sort();
     const monthlyData = monthlyKeys.reduce((acc, key) => {
         const [y, m] = key.split('-');
         const date = new Date(Number(y), Number(m) - 1, 1);

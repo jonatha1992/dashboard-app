@@ -520,7 +520,7 @@ const ComparisonDashboard = () => {
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-3">📈 Estadísticas Comparativas</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {comparisonStats.slice(0, 6).map((stat, index) => (
+                {comparisonStats.slice(0, 6).map((stat) => (
                   <div key={stat.provincia} className="bg-gray-50 p-4 rounded-lg">
                     <h4 className="font-medium text-gray-800 mb-2">{stat.provincia}</h4>
                     <div className="space-y-1 text-sm">

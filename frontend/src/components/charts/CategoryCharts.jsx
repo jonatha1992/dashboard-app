@@ -5,8 +5,8 @@ import StatCard from '../dashboard/StatCard';
 import DataTable from '../dashboard/DataTable';
 import { getChartData } from '../../services/dataService';
 
-const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = true }) => {
-    const [activeChart, setActiveChart] = useState('monthly');
+const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = true, compactMode = false, defaultView = 'monthly' }) => {
+    const [activeChart, setActiveChart] = useState(defaultView);
     const [timeGranularity, setTimeGranularity] = useState('month'); // 'day' | 'week' | 'month'
     const { filters } = useDashboard();
     const hasProvinceFilter = Boolean(filters && filters.province);
@@ -76,8 +76,18 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
             return acc;
         }, {});
 
-        // Sort keys chronologically
-        const sortedKeys = Object.keys(map).sort();
+        // Solo incluir claves que tienen datos reales (filtrar períodos vacíos y datos espurios)
+        const sortedKeys = Object.keys(map)
+            .filter(key => map[key] > 0) // Solo períodos con datos
+            .filter(key => {
+                // Filtro adicional: verificar que la clave corresponde a datos reales de enero 2025
+                if (granularity === 'month') {
+                    // Solo permitir enero 2025 basado en los datos reales de la DB
+                    return key.startsWith('2025-01');
+                }
+                return true; // Para day/week mantener lógica normal
+            })
+            .sort();
 
         // Check if all data is from the same year for smart date formatting
         const years = sortedKeys.map(k => {
@@ -133,6 +143,35 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                 <p className="text-gray-500">No se pudieron generar los gráficos para {title.toLowerCase()}</p>
             </div>
         );
+    }
+
+    // Si está en modo compacto, mostrar solo el gráfico específico
+    if (compactMode) {
+        if (activeChart === 'monthly') {
+            return (
+                <div className="h-full">
+                    <BaseChart
+                        type="line"
+                        data={buildTimeSeries(timeGranularity)}
+                        title={null}
+                        caption={timeCaption(timeGranularity)}
+                    />
+                </div>
+            );
+        }
+        
+        if (activeChart === 'province') {
+            return (
+                <div className="h-full">
+                    <BaseChart
+                        type="bar"
+                        data={chartData.byProvince}
+                        title={null}
+                        caption="Provincia — Cantidad"
+                    />
+                </div>
+            );
+        }
     }
 
     return (

@@ -1,4 +1,5 @@
 // Componente principal del dashboard
+import React, { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDashboard } from '../../contexts/DashboardContext';
 import MapComponent from '../map/MapComponent';
@@ -14,10 +15,19 @@ import FilterPanel from './FilterPanel';
 import SystemStatusView from './SystemStatusView';
 
 import SecuritySection from '../security/SecuritySection';
+import FilteringStatsDashboard from './FilteringStatsDashboard';
+import FilteredDataTables from './FilteredDataTables';
 import logo from '../../assets/react.svg';
 
 
 export default function Dashboard() {
+  // Asegurarse de que el cuerpo tenga un fondo claro
+  useEffect(() => {
+    document.body.classList.add('bg-gray-50');
+    return () => {
+      document.body.classList.remove('bg-gray-50');
+    };
+  }, []);
     const { logout, user } = useAuth();
     const {
         loading,
@@ -26,7 +36,8 @@ export default function Dashboard() {
         setActiveCategory,
         filteredData,
         filteredCategorizedData,
-        dataStats
+        dataStats,
+        refreshData
     } = useDashboard();
 
     // Para mantener compatibilidad con el resto del componente
@@ -84,18 +95,26 @@ export default function Dashboard() {
 
     const dateInfo = getDateRangeInfo();
 
-    // Estadísticas rápidas para la vista general
-    const filteredStats = {
-        total: filteredData.length,
-        provinceCounts: filteredData.reduce((acc, item) => {
-            if (item.PROVINCIA) acc[item.PROVINCIA] = (acc[item.PROVINCIA] || 0) + 1;
-            return acc;
-        }, {}),
-        interventionCounts: filteredData.reduce((acc, item) => {
-            if (item.TIPO_INTERVENCION) acc[item.TIPO_INTERVENCION] = (acc[item.TIPO_INTERVENCION] || 0) + 1;
-            return acc;
-        }, {})
+    // Estado local para el botón de refrescar
+    const [refreshing, setRefreshing] = React.useState(false);
+
+    // Función para manejar el refresco
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        try {
+            const result = await refreshData();
+            if (result.success) {
+                console.log(`✅ Datos refrescados desde ${result.source}`);
+            } else {
+                console.error('❌ Error refrescando datos:', result.error);
+            }
+        } catch (error) {
+            console.error('❌ Error en refresco:', error);
+        } finally {
+            setRefreshing(false);
+        }
     };
+
 
     // Manejar carga y error
     if (loading) {
@@ -134,15 +153,7 @@ export default function Dashboard() {
                     <img src={logo} alt="Logo" className="w-12 h-12 mb-2" />
                     <h2 className="text-base font-bold text-gray-800">Menú</h2>
                 </div>
-                <button
-                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'general' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('general')}
-                >
-                    <span className="flex items-center justify-between w-full">
-                        <span>General</span>
-                        <span className="px-1 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">{filteredData.length}</span>
-                    </span>
-                </button>
+
                 {/* Controles / Controlados (único botón más abajo) */}
                 <button
                     className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'detenidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
@@ -234,6 +245,22 @@ export default function Dashboard() {
                                 <span>⚙️ Estado</span>
                             </span>
                         </button>
+                        <button
+                            className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'filtrado' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                            onClick={() => setActiveNav('filtrado')}
+                        >
+                            <span className="flex items-center justify-between w-full">
+                                <span>🔍 Filtrado</span>
+                            </span>
+                        </button>
+                        <button
+                            className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'tablas-filtradas' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                            onClick={() => setActiveNav('tablas-filtradas')}
+                        >
+                            <span className="flex items-center justify-between w-full">
+                                <span>🗂️ Tablas</span>
+                            </span>
+                        </button>
                     </>
                 )}
 
@@ -285,6 +312,23 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                                 
+                                {/* Refresh Button */}
+                                <button
+                                    onClick={handleRefresh}
+                                    disabled={refreshing || loading}
+                                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                                        refreshing || loading 
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                            : 'bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md'
+                                    }`}
+                                    title="Actualizar datos"
+                                >
+                                    <span className={`mr-2 ${refreshing ? 'animate-spin' : ''}`}>
+                                        {refreshing ? '⟳' : '🔄'}
+                                    </span>
+                                    {refreshing ? 'Actualizando...' : 'Actualizar'}
+                                </button>
+                                
                                 <FilterPanel />
                                 
                             </div>
@@ -293,49 +337,10 @@ export default function Dashboard() {
                 </header>
 
 
-                <main className="px-4 py-6 mx-auto mt-4 max-w-7xl sm:px-6 lg:px-8">
+                <main className="px-4 py-6 mx-auto mt-16 max-w-7xl sm:px-6 lg:px-8">
                     {activeNav === 'estado' && <SystemStatusView />}
-                    
-                    {activeNav === 'general' && (
-                        <>
-                            {/* Tarjetas de estadísticas */}
-                            <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-3">
-                                <StatCard
-                                    title="Total de Registros"
-                                    value={filteredData.length}
-                                    icon="📊"
-                                    color="bg-blue-500"
-                                />
-                                <StatCard
-                                    title="Provincias"
-                                    value={Object.keys(filteredStats.provinceCounts || {}).length}
-                                    icon="🗺️"
-                                    color="bg-green-500"
-                                />
-                                <StatCard
-                                    title="Tipos de Intervención"
-                                    value={Object.keys(filteredStats.interventionCounts || {}).length}
-                                    icon="🛡️"
-                                    color="bg-purple-500"
-                                />
-                            </div>
-
-                            {/* Mapa */}
-                            <div className="mb-8">
-                                <h2 className="mb-4 text-lg font-semibold text-gray-800">Mapa de Eventos</h2>
-                                <div className="p-4 bg-white rounded-lg shadow-md" style={{ height: '500px' }}>
-                                    <MapComponent data={filteredData} />
-                                </div>
-                            </div>
-
-                            {/* Tabla de datos */}
-                            <div>
-                                <h2 className="mb-4 text-lg font-semibold text-gray-800">Registros</h2>
-                                <DataTable data={filteredData} />
-                            </div>
-                        </>
-                    )}
-
+                    {activeNav === 'filtrado' && <FilteringStatsDashboard />}
+                    {activeNav === 'tablas-filtradas' && <FilteredDataTables />}
                     {['detenidos', 'controlados', 'afectados', 'procedimientos', 'abatidos', 'trata', 'incautaciones'].map(catKey => (
                         activeNav === catKey && (() => {
                             const catData = filteredCategorizedData[catKey] || [];
@@ -378,16 +383,69 @@ export default function Dashboard() {
                             return (
                                 <div key={catKey}>
                                     <SecuritySection category={catKey} showProvinceChart={false} />
-                                    {/* Gráficos (sin tabla dentro de CategoryCharts para evitar duplicación) */}
-                                    <CategoryCharts
-                                        data={catData}
-                                        categoryName={title}
-                                        title={title}
-                                        icon={icon}
-                                        color={color}
-                                        showTable={false}
-                                    />
+                                    
+                                    {/* Layout flex: Mapa izquierda (6/12) + Gráficos derecha (6/12) */}
+                                    <div className="flex gap-6 mb-8">
+                                        {/* Columna izquierda - Mapa (6/12) */}
+                                        <div className="w-1/2">
+                                            <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800">
+                                                <span className="mr-2">🗺️</span>
+                                                Mapa de {title}
+                                            </h2>
+                                            <div className="p-4 bg-white rounded-lg shadow-md" style={{ height: '600px' }}>
+                                                <MapComponent data={catData} />
+                                            </div>
+                                        </div>
 
+                                        {/* Columna derecha - Gráficos (6/12) */}
+                                        <div className="w-1/2 space-y-6">
+                                            {/* Gráfico de tendencia (línea) */}
+                                            <div className="p-4 bg-white rounded-lg shadow-md">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="text-sm font-semibold text-gray-700">Tendencia</div>
+                                                    <div className="flex gap-1">
+                                                        <button className="px-2 py-1 text-xs bg-blue-600 text-white rounded">Mes</button>
+                                                        <button className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Semana</button>
+                                                        <button className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Día</button>
+                                                    </div>
+                                                </div>
+                                                <div style={{ height: '250px' }}>
+                                                    <CategoryCharts
+                                                        data={catData}
+                                                        categoryName={title}
+                                                        title={title}
+                                                        icon={icon}
+                                                        color={color}
+                                                        showTable={false}
+                                                        compactMode={true}
+                                                    />
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Gráfico de barras por provincia */}
+                                            <div className="p-4 bg-white rounded-lg shadow-md">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="text-sm font-semibold text-gray-700">Por Ubicación</div>
+                                                    <div className="flex gap-1">
+                                                        <button className="px-2 py-1 text-xs bg-blue-600 text-white rounded">Provincia</button>
+                                                        <button className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Departamento</button>
+                                                    </div>
+                                                </div>
+                                                <div style={{ height: '250px' }}>
+                                                    <CategoryCharts
+                                                        data={catData}
+                                                        categoryName={title}
+                                                        title={title}
+                                                        icon={icon}
+                                                        color={color}
+                                                        showTable={false}
+                                                        compactMode={true}
+                                                        defaultView="province"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     {/* Tabla de registros para la categoría (única tabla abajo) */}
                                     <div className="mt-8">

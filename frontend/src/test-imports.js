@@ -19,7 +19,7 @@ try {
   });
 
   // Test analysis components
-  import('./components/analysis/AnalysisMain.jsx').then(module => {
+  import('./components/analysis/AnalysisMain.jsx').then(() => {
     console.log('✅ AnalysisMain component imported successfully');
   }).catch(error => {
     console.error('❌ Error importing AnalysisMain:', error);

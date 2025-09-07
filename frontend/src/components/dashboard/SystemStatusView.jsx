@@ -18,7 +18,8 @@ import {
   Paper,
   Divider,
   IconButton,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -34,11 +35,9 @@ import {
   Assessment as AssessmentIcon
 } from '@mui/icons-material';
 import { analysisService } from '../../services/analysisService';
-import { useDashboard } from '../../contexts/DashboardContext';
 import ExcelUpload from './ExcelUpload';
 
 const SystemStatusView = () => {
-  const { filters } = useDashboard(); // Get current filters from dashboard context
   const [dwStatus, setDwStatus] = useState(null);
   const [etlStatus, setEtlStatus] = useState(null);
   const [provinciasDisponibles, setProvinciasDisponibles] = useState([]);
@@ -49,7 +48,6 @@ const SystemStatusView = () => {
 
   useEffect(() => {
     loadAllStatus();
-    // Auto refresh cada 10 segundos cuando el ETL está corriendo, sino cada minuto
     const interval = setInterval(() => {
       loadAllStatus();
     }, etlRunning ? 10000 : 60000);
@@ -83,7 +81,6 @@ const SystemStatusView = () => {
     try {
       const result = await analysisService.runETL();
       setEtlResult(result);
-      // Recargar estado después de un breve delay
       setTimeout(() => {
         loadAllStatus();
       }, 3000);
@@ -100,19 +97,33 @@ const SystemStatusView = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'ready': return 'success';
-      case 'empty': return 'warning';
-      case 'error': return 'error';
-      default: return 'default';
+      case 'ready':
+      case 'healthy':
+      case 'success':
+        return 'success';
+      case 'empty':
+      case 'warning':
+        return 'warning';
+      case 'error':
+        return 'error';
+      default:
+        return 'default';
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'ready': return <CheckCircleIcon />;
-      case 'empty': return <WarningIcon />;
-      case 'error': return <ErrorIcon />;
-      default: return <InfoIcon />;
+      case 'ready':
+      case 'healthy':
+      case 'success':
+        return <CheckCircleIcon />;
+      case 'empty':
+      case 'warning':
+        return <WarningIcon />;
+      case 'error':
+        return <ErrorIcon />;
+      default:
+        return <InfoIcon />;
     }
   };
 
@@ -130,20 +141,6 @@ const SystemStatusView = () => {
 
   const formatNumber = (num) => {
     return new Intl.NumberFormat('es-ES').format(num || 0);
-  };
-
-  const formatFilterDate = (dateStr) => {
-    if (!dateStr) {
-      return 'No especificado';
-    }
-    
-    // Las fechas ahora vienen en formato ISO desde el backend corregido
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
   };
 
   const calculateTotalRecords = () => {
@@ -172,43 +169,48 @@ const SystemStatusView = () => {
   const systemHealth = getSystemHealth();
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="system-status p-6 bg-white rounded-lg shadow-md my-6">
       {/* Header */}
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
-        <Box display="flex" alignItems="center" gap={2}>
-          <SpeedIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-          <Box>
-            <Typography variant="h4" component="h1" fontWeight="bold">
-              Estado del Sistema
-            </Typography>
-            <Typography variant="subtitle1" color="text.secondary">
-              Data Warehouse y Procesamiento ETL
-            </Typography>
-          </Box>
-        </Box>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+            <SpeedIcon className="mr-2 text-blue-600" />
+            Estado del Sistema
+          </h2>
+          <p className="text-sm text-gray-500">Data Warehouse y Procesamiento ETL</p>
+        </div>
         
-        <Box display="flex" alignItems="center" gap={2}>
+        <div className="flex items-center gap-2">
+          <Tooltip title="Actualizar estado">
+            <IconButton 
+              onClick={loadAllStatus} 
+              disabled={loading || etlRunning}
+              className="hover:bg-blue-50"
+            >
+              <RefreshIcon className={loading ? 'animate-spin' : ''} />
+            </IconButton>
+          </Tooltip>
+          
           <Chip
             icon={getStatusIcon(systemHealth.status)}
             label={systemHealth.message}
             color={getStatusColor(systemHealth.status)}
             variant="outlined"
+            className="hidden md:flex"
           />
-          <ExcelUpload />
+          
           <Button
             variant="contained"
-            startIcon={<PlayArrowIcon />}
+            color="primary"
+            startIcon={etlRunning ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
             onClick={runETL}
-            disabled={etlRunning || loading}
-            color="success"
+            disabled={etlRunning}
+            className="bg-blue-600 hover:bg-blue-700"
           >
             {etlRunning ? 'Ejecutando ETL...' : 'Ejecutar ETL'}
           </Button>
-          <IconButton onClick={loadAllStatus} disabled={loading}>
-            <RefreshIcon />
-          </IconButton>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Loading indicator */}
       {loading && <LinearProgress sx={{ mb: 3 }} />}
@@ -235,7 +237,7 @@ const SystemStatusView = () => {
             <br />
             {etlResult.message}
             {etlResult.details && (
-              <Box sx={{ mt: 1, fontSize: '0.875rem' }}>
+              <Box component="div" sx={{ mt: 1, fontSize: '0.875rem' }}>
                 • Registros de tiempo: {formatNumber(etlResult.details.tiempo_records)}
                 <br />
                 • Registros de geografía: {formatNumber(etlResult.details.geografia_records)}
@@ -253,9 +255,9 @@ const SystemStatusView = () => {
 
       {/* System Overview Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={3}>
-          <Card sx={{ textAlign: 'center', height: '100%' }}>
-            <CardContent>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ textAlign: 'center' }}>
               <AssessmentIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
               <Typography variant="h4" color="primary">
                 {formatNumber(calculateTotalRecords())}
@@ -267,9 +269,9 @@ const SystemStatusView = () => {
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={3}>
-          <Card sx={{ textAlign: 'center', height: '100%' }}>
-            <CardContent>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ textAlign: 'center' }}>
               <TimelineIcon sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
               <Typography variant="h4" color="success.main">
                 {formatNumber(dwStatus?.tablas?.fact_procedimientos || 0)}
@@ -281,9 +283,9 @@ const SystemStatusView = () => {
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={3}>
-          <Card sx={{ textAlign: 'center', height: '100%' }}>
-            <CardContent>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ textAlign: 'center' }}>
               <StorageIcon sx={{ fontSize: 48, color: 'warning.main', mb: 1 }} />
               <Typography variant="h4" color="warning.main">
                 {provinciasDisponibles.length}
@@ -295,9 +297,9 @@ const SystemStatusView = () => {
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={3}>
-          <Card sx={{ textAlign: 'center', height: '100%' }}>
-            <CardContent>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ textAlign: 'center' }}>
               <CloudSyncIcon sx={{ fontSize: 48, color: 'info.main', mb: 1 }} />
               <Typography variant="h6" color="info.main">
                 {formatDateTime(etlStatus?.ultima_carga)}
@@ -311,176 +313,102 @@ const SystemStatusView = () => {
       </Grid>
 
       {/* Detailed Tables Information */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} lg={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
-                <StorageIcon /> Estado de Tablas del Data Warehouse
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell><strong>Tabla</strong></TableCell>
-                      <TableCell align="right"><strong>Registros</strong></TableCell>
-                      <TableCell><strong>Estado</strong></TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>Dimensión Tiempo</TableCell>
-                      <TableCell align="right">{formatNumber(dwStatus?.tablas?.dim_tiempo || 0)}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          size="small" 
-                          label={dwStatus?.tablas?.dim_tiempo > 0 ? 'OK' : 'Vacía'} 
-                          color={dwStatus?.tablas?.dim_tiempo > 0 ? 'success' : 'warning'}
-                        />
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Dimensión Geografía</TableCell>
-                      <TableCell align="right">{formatNumber(dwStatus?.tablas?.dim_geografia || 0)}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          size="small" 
-                          label={dwStatus?.tablas?.dim_geografia > 0 ? 'OK' : 'Vacía'} 
-                          color={dwStatus?.tablas?.dim_geografia > 0 ? 'success' : 'warning'}
-                        />
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Tabla de Hechos</TableCell>
-                      <TableCell align="right">{formatNumber(dwStatus?.tablas?.fact_procedimientos || 0)}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          size="small" 
-                          label={dwStatus?.tablas?.fact_procedimientos > 0 ? 'OK' : 'Vacía'} 
-                          color={dwStatus?.tablas?.fact_procedimientos > 0 ? 'success' : 'error'}
-                        />
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Agregaciones Provinciales</TableCell>
-                      <TableCell align="right">{formatNumber(dwStatus?.tablas?.agg_mensual_provincia || 0)}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          size="small" 
-                          label={dwStatus?.tablas?.agg_mensual_provincia > 0 ? 'OK' : 'Vacía'} 
-                          color={dwStatus?.tablas?.agg_mensual_provincia > 0 ? 'success' : 'warning'}
-                        />
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Agregaciones Departamentales</TableCell>
-                      <TableCell align="right">{formatNumber(dwStatus?.tablas?.agg_mensual_departamento || 0)}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          size="small" 
-                          label={dwStatus?.tablas?.agg_mensual_departamento > 0 ? 'OK' : 'Vacía'} 
-                          color={dwStatus?.tablas?.agg_mensual_departamento > 0 ? 'success' : 'warning'}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
+            <StorageIcon /> Estado de Tablas del Data Warehouse
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          
+          <TableContainer component={Paper}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell><strong>Tabla</strong></TableCell>
+                  <TableCell align="right"><strong>Registros</strong></TableCell>
+                  <TableCell><strong>Estado</strong></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Dimensión Tiempo</TableCell>
+                  <TableCell align="right">{formatNumber(dwStatus?.tablas?.dim_tiempo || 0)}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      size="small" 
+                      label={dwStatus?.tablas?.dim_tiempo > 0 ? 'OK' : 'Vacía'} 
+                      color={dwStatus?.tablas?.dim_tiempo > 0 ? 'success' : 'warning'}
+                    />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Dimensión Geografía</TableCell>
+                  <TableCell align="right">{formatNumber(dwStatus?.tablas?.dim_geografia || 0)}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      size="small" 
+                      label={dwStatus?.tablas?.dim_geografia > 0 ? 'OK' : 'Vacía'} 
+                      color={dwStatus?.tablas?.dim_geografia > 0 ? 'success' : 'warning'}
+                    />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Tabla de Hechos</TableCell>
+                  <TableCell align="right">{formatNumber(dwStatus?.tablas?.fact_procedimientos || 0)}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      size="small" 
+                      label={dwStatus?.tablas?.fact_procedimientos > 0 ? 'OK' : 'Vacía'} 
+                      color={dwStatus?.tablas?.fact_procedimientos > 0 ? 'success' : 'error'}
+                    />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Agregaciones Provinciales</TableCell>
+                  <TableCell align="right">{formatNumber(dwStatus?.tablas?.agg_mensual_provincia || 0)}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      size="small" 
+                      label={dwStatus?.tablas?.agg_mensual_provincia > 0 ? 'OK' : 'Vacía'} 
+                      color={dwStatus?.tablas?.agg_mensual_provincia > 0 ? 'success' : 'warning'}
+                    />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Agregaciones Departamentales</TableCell>
+                  <TableCell align="right">{formatNumber(dwStatus?.tablas?.agg_mensual_departamento || 0)}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      size="small" 
+                      label={dwStatus?.tablas?.agg_mensual_departamento > 0 ? 'OK' : 'Vacía'} 
+                      color={dwStatus?.tablas?.agg_mensual_departamento > 0 ? 'success' : 'warning'}
+                    />
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
 
-        <Grid item xs={12} lg={6}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
-                <InfoIcon /> Información del Sistema
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Rango de Datos Filtrados
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Desde:</strong> {formatFilterDate(filters.fromDate)}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 2 }}>
-                  <strong>Hasta:</strong> {formatFilterDate(filters.toDate)}
-                </Typography>
-                {filters.province && (
-                  <Typography variant="body2" sx={{ mb: 2 }}>
-                    <strong>Provincia:</strong> {filters.province}
-                  </Typography>
-                )}
-              </Box>
+      {/* Excel Upload Section */}
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Cargar Datos desde Excel
+          </Typography>
+          <Divider sx={{ mb: 3 }} />
+          <ExcelUpload onUploadSuccess={loadAllStatus} />
+        </CardContent>
+      </Card>
 
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Rango Completo Disponible
-                </Typography>
-                <Typography variant="body2" sx={{ fontSize: '0.875rem', color: 'text.disabled' }}>
-                  <strong>Desde:</strong> {formatDateTime(dwStatus?.rango_fechas?.fecha_minima)}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 2, fontSize: '0.875rem', color: 'text.disabled' }}>
-                  <strong>Hasta:</strong> {formatDateTime(dwStatus?.rango_fechas?.fecha_maxima)}
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Estado del ETL
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Estado:</strong> {etlStatus?.etl_status === 'ready' ? 'Listo' : 'No ejecutado'}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Registros procesados:</strong> {formatNumber(etlStatus?.facts_count || 0)}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Última Actualización
-                </Typography>
-                <Typography variant="body2">
-                  {formatDateTime(lastUpdate)}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Provincias disponibles - tabla completa */}
-        {provinciasDisponibles.length > 0 && (
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Provincias Disponibles ({provinciasDisponibles.length})
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                
-                <Grid container spacing={1}>
-                  {provinciasDisponibles.map((provincia, index) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-                      <Chip 
-                        label={provincia.provincia} 
-                        variant="outlined" 
-                        size="small"
-                        sx={{ width: '100%', justifyContent: 'flex-start' }}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    </Box>
+      {/* Last Update */}
+      <Box sx={{ mt: 2, textAlign: 'right' }}>
+        <Typography variant="caption" color="text.secondary">
+          Última actualización: {lastUpdate ? formatDateTime(lastUpdate) : 'Nunca'}
+        </Typography>
+      </Box>
+    </div>
   );
 };
 

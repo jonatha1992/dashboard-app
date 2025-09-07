@@ -83,22 +83,58 @@ export class AnalysisService {
   }
 
   /**
-   * Obtiene estado del Data Warehouse
-   * @returns {Promise} Estado del DW (tablas, fechas, provincias disponibles)
+   * Obtiene el estado actual del Data Warehouse
+   * @returns {Promise<Object>} Estado del DW con información de tablas y conteos
    */
   async getDWStatus() {
     try {
       const response = await apiService.get('/dw/status/');
       return response.data;
     } catch (error) {
-      console.error('Error obteniendo estado DW:', error);
-      throw error;
+      console.error('Error obteniendo estado del Data Warehouse:', error);
+      return {
+        status: 'error',
+        message: 'Error al conectar con el servidor',
+        tablas: {}
+      };
     }
   }
 
   /**
-   * Ejecuta el proceso ETL completo
-   * @returns {Promise} Resultado de la ejecución ETL
+   * Obtiene el estado del último proceso ETL
+   * @returns {Promise<Object>} Estado del último ETL ejecutado
+   */
+  async getETLStatus() {
+    try {
+      const response = await apiService.get('/dw/etl/status/');
+      return response.data;
+    } catch (error) {
+      console.error('Error obteniendo estado del ETL:', error);
+      return {
+        ultima_carga: null,
+        estado: 'error',
+        mensaje: 'Error al conectar con el servidor'
+      };
+    }
+  }
+
+  /**
+   * Obtiene la lista de provincias disponibles en el sistema
+   * @returns {Promise<Array>} Lista de provincias
+   */
+  async getProvinciasDisponibles() {
+    try {
+      const response = await apiService.get('/dw/provincias/');
+      return response.data;
+    } catch (error) {
+      console.error('Error obteniendo provincias disponibles:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Ejecuta el proceso ETL
+   * @returns {Promise<Object>} Resultado de la ejecución del ETL
    */
   async runETL() {
     try {
@@ -106,35 +142,11 @@ export class AnalysisService {
       return response.data;
     } catch (error) {
       console.error('Error ejecutando ETL:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Obtiene estado del ETL
-   * @returns {Promise} Estado actual del ETL
-   */
-  async getETLStatus() {
-    try {
-      const response = await apiService.get('/dw/etl/status/');
-      return response.data;
-    } catch (error) {
-      console.error('Error obteniendo estado ETL:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Obtiene lista de provincias disponibles
-   * @returns {Promise} Lista de provincias con sus claves normalizadas
-   */
-  async getProvinciasDisponibles() {
-    try {
-      const response = await apiService.get('/dw/provincias/');
-      return response.data.data || [];
-    } catch (error) {
-      console.error('Error obteniendo provincias:', error);
-      return [];
+      return {
+        status: 'error',
+        message: error.response?.data?.message || 'Error al ejecutar el ETL',
+        details: error.response?.data?.details
+      };
     }
   }
 
@@ -152,16 +164,10 @@ export class AnalysisService {
       };
     }
 
-    // Agrupar por provincia si hay múltiples
-    const groupedData = rawData.reduce((acc, item) => {
-      const provincia = item.provincia_nombre || 'Sin provincia';
-      if (!acc[provincia]) {
-        acc[provincia] = [];
-      }
-      acc[provincia].push(item);
-      return acc;
-    }, {});
+    // Determinar si es mensual o trimestral según presencia de campos
+    const isQuarterly = Boolean(rawData[0]?.año_trimestre);
 
+    // Colores predefinidos
     const colors = [
       'rgb(75, 192, 192)',
       'rgb(255, 99, 132)',
@@ -171,22 +177,64 @@ export class AnalysisService {
       'rgb(255, 159, 64)'
     ];
 
-    const labels = rawData.length > 0 ? 
-      [...new Set(rawData.map(item => item.mes_nombre || item.año_trimestre))] : [];
+    // %rar etiquetas objetivo ordenadas y claves de alineación
+    let labels = [];
+    let labelKeys = [];
 
-    const datasets = Object.entries(groupedData).map(([provincia, data], index) => ({
-      label: provincia,
-      data: data.map(item => item[metrica] || 0),
-      borderColor: colors[index % colors.length],
-      backgroundColor: colors[index % colors.length] + '20',
-      tension: 0.1,
-      fill: false
-    }));
+    if (isQuarterly) {
+      // Para trimestral, siempre Q1..Q4
+      labels = ['Q1', 'Q2', 'Q3', 'Q4'];
+      labelKeys = ['-Q1', '-Q2', '-Q3', '-Q4'];
+    } else {
+      // Para mensual, generar 12 meses en español
+      const meses = [
+        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+      ];
+      labels = meses;
+      // Usaremos el número de mes 1..12 como clave de alineación
+      labelKeys = Array.from({ length: 12 }, (_, i) => i + 1);
+    }
 
-    return {
-      labels,
-      datasets
-    };
+    // Agrupar por provincia y crear un mapa {keyPeriodo -> valor}
+    const grouped = rawData.reduce((acc, item) => {
+      const provincia = item.provincia_nombre || 'Sin provincia';
+      if (!acc[provincia]) acc[provincia] = {};
+
+      if (isQuarterly) {
+        // año_trimestre forma "YYYY-QN"; guardamos por sufijo QN
+        const qKey = String(item.año_trimestre).slice(-2); // "Q1".."Q4"
+        acc[provincia][qKey] = item[metrica] || 0;
+      } else {
+        // usar número de mes para alineación
+        const mesNumero = Number(item.mes);
+        acc[provincia][mesNumero] = item[metrica] || 0;
+      }
+      return acc;
+    }, {});
+
+    // Construir datasets alineando contra labels y rellenando 0 cuando falte
+    const datasets = Object.entries(grouped).map(([provincia, valuesMap], idx) => {
+      const aligned = labelKeys.map(k => {
+        if (isQuarterly) {
+          // k será "-Q1" etc; buscamos por sufijo
+          const q = k.replace('-', '');
+          return valuesMap[q] ?? 0;
+        }
+        return valuesMap[k] ?? 0;
+      });
+
+      return {
+        label: provincia,
+        data: aligned,
+        borderColor: colors[idx % colors.length],
+        backgroundColor: colors[idx % colors.length] + '20',
+        tension: 0.1,
+        fill: false
+      };
+    });
+
+    return { labels, datasets };
   }
 
   /**

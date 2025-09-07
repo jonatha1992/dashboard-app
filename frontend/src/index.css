@@ -6,4 +6,63 @@ body {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+}
+
+/* Estilos para el contenedor principal */
+.main-container {
+  @apply px-4 py-6 mx-auto mt-4 max-w-7xl sm:px-6 lg:px-8;
+}
+
+/* Estilos para las tarjetas */
+.stat-card {
+  @apply bg-white rounded-lg shadow-md p-4 flex items-center transition-all duration-200 hover:shadow-lg;
+}
+
+/* Ajustes para el mapa */
+.map-container {
+  @apply p-4 bg-white rounded-lg shadow-md h-[500px] w-full;
+}
+
+/* Ajustes para los elementos del sistema */
+.system-status {
+  @apply mt-8 mb-6;
+}
+
+/* Ajustes para los botones */
+.action-button {
+  @apply px-4 py-2 rounded-md font-medium transition-colors duration-200;
+}
+
+/* Ajustes para el encabezado */
+.dashboard-header {
+  @apply mb-8;
+}
+
+/* Ajustes para las tablas de datos */
+.data-table {
+  @apply w-full mt-6 overflow-hidden rounded-lg shadow-md;
+}
+
+/* Ajustes para los mensajes de estado */
+.status-message {
+  @apply p-3 rounded-md mb-4 flex items-center;
+}
+
+.status-message.success {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-message.error {
+  @apply bg-red-100 text-red-800;
+}
+
+.status-message.warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+/* Ajustes para los elementos de filtro */
+.filter-section {
+  @apply mb-6 p-4 bg-gray-50 rounded-lg;
 }

@@ -28,7 +28,25 @@ const ARGENTINE_PROVINCES = [
 ].sort();
 
 export default function UnifiedFilter() {
-    const { filters, setFilters } = useDashboard();
+    const { filters, setFilters, dataStats } = useDashboard();
+    
+    // Obtener límites de fechas reales desde dataStats
+    const getDateLimits = () => {
+        if (!dataStats || !dataStats.dateRange) return { min: null, max: null };
+        
+        const { earliest, latest } = dataStats.dateRange;
+        
+        if (!earliest || !latest || earliest === '-' || latest === '-') {
+            return { min: null, max: null };
+        }
+        
+        return {
+            min: earliest,
+            max: latest
+        };
+    };
+
+    const dateLimits = getDateLimits();
 
     const handleFromDateChange = (e) => {
         setFilters({ ...filters, fromDate: e.target.value });
@@ -40,7 +58,15 @@ export default function UnifiedFilter() {
         setFilters({ ...filters, province: e.target.value });
     };
     const clearAllFilters = () => {
-        setFilters({ fromDate: '', toDate: '', province: '' });
+        // Usar las fechas reales disponibles en lugar de vacío
+        const realDateRange = dateLimits.min && dateLimits.max 
+            ? { fromDate: dateLimits.min, toDate: dateLimits.max }
+            : { fromDate: '', toDate: '' };
+        
+        setFilters({
+            ...realDateRange,
+            province: ''
+        });
     };
     const hasActiveFilters = filters.fromDate || filters.toDate || filters.province;
 
@@ -76,6 +102,8 @@ export default function UnifiedFilter() {
                         id="fromDate"
                         type="date"
                         value={filters.fromDate || ''}
+                        min={dateLimits.min || undefined}
+                        max={dateLimits.max || undefined}
                         onChange={handleFromDateChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -90,6 +118,8 @@ export default function UnifiedFilter() {
                         id="toDate"
                         type="date"
                         value={filters.toDate || ''}
+                        min={dateLimits.min || undefined}
+                        max={dateLimits.max || undefined}
                         onChange={handleToDateChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />

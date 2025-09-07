@@ -1,13 +1,25 @@
-// Contexto de autenticación para manejar el inicio de sesión
+// Contexto de autenticación para manejar el inicio de sesión - COMENTADO PARA DESARROLLO
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, useContext, useEffect } from 'react';
-import apiService from '../services/apiService';
+// import { createContext, useState, useContext, useEffect } from 'react';
+// import apiService from '../services/apiService';
 
-const AuthContext = createContext();
+// const AuthContext = createContext();
 
+// export function useAuth() {
+//     return useContext(AuthContext);
+// }
+
+// STUBS para evitar errores de importación durante desarrollo
 export function useAuth() {
-    return useContext(AuthContext);
+    return { authenticated: true, user: null, error: '', loading: false };
 }
+
+export function AuthProvider({ children }) {
+    return children;
+}
+
+/*
+// CÓDIGO ORIGINAL COMENTADO PARA DESARROLLO
 
 export function AuthProvider({ children }) {
     const [authenticated, setAuthenticated] = useState(false);
@@ -60,10 +72,10 @@ export function AuthProvider({ children }) {
     const value = {
         authenticated,
         user,
-        login,
-        logout,
         error,
-        loading
+        loading,
+        login,
+        logout
     };
 
     return (
@@ -72,3 +84,4 @@ export function AuthProvider({ children }) {
         </AuthContext.Provider>
     );
 }
+*/

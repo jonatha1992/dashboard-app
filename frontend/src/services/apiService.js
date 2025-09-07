@@ -3,6 +3,29 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 class ApiService {
   constructor() {
     this.token = localStorage.getItem('auth_token');
+    // Auto-login for development mode
+    this.ensureAuthentication();
+  }
+
+  async ensureAuthentication() {
+    if (!this.token || this.isTokenExpired()) {
+      try {
+        // Try auto-login with admin credentials for development
+        await this.login('admin', 'admin123');
+      } catch (error) {
+        console.warn('Auto-login failed:', error);
+      }
+    }
+  }
+
+  isTokenExpired() {
+    if (!this.token) return true;
+    try {
+      const payload = JSON.parse(atob(this.token.split('.')[1]));
+      return Date.now() >= payload.exp * 1000;
+    } catch (error) {
+      return true;
+    }
   }
 
   setAuthToken(token) {
@@ -70,9 +93,71 @@ class ApiService {
     this.setAuthToken(null);
   }
 
-  // Data operations
+  // Data operations - Using existing endpoints
+  async getCategorizedData() {
+    // Get all procedimientos and organize by category
+    const allData = await this.request('/data');
+    
+    if (!allData || !Array.isArray(allData)) {
+      return {};
+    }
+    
+    // Categorize data based on description and type
+    const categorizeData = (data) => {
+      const categories = {
+        procedimientos: data, // All data goes to procedures
+        detenidos: data.filter(item => {
+          const desc = (item.descripcion || '').toLowerCase();
+          const tipo = (item.tipo_intervencion || '').toLowerCase();
+          return desc.includes('detención') || desc.includes('detenido') ||
+                 desc.includes('arresto') || desc.includes('aprehendido') ||
+                 tipo.includes('detención') || tipo.includes('detenido');
+        }),
+        incautaciones: data.filter(item => {
+          const desc = (item.descripcion || '').toLowerCase();
+          const tipo = (item.tipo_intervencion || '').toLowerCase();
+          return desc.includes('incautación') || desc.includes('secuestro') ||
+                 desc.includes('decomiso') || desc.includes('droga') ||
+                 desc.includes('arma') || tipo.includes('incautación');
+        }),
+        controlados: data.filter(item => {
+          const desc = (item.descripcion || '').toLowerCase();
+          const tipo = (item.tipo_intervencion || '').toLowerCase();
+          return desc.includes('control') || tipo.includes('control') ||
+                 desc.includes('controlado') || desc.includes('verificación');
+        }),
+        afectados: data.filter(item => {
+          const desc = (item.descripcion || '').toLowerCase();
+          const tipo = (item.tipo_intervencion || '').toLowerCase();
+          return desc.includes('afectado') || desc.includes('víctima') ||
+                 desc.includes('herido') || tipo.includes('afectado');
+        }),
+        trata: data.filter(item => {
+          const desc = (item.descripcion || '').toLowerCase();
+          const tipo = (item.tipo_intervencion || '').toLowerCase();
+          return desc.includes('trata') || desc.includes('tráfico') ||
+                 desc.includes('explotación') || tipo.includes('trata');
+        }),
+        abatidos: data.filter(item => {
+          const desc = (item.descripcion || '').toLowerCase();
+          const tipo = (item.tipo_intervencion || '').toLowerCase();
+          return desc.includes('abatido') || desc.includes('enfrentamiento') ||
+                 desc.includes('tiroteo') || tipo.includes('abatido');
+        })
+      };
+      return categories;
+    };
+    
+    return categorizeData(allData);
+  }
+
+  async getDataStats() {
+    return await this.request('/data/stats');
+  }
+
+  // Legacy method for backward compatibility
   async getData() {
-    return await this.request('/data');
+    return await this.getCategorizedData();
   }
 
   async uploadData(file) {
@@ -103,6 +188,94 @@ class ApiService {
 
   async getDataStats() {
     return await this.request('/data/stats');
+  }
+
+  // Specialized filtering endpoints
+  async getSpecializedStats() {
+    return await this.request('/data/specialized-stats');
+  }
+
+  async getFilteringStats() {
+    return await this.request('/data/filtering-stats');
+  }
+
+  async getFilteredIncautaciones() {
+    return await this.request('/data/filtered/incautaciones');
+  }
+
+  async getFilteredDetenidos() {
+    return await this.request('/data/filtered/detenidos');
+  }
+
+  async getFilteredControlados() {
+    return await this.request('/data/filtered/controlados');
+  }
+
+  async getFilteredAfectados() {
+    return await this.request('/data/filtered/afectados');
+  }
+
+  // Specialized table data endpoints
+  async getDetenidos() {
+    return await this.request('/data/detenidos');
+  }
+
+  async getIncautaciones() {
+    return await this.request('/data/incautaciones');
+  }
+
+  async getTrata() {
+    return await this.request('/data/trata');
+  }
+
+  async getFallecidos() {
+    return await this.request('/data/fallecidos');
+  }
+
+  async getAbatidos() {
+    return await this.request('/data/abatidos');
+  }
+
+  // Get all categorized data at once
+  async getCategorizedData() {
+    try {
+      const [general, detenidos, incautaciones, trata, fallecidos, abatidos, controlados, afectados] = await Promise.all([
+        this.getData(), // Tabla maestra (GeografiaProcedimiento)
+        this.getDetenidos(),
+        this.getIncautaciones(), 
+        this.getTrata(),
+        this.getFallecidos(),
+        this.getAbatidos(),
+        this.getFilteredControlados(),
+        this.getFilteredAfectados()
+      ]);
+
+      return {
+        general: general || [],
+        detenidos: detenidos || [],
+        incautaciones: incautaciones || [],
+        trata: trata || [],
+        fallecidos: fallecidos || [],
+        abatidos: abatidos || [],
+        controlados: controlados || [],
+        afectados: afectados || [],
+        // Derivadas
+        procedimientos: general || [], // Los procedimientos son todos los registros de la tabla maestra
+      };
+    } catch (error) {
+      console.error('Error obteniendo datos categorizados:', error);
+      return {
+        general: [],
+        detenidos: [],
+        incautaciones: [],
+        trata: [],
+        fallecidos: [],
+        abatidos: [],
+        controlados: [],
+        afectados: [],
+        procedimientos: []
+      };
+    }
   }
 
   // HTTP method shortcuts

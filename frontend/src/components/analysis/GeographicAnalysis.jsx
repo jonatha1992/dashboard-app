@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -42,13 +42,13 @@ const GeographicAnalysis = () => {
     sortOrder: 'desc' // asc, desc
   });
 
-  // Opciones de métricas disponibles
-  const metricas = [
+  // Opciones de métricas disponibles - memoizadas para evitar recalculo
+  const metricas = useMemo(() => [
     { key: 'total_procedimientos', label: 'Procedimientos', color: '#3B82F6' },
     { key: 'total_detenidos', label: 'Detenidos', color: '#EF4444' },
     { key: 'total_incautaciones', label: 'Incautaciones', color: '#10B981' },
     { key: 'total_vehiculos_controlados', label: 'Vehículos Controlados', color: '#F59E0B' }
-  ];
+  ], []);
 
   // Opciones para top N
   const topOptions = [
@@ -97,7 +97,7 @@ const GeographicAnalysis = () => {
     }
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!filters.periodo) {
       return;
     }
@@ -121,7 +121,7 @@ const GeographicAnalysis = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   // Procesar datos para visualización
   const processedData = useMemo(() => {

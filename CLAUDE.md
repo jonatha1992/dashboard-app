@@ -19,6 +19,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `cd backend && python manage.py init_users` - Create default admin/viewer users
 - `cd backend && python manage.py collectstatic --noinput` - Collect static files for production
 
+### Database Management
+- `cd backend && python manage.py shell` - Open Django shell for database operations
+- `cd backend && python manage.py flush` - Clear all data from database (keep schema)
+- `cd backend && python manage.py createsuperuser` - Create admin user manually
+
 ## Project Architecture
 
 This is a full-stack security operations dashboard with a React frontend and Django backend. The application visualizes security operatives data through interactive maps, charts, and tables.
@@ -157,3 +162,18 @@ cd backend && python manage.py runserver
 - **ESLint Configuration**: React hooks and refresh plugins enabled, ignores unused vars with capital letters (`varsIgnorePattern: '^[A-Z_]'`)
 - **Default Authentication**: Backend creates admin/admin123 and viewer/viewer123 users automatically
 - **CORS Configuration**: Development mode allows localhost:5173, production mode restricts appropriately
+- **Data Validation Filters**: Smart filtering prevents empty records in specialized tables (see `FILTROS_IMPLEMENTADOS.md`)
+
+### Testing and Quality Assurance
+- Frontend linting uses ESLint with React hooks and refresh plugins
+- Backend follows Django best practices with proper error handling
+- Data processing includes validation to prevent empty/invalid records
+- Authentication supports both development and production modes
+- Use `npm run lint` for frontend code quality checks
+
+### Excel Data Processing
+- Excel files (`bd.xlsx`) are processed through Django backend API endpoints
+- Province names are normalized for consistent filtering across datasets
+- Date formats are standardized to ISO format in backend processing
+- Validation filters prevent creation of records with empty data (marked with "-")
+- Multiple sheets in Excel files are processed with proper field mapping

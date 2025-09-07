@@ -194,3 +194,87 @@ class FileUploadSerializer(serializers.Serializer):
         if not value.name.endswith(('.xlsx', '.xls')):
             raise serializers.ValidationError('File must be an Excel file (.xlsx or .xls)')
         return value
+
+
+class FilteringStatsSerializer(serializers.Serializer):
+    """
+    Serializer for filtering statistics showing before/after record counts
+    """
+    tabla = serializers.CharField()
+    registros_total = serializers.IntegerField()
+    registros_filtrados = serializers.IntegerField()
+    registros_omitidos = serializers.IntegerField()
+    porcentaje_reduccion = serializers.FloatField()
+    criterio_filtrado = serializers.CharField()
+
+
+class UploadResultSerializer(serializers.Serializer):
+    """
+    Enhanced serializer for upload results with detailed filtering statistics
+    """
+    stats = serializers.DictField()
+    filtering_details = FilteringStatsSerializer(many=True)
+    total_records_processed = serializers.IntegerField()
+    total_records_created = serializers.IntegerField()
+    etl_result = serializers.DictField(required=False)
+
+
+class SpecializedTableStatsSerializer(serializers.Serializer):
+    """
+    Serializer for specialized table statistics
+    """
+    incautaciones_count = serializers.IntegerField()
+    detenidos_count = serializers.IntegerField()
+    controlados_count = serializers.IntegerField()
+    afectados_count = serializers.IntegerField()
+    trata_count = serializers.IntegerField()
+    otros_delitos_count = serializers.IntegerField()
+    otros_eventos_count = serializers.IntegerField()
+    fallecidos_count = serializers.IntegerField()
+    abatidos_count = serializers.IntegerField()
+    codigos_count = serializers.IntegerField()
+    total_specialized_records = serializers.IntegerField()
+
+
+class FilteredIncautacionesSerializer(serializers.ModelSerializer):
+    """
+    Serializer for filtered incautaciones (only real seizures)
+    """
+    procedimiento_info = GeografiaProcedimientoSerializer(source='procedimiento', read_only=True)
+    
+    class Meta:
+        model = Incautaciones
+        fields = '__all__'
+
+
+class FilteredDetenidosSerializer(serializers.ModelSerializer):
+    """
+    Serializer for filtered detenidos (only real detained persons)
+    """
+    procedimiento_info = GeografiaProcedimientoSerializer(source='procedimiento', read_only=True)
+    
+    class Meta:
+        model = DetenidosAprehendidos
+        fields = '__all__'
+
+
+class FilteredControladosSerializer(serializers.ModelSerializer):
+    """
+    Serializer for filtered controlados (only real controls)
+    """
+    procedimiento_info = GeografiaProcedimientoSerializer(source='procedimiento', read_only=True)
+    
+    class Meta:
+        model = VehiculosPersonasControladas
+        fields = '__all__'
+
+
+class FilteredAfectadosSerializer(serializers.ModelSerializer):
+    """
+    Serializer for filtered afectados (only real affected personnel)
+    """
+    procedimiento_info = GeografiaProcedimientoSerializer(source='procedimiento', read_only=True)
+    
+    class Meta:
+        model = PersonalElementosAfectados
+        fields = '__all__'

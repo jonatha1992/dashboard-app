@@ -65,7 +65,7 @@ const SecuritySection = ({ category, showProvinceChart = true }) => {
   }
 
   return (
-    <div className="mt-16 space-y-6">
+    <div className="mt-6 space-y-6">
       {/* Header */}
       <div className="flex items-center mb-6 space-x-3">
         <span className="text-3xl">{config.icon}</span>

@@ -48,8 +48,8 @@ const clusterPoints = (points, zoom) => {
     points.forEach((point, index) => {
         if (processed.has(index)) return;
 
-        const lat = point.latitud_decimal ?? point["Latitud Decimal"] ?? point.LATITUD;
-        const lng = point.longitud_decimal ?? point["Longitud Decimal"] ?? point.LONGITUD;
+        const lat = point.LATITUD ?? point.latitud ?? point.latitud_decimal ?? point["Latitud Decimal"];
+        const lng = point.LONGITUD ?? point.longitud ?? point.longitud_decimal ?? point["Longitud Decimal"];
 
         if (!lat || !lng) return;
 
@@ -64,8 +64,8 @@ const clusterPoints = (points, zoom) => {
         points.forEach((otherPoint, otherIndex) => {
             if (processed.has(otherIndex) || index === otherIndex) return;
 
-            const otherLat = otherPoint.latitud_decimal ?? otherPoint["Latitud Decimal"] ?? otherPoint.LATITUD;
-            const otherLng = otherPoint.longitud_decimal ?? otherPoint["Longitud Decimal"] ?? otherPoint.LONGITUD;
+            const otherLat = otherPoint.LATITUD ?? otherPoint.latitud ?? otherPoint.latitud_decimal ?? otherPoint["Latitud Decimal"];
+            const otherLng = otherPoint.LONGITUD ?? otherPoint.longitud ?? otherPoint.longitud_decimal ?? otherPoint["Longitud Decimal"];
 
             if (!otherLat || !otherLng) return;
 
@@ -168,8 +168,8 @@ const MapComponent = memo(({ data }) => {
         if (!data || data.length === 0) return [];
 
         return data.filter(point => {
-            const lat = point.latitud_decimal ?? point["Latitud Decimal"] ?? point.LATITUD;
-            const lng = point.longitud_decimal ?? point["Longitud Decimal"] ?? point.LONGITUD;
+            const lat = point.LATITUD ?? point.latitud ?? point.latitud_decimal ?? point["Latitud Decimal"];
+            const lng = point.LONGITUD ?? point.longitud ?? point.longitud_decimal ?? point["Longitud Decimal"];
             return lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
         });
     }, [data]);
@@ -183,8 +183,8 @@ const MapComponent = memo(({ data }) => {
     useEffect(() => {
         if (validData.length > 0 && map) {
             const firstPoint = validData[0];
-            const lat = firstPoint.latitud_decimal ?? firstPoint["Latitud Decimal"] ?? firstPoint.LATITUD;
-            const lng = firstPoint.longitud_decimal ?? firstPoint["Longitud Decimal"] ?? firstPoint.LONGITUD;
+            const lat = firstPoint.LATITUD ?? firstPoint.latitud ?? firstPoint.latitud_decimal ?? firstPoint["Latitud Decimal"];
+            const lng = firstPoint.LONGITUD ?? firstPoint.longitud ?? firstPoint.longitud_decimal ?? firstPoint["Longitud Decimal"];
             setMapCenter([parseFloat(lat), parseFloat(lng)]);
             map.setView([parseFloat(lat), parseFloat(lng)], mapZoom);
         }

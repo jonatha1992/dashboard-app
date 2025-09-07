@@ -39,19 +39,30 @@ export default function ExcelUpload() {
             const result = await apiService.uploadData(file);
             
             // Mostrar estadísticas del resultado
-            const { stats, etl_result } = result;
+            const { stats, filtering_details, etl_result } = result;
             const etlStatus = etl_result ? 
                 (etl_result.status === 'success' ? 
                     `🔄 ETL: ✅ Ejecutado automáticamente (${etl_result.facts_created} hechos creados)` : 
                     `🔄 ETL: ⚠️ ${etl_result.message}`
                 ) : '🔄 ETL: No ejecutado';
             
+            // Generate filtering summary
+            let filteringSummary = '';
+            if (filtering_details && filtering_details.length > 0) {
+                const totalFiltered = filtering_details.reduce((sum, detail) => sum + detail.registros_filtrados, 0);
+                const totalOmitted = filtering_details.reduce((sum, detail) => sum + detail.registros_omitidos, 0);
+                filteringSummary = `\n\n🔍 Filtrado Inteligente:
+📈 ${totalFiltered} registros con datos reales creados
+🗑️ ${totalOmitted} registros vacíos omitidos
+✨ Optimización: ${totalOmitted > 0 ? Math.round(totalOmitted / (totalFiltered + totalOmitted) * 100) : 0}% reducción`;
+            }
+            
             setMessage(`✅ Importación completada:
-📊 ${stats.totalAdded} registros nuevos
+📊 ${stats.totalAdded} registros maestros nuevos
 ⚠️ ${stats.duplicatesSkipped} duplicados omitidos
-📁 Total de registros en sistema: ${stats.totalRecords}
+📁 Total maestros en sistema: ${stats.totalRecords}
 📋 Hojas procesadas: ${stats.sheetsProcessed.length}
-${etlStatus}`);
+${etlStatus}${filteringSummary}`);
 
             // Recargar datos Y estadísticas actualizadas
             const [updatedData, updatedStats] = await Promise.all([

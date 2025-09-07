@@ -9,16 +9,6 @@ const ARGENTINE_PROVINCES = [
     'Tierra del Fuego', 'Tucumán'
 ].sort();
 
-// Función para obtener las fechas del mes actual
-const getCurrentMonthDates = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const fromDate = new Date(year, month, 1).toISOString().split('T')[0];
-    const toDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
-
-    return { fromDate, toDate };
-};
 
 export default function FilterPanel() {
     const { filters, setFilters, dataStats } = useDashboard();
@@ -59,6 +49,24 @@ export default function FilterPanel() {
 
     const dateRange = getDataDateRange();
 
+    // Obtener límites de fechas reales desde dataStats
+    const getDateLimits = () => {
+        if (!dataStats || !dataStats.dateRange) return { min: null, max: null };
+        
+        const { earliest, latest } = dataStats.dateRange;
+        
+        if (!earliest || !latest || earliest === '-' || latest === '-') {
+            return { min: null, max: null };
+        }
+        
+        return {
+            min: earliest,
+            max: latest
+        };
+    };
+
+    const dateLimits = getDateLimits();
+
     const handleFromDateChange = (e) => {
         setFilters({ ...filters, fromDate: e.target.value });
     };
@@ -69,10 +77,13 @@ export default function FilterPanel() {
         setFilters({ ...filters, province: e.target.value });
     };
     const clearAllFilters = () => {
-        const currentMonth = getCurrentMonthDates();
+        // Usar las fechas reales disponibles en lugar del mes actual
+        const realDateRange = dateLimits.min && dateLimits.max 
+            ? { fromDate: dateLimits.min, toDate: dateLimits.max }
+            : { fromDate: '', toDate: '' };
+        
         setFilters({
-            fromDate: currentMonth.fromDate,
-            toDate: currentMonth.toDate,
+            ...realDateRange,
             province: ''
         });
     };
@@ -140,6 +151,8 @@ export default function FilterPanel() {
                                 id="fromDate"
                                 type="date"
                                 value={filters.fromDate || ''}
+                                min={dateLimits.min || undefined}
+                                max={dateLimits.max || undefined}
                                 onChange={handleFromDateChange}
                                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                             />
@@ -153,6 +166,8 @@ export default function FilterPanel() {
                                 id="toDate"
                                 type="date"
                                 value={filters.toDate || ''}
+                                min={dateLimits.min || undefined}
+                                max={dateLimits.max || undefined}
                                 onChange={handleToDateChange}
                                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                             />
