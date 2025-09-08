@@ -10,9 +10,8 @@ from datetime import datetime
 import json
 from decimal import Decimal, InvalidOperation
 import logging
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
+from drf_spectacular.openapi import OpenApiTypes
 
 logger = logging.getLogger(__name__)
 
@@ -47,235 +46,16 @@ from .authentication import generate_jwt_token
 
 User = get_user_model()
 
-# PUBLIC ENDPOINTS - NO AUTHENTICATION REQUIRED
-# Using native Django views to completely bypass DRF authentication
-
-@csrf_exempt
-@require_http_methods(["GET"])
-def public_categorized_data(request):
-    """Endpoint público para datos categorizados"""
-    try:
-        # Obtener todos los procedimientos con geolocalización válida
-        procedimientos = GeografiaProcedimiento.objects.filter(
-            latitud__isnull=False,
-            longitud__isnull=False
-        ).exclude(
-            latitud=0, longitud=0
-        )
-        
-        # Serializar datos de procedimientos
-        procedimientos_data = []
-        for proc in procedimientos:
-            procedimientos_data.append({
-                'id': proc.id,
-                'ID_OPERATIVO': proc.id_operativo,
-                'FECHA': proc.fecha_original or '',
-                'FECHA_ISO': proc.fecha_iso.strftime('%Y-%m-%d') if proc.fecha_iso else '',
-                'HORA': proc.hora or '',
-                'DESCRIPCION': proc.descripcion or '',
-                'TIPO_INTERVENCION': proc.tipo_intervencion or '',
-                'PROVINCIA': proc.provincia or '',
-                'PROVINCIA_KEY': proc.provincia_key or '',
-                'DEPARTAMENTO_O_PARTIDO': proc.departamento_partido or '',
-                'LATITUD': float(proc.latitud) if proc.latitud else 0,
-                'LONGITUD': float(proc.longitud) if proc.longitud else 0,
-            })
-        
-        # Obtener datos de tablas especializadas
-        detenidos_data = []
-        detenidos = DetenidosAprehendidos.objects.select_related('geografia').all()
-        for det in detenidos:
-            if det.geografia:
-                detenidos_data.append({
-                    'id': det.id,
-                    'ID_OPERATIVO': det.geografia.id_operativo,
-                    'FECHA': det.geografia.fecha_original or '',
-                    'FECHA_ISO': det.geografia.fecha_iso.strftime('%Y-%m-%d') if det.geografia.fecha_iso else '',
-                    'HORA': det.geografia.hora or '',
-                    'DESCRIPCION': det.geografia.descripcion or '',
-                    'TIPO_INTERVENCION': det.geografia.tipo_intervencion or '',
-                    'PROVINCIA': det.geografia.provincia or '',
-                    'PROVINCIA_KEY': det.geografia.provincia_key or '',
-                    'DEPARTAMENTO_O_PARTIDO': det.geografia.departamento_partido or '',
-                    'LATITUD': float(det.geografia.latitud) if det.geografia.latitud else 0,
-                    'LONGITUD': float(det.geografia.longitud) if det.geografia.longitud else 0,
-                    'NACIONALIDAD': det.nacionalidad or '',
-                    'EDAD': det.edad or '',
-                    'SEXO': det.sexo or '',
-                })
-        
-        # Incautaciones
-        incautaciones_data = []
-        incautaciones = Incautaciones.objects.select_related('geografia').all()
-        for inc in incautaciones:
-            if inc.geografia:
-                incautaciones_data.append({
-                    'id': inc.id,
-                    'ID_OPERATIVO': inc.geografia.id_operativo,
-                    'FECHA': inc.geografia.fecha_original or '',
-                    'FECHA_ISO': inc.geografia.fecha_iso.strftime('%Y-%m-%d') if inc.geografia.fecha_iso else '',
-                    'HORA': inc.geografia.hora or '',
-                    'DESCRIPCION': inc.geografia.descripcion or '',
-                    'TIPO_INTERVENCION': inc.geografia.tipo_intervencion or '',
-                    'PROVINCIA': inc.geografia.provincia or '',
-                    'PROVINCIA_KEY': inc.geografia.provincia_key or '',
-                    'DEPARTAMENTO_O_PARTIDO': inc.geografia.departamento_partido or '',
-                    'LATITUD': float(inc.geografia.latitud) if inc.geografia.latitud else 0,
-                    'LONGITUD': float(inc.geografia.longitud) if inc.geografia.longitud else 0,
-                    'TIPO_INCAUTACION': inc.tipo_incautacion or '',
-                    'CANTIDAD': inc.cantidad or '',
-                    'UNIDAD': inc.unidad or '',
-                })
-        
-        # Controlados
-        controlados_data = []
-        controlados = VehiculosPersonasControladas.objects.select_related('geografia').all()
-        for ctrl in controlados:
-            if ctrl.geografia:
-                controlados_data.append({
-                    'id': ctrl.id,
-                    'ID_OPERATIVO': ctrl.geografia.id_operativo,
-                    'FECHA': ctrl.geografia.fecha_original or '',
-                    'FECHA_ISO': ctrl.geografia.fecha_iso.strftime('%Y-%m-%d') if ctrl.geografia.fecha_iso else '',
-                    'HORA': ctrl.geografia.hora or '',
-                    'DESCRIPCION': ctrl.geografia.descripcion or '',
-                    'TIPO_INTERVENCION': ctrl.geografia.tipo_intervencion or '',
-                    'PROVINCIA': ctrl.geografia.provincia or '',
-                    'PROVINCIA_KEY': ctrl.geografia.provincia_key or '',
-                    'DEPARTAMENTO_O_PARTIDO': ctrl.geografia.departamento_partido or '',
-                    'LATITUD': float(ctrl.geografia.latitud) if ctrl.geografia.latitud else 0,
-                    'LONGITUD': float(ctrl.geografia.longitud) if ctrl.geografia.longitud else 0,
-                    'TIPO_VEHICULO': ctrl.tipo_vehiculo or '',
-                    'CANTIDAD_PERSONAS': ctrl.cantidad_personas or 0,
-                })
-        
-        # Afectados
-        afectados_data = []
-        afectados = PersonalElementosAfectados.objects.select_related('geografia').all()
-        for afect in afectados:
-            if afect.geografia:
-                afectados_data.append({
-                    'id': afect.id,
-                    'ID_OPERATIVO': afect.geografia.id_operativo,
-                    'FECHA': afect.geografia.fecha_original or '',
-                    'FECHA_ISO': afect.geografia.fecha_iso.strftime('%Y-%m-%d') if afect.geografia.fecha_iso else '',
-                    'HORA': afect.geografia.hora or '',
-                    'DESCRIPCION': afect.geografia.descripcion or '',
-                    'TIPO_INTERVENCION': afect.geografia.tipo_intervencion or '',
-                    'PROVINCIA': afect.geografia.provincia or '',
-                    'PROVINCIA_KEY': afect.geografia.provincia_key or '',
-                    'DEPARTAMENTO_O_PARTIDO': afect.geografia.departamento_partido or '',
-                    'LATITUD': float(afect.geografia.latitud) if afect.geografia.latitud else 0,
-                    'LONGITUD': float(afect.geografia.longitud) if afect.geografia.longitud else 0,
-                    'TIPO_AFECTACION': afect.tipo_afectacion or '',
-                    'GRAVEDAD': afect.gravedad or '',
-                })
-        
-        # Trata
-        trata_data = []
-        trata = TrataTraficPersonas.objects.select_related('geografia').all()
-        for tr in trata:
-            if tr.geografia:
-                trata_data.append({
-                    'id': tr.id,
-                    'ID_OPERATIVO': tr.geografia.id_operativo,
-                    'FECHA': tr.geografia.fecha_original or '',
-                    'FECHA_ISO': tr.geografia.fecha_iso.strftime('%Y-%m-%d') if tr.geografia.fecha_iso else '',
-                    'HORA': tr.geografia.hora or '',
-                    'DESCRIPCION': tr.geografia.descripcion or '',
-                    'TIPO_INTERVENCION': tr.geografia.tipo_intervencion or '',
-                    'PROVINCIA': tr.geografia.provincia or '',
-                    'PROVINCIA_KEY': tr.geografia.provincia_key or '',
-                    'DEPARTAMENTO_O_PARTIDO': tr.geografia.departamento_partido or '',
-                    'LATITUD': float(tr.geografia.latitud) if tr.geografia.latitud else 0,
-                    'LONGITUD': float(tr.geografia.longitud) if tr.geografia.longitud else 0,
-                    'MODALIDAD': tr.modalidad or '',
-                    'VICTIMAS_RESCATADAS': tr.victimas_rescatadas or 0,
-                })
-        
-        # Abatidos
-        abatidos_data = []
-        abatidos = Abatidos.objects.select_related('geografia').all()
-        for ab in abatidos:
-            if ab.geografia:
-                abatidos_data.append({
-                    'id': ab.id,
-                    'ID_OPERATIVO': ab.geografia.id_operativo,
-                    'FECHA': ab.geografia.fecha_original or '',
-                    'FECHA_ISO': ab.geografia.fecha_iso.strftime('%Y-%m-%d') if ab.geografia.fecha_iso else '',
-                    'HORA': ab.geografia.hora or '',
-                    'DESCRIPCION': ab.geografia.descripcion or '',
-                    'TIPO_INTERVENCION': ab.geografia.tipo_intervencion or '',
-                    'PROVINCIA': ab.geografia.provincia or '',
-                    'PROVINCIA_KEY': ab.geografia.provincia_key or '',
-                    'DEPARTAMENTO_O_PARTIDO': ab.geografia.departamento_partido or '',
-                    'LATITUD': float(ab.geografia.latitud) if ab.geografia.latitud else 0,
-                    'LONGITUD': float(ab.geografia.longitud) if ab.geografia.longitud else 0,
-                    'CIRCUNSTANCIAS': ab.circunstancias or '',
-                })
-        
-        response_data = {
-            'procedimientos': procedimientos_data,
-            'detenidos': detenidos_data,
-            'incautaciones': incautaciones_data, 
-            'controlados': controlados_data,
-            'afectados': afectados_data,
-            'trata': trata_data,
-            'abatidos': abatidos_data
-        }
-        
-        return JsonResponse(response_data, safe=False)
-        
-    except Exception as e:
-        logger.error(f"Error en public_categorized_data: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
-
-@csrf_exempt 
-@require_http_methods(["GET"])
-def public_data_stats(request):
-    """Endpoint público para estadísticas de datos"""
-    try:
-        total_procedimientos = GeografiaProcedimiento.objects.count()
-        
-        # Fechas disponibles
-        fechas_query = GeografiaProcedimiento.objects.filter(
-            fecha_iso__isnull=False
-        ).values_list('fecha_iso', flat=True).order_by('fecha_iso')
-        
-        fechas_list = list(fechas_query)
-        
-        # Provincias disponibles
-        provincias = list(GeografiaProcedimiento.objects.filter(
-            provincia__isnull=False
-        ).exclude(
-            provincia=''
-        ).values_list('provincia', flat=True).distinct().order_by('provincia'))
-        
-        stats = {
-            'totalRecords': total_procedimientos,
-            'dateRange': {
-                'earliest': fechas_list[0].strftime('%Y-%m-%d') if fechas_list else None,
-                'latest': fechas_list[-1].strftime('%Y-%m-%d') if fechas_list else None
-            },
-            'provinces': provincias,
-            'categoryCounts': {
-                'procedimientos': total_procedimientos,
-                'detenidos': DetenidosAprehendidos.objects.count(),
-                'incautaciones': Incautaciones.objects.count(),
-                'controlados': VehiculosPersonasControladas.objects.count(),
-                'afectados': PersonalElementosAfectados.objects.count(),
-                'trata': TrataTraficPersonas.objects.count(),
-                'abatidos': Abatidos.objects.count()
-            }
-        }
-        
-        return JsonResponse(stats)
-        
-    except Exception as e:
-        logger.error(f"Error en public_data_stats: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
 
 # Public endpoints using @api_view decorator to bypass authentication issues
+@extend_schema(
+    tags=['Datos Públicos'],
+    summary='Obtener datos operacionales',
+    description='Obtener todos los datos operacionales de la tabla maestra (sin autenticación)',
+    responses={
+        200: GeografiaProcedimientoSerializer(many=True)
+    }
+)
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def data_list_public(request):
@@ -286,6 +66,14 @@ def data_list_public(request):
     serializer = GeografiaProcedimientoSerializer(data, many=True)
     return Response(serializer.data)
 
+@extend_schema(
+    tags=['Estadísticas'],
+    summary='Obtener estadísticas de datos',
+    description='Obtener estadísticas generales de los datos (sin autenticación)',
+    responses={
+        200: DataStatsSerializer
+    }
+)
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def data_stats_public(request):
@@ -329,15 +117,25 @@ def data_stats_public(request):
     
     return Response(stats_data)
 
-@api_view(['GET'])
-@permission_classes([permissions.AllowAny])
-def simple_test(request):
-    """
-    Simple test endpoint - no authentication required
-    """
-    return Response({"message": "Hello! This is a public endpoint", "status": "success"})
 
 
+@extend_schema(
+    tags=['Health Check'],
+    summary='Verificar estado del servidor',
+    description='Endpoint para verificar que el servidor está funcionando correctamente',
+    responses={
+        200: {
+            'description': 'Servidor funcionando correctamente',
+            'examples': {
+                'application/json': {
+                    'message': 'Dashboard Django API - Nueva Estructura',
+                    'version': '2.0.0',
+                    'status': 'running'
+                }
+            }
+        }
+    }
+)
 class HealthCheckView(APIView):
     """
     Health check endpoint (equivalent to Node.js '/' route)
@@ -351,6 +149,29 @@ class HealthCheckView(APIView):
         })
 
 
+@extend_schema(
+    tags=['Autenticación'],
+    summary='Iniciar sesión',
+    description='Autenticar usuario con credenciales y obtener token JWT',
+    request=LoginSerializer,
+    responses={
+        200: {
+            'description': 'Login exitoso',
+            'example': {
+                'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                'user': {
+                    'id': 1,
+                    'username': 'admin',
+                    'role': 'admin'
+                }
+            }
+        },
+        401: {
+            'description': 'Credenciales inválidas',
+            'example': {'error': 'Credenciales inválidas'}
+        }
+    }
+)
 class LoginView(APIView):
     """
     Login endpoint (equivalent to Node.js '/api/auth/login')
@@ -376,6 +197,18 @@ class LoginView(APIView):
         }, status=status.HTTP_401_UNAUTHORIZED)
 
 
+@extend_schema(
+    tags=['Autenticación'],
+    summary='Obtener usuario actual',
+    description='Obtener información del usuario autenticado',
+    responses={
+        200: UserSerializer,
+        401: {
+            'description': 'Token inválido o expirado',
+            'example': {'error': 'Token inválido'}
+        }
+    }
+)
 class CurrentUserView(APIView):
     """
     Get current user info (equivalent to Node.js '/api/auth/me')
@@ -389,62 +222,16 @@ class CurrentUserView(APIView):
         })
 
 
-class DataListView(APIView):
-    """
-    Get operational data (equivalent to Node.js '/api/data')
-    Devuelve datos de la tabla maestra GeografiaProcedimiento
-    """
-    
-    def get(self, request):
-        data = GeografiaProcedimiento.objects.all()
-        serializer = GeografiaProcedimientoSerializer(data, many=True)
-        return Response(serializer.data)
 
 
-class DataStatsView(APIView):
-    """
-    Get data statistics (equivalent to Node.js '/api/data/stats')
-    """
-    
-    def get(self, request):
-        # Get all data from tabla maestra
-        all_data = GeografiaProcedimiento.objects.all()
-        
-        # Calculate date range
-        date_range = {'earliest': None, 'latest': None}
-        
-        valid_dates = all_data.filter(
-            fecha_iso__isnull=False
-        ).exclude(
-            fecha__in=['-', '', None]
-        ).order_by('fecha_iso')
-        
-        if valid_dates.exists():
-            earliest_date = valid_dates.first().fecha_iso  # Usar fecha_iso en formato ISO
-            latest_date = valid_dates.last().fecha_iso      # Usar fecha_iso en formato ISO
-            date_range = {
-                'earliest': earliest_date.isoformat() if earliest_date else None,
-                'latest': latest_date.isoformat() if latest_date else None
-            }
-        
-        # Get unique sheets
-        sheets = list(all_data.values_list('hoja', flat=True).distinct())
-        sheets = [sheet for sheet in sheets if sheet]  # Remove None values
-        
-        # Get unique provinces
-        provinces = list(all_data.values_list('provincia', flat=True).distinct())
-        provinces = [prov for prov in provinces if prov and prov != '-']  # Remove None and '-'
-        
-        stats_data = {
-            'totalRecords': all_data.count(),
-            'sheets': sheets,
-            'dateRange': date_range,
-            'provinces': provinces
-        }
-        
-        return Response(stats_data)
-
-
+@extend_schema(
+    tags=['Estadísticas'],
+    summary='Obtener estadísticas de tablas especializadas',
+    description='Obtener conteos de registros en todas las tablas especializadas filtradas',
+    responses={
+        200: SpecializedTableStatsSerializer
+    }
+)
 class SpecializedTableStatsView(APIView):
     """
     Get statistics for all specialized tables (filtered counts)
@@ -471,6 +258,14 @@ class SpecializedTableStatsView(APIView):
         return Response(serializer.data)
 
 
+@extend_schema(
+    tags=['Estadísticas'],
+    summary='Obtener estadísticas de filtrado',
+    description='Obtener estadísticas detalladas de filtrado mostrando conteos antes/después por tabla',
+    responses={
+        200: FilteringStatsSerializer(many=True)
+    }
+)
 class FilteringStatsView(APIView):
     """
     Get detailed filtering statistics showing before/after counts
@@ -527,6 +322,14 @@ class FilteringStatsView(APIView):
         return Response(filtering_details)
 
 
+@extend_schema(
+    tags=['Datos Filtrados'],
+    summary='Obtener incautaciones filtradas',
+    description='Obtener solo registros de incautaciones con datos reales de decomisos',
+    responses={
+        200: FilteredIncautacionesSerializer(many=True)
+    }
+)
 class FilteredIncautacionesView(APIView):
     """
     Get filtered incautaciones (only records with real seizures)
@@ -539,6 +342,14 @@ class FilteredIncautacionesView(APIView):
         return Response(serializer.data)
 
 
+@extend_schema(
+    tags=['Datos Filtrados'],
+    summary='Obtener detenidos filtrados',
+    description='Obtener solo registros de detenidos con datos reales de personas',
+    responses={
+        200: FilteredDetenidosSerializer(many=True)
+    }
+)
 class FilteredDetenidosView(APIView):
     """
     Get filtered detenidos (only records with real detained persons)
@@ -551,6 +362,14 @@ class FilteredDetenidosView(APIView):
         return Response(serializer.data)
 
 
+@extend_schema(
+    tags=['Datos Filtrados'],
+    summary='Obtener controlados filtrados',
+    description='Obtener solo registros de controles con datos reales de vehículos/personas',
+    responses={
+        200: FilteredControladosSerializer(many=True)
+    }
+)
 class FilteredControladosView(APIView):
     """
     Get filtered controlados (only records with real vehicle/person controls)
@@ -563,6 +382,14 @@ class FilteredControladosView(APIView):
         return Response(serializer.data)
 
 
+@extend_schema(
+    tags=['Datos Filtrados'],
+    summary='Obtener afectados filtrados',
+    description='Obtener solo registros de afectados con cantidad de personal mayor a 0',
+    responses={
+        200: FilteredAfectadosSerializer(many=True)
+    }
+)
 class FilteredAfectadosView(APIView):
     """
     Get filtered afectados (only records with personnel count > 0)
@@ -575,6 +402,28 @@ class FilteredAfectadosView(APIView):
         return Response(serializer.data)
 
 
+@extend_schema(
+    tags=['Gestión de Datos'],
+    summary='Subir datos operacionales',
+    description='Subir archivo Excel con datos operacionales. Solo administradores. '
+                'Procesa automáticamente y distribuye a tablas especializadas.',
+    request=FileUploadSerializer,
+    responses={
+        200: UploadResultSerializer,
+        400: {
+            'description': 'Archivo requerido o inválido',
+            'example': {'error': 'Archivo requerido'}
+        },
+        403: {
+            'description': 'Permisos insuficientes',
+            'example': {'error': 'Permisos insuficientes'}
+        },
+        500: {
+            'description': 'Error procesando archivo',
+            'example': {'error': 'Error al procesar archivo: [detalle]'}
+        }
+    }
+)
 class DataUploadView(APIView):
     """
     Upload operational data (equivalent to Node.js '/api/data/upload')
@@ -698,22 +547,12 @@ class DataUploadView(APIView):
                 stats['totalAdded'] += sheet_stats['added']
                 stats['duplicatesSkipped'] += sheet_stats['skipped']
             
-            # Ejecutar ETL automático después de upload exitoso
-            etl_result = None
-            try:
-                logger.info("Ejecutando ETL automático post-upload")
-                from .etl_dimensions import DimensionETLProcessor
-                etl_processor = DimensionETLProcessor()
-                etl_result = etl_processor.run_full_etl_auto()
-                logger.info(f"ETL automático completado: {etl_result.get('status')}")
-            except Exception as e:
-                logger.error(f"Error en ETL automático: {str(e)}")
-                # No falla el upload, solo logea el error
-                etl_result = {
-                    'status': 'error', 
-                    'message': str(e), 
-                    'auto_executed': True
-                }
+            # ETL automático removido - archivo eliminado
+            etl_result = {
+                'status': 'disabled', 
+                'message': 'ETL system removed', 
+                'auto_executed': False
+            }
             
             # Generate detailed filtering statistics
             filtering_details = self._generate_filtering_statistics(stats)
@@ -1282,6 +1121,28 @@ class DataUploadView(APIView):
         return filtering_details
 
 
+@extend_schema(
+    tags=['Gestión de Datos'],
+    summary='Limpiar todos los datos',
+    description='Eliminar todos los datos operacionales de todas las tablas. Solo administradores.',
+    responses={
+        200: {
+            'description': 'Datos eliminados exitosamente',
+            'example': {
+                'success': True,
+                'message': 'Todos los datos han sido eliminados (nueva estructura)'
+            }
+        },
+        403: {
+            'description': 'Permisos insuficientes',
+            'example': {'error': 'Permisos insuficientes'}
+        },
+        500: {
+            'description': 'Error al limpiar datos',
+            'example': {'error': 'Error al limpiar datos'}
+        }
+    }
+)
 class DataClearView(APIView):
     """
     Clear all data (equivalent to Node.js '/api/data/clear')
@@ -1326,6 +1187,27 @@ class DataClearView(APIView):
 # NUEVAS VIEWS PARA LA ESTRUCTURA ESPECIALIZADA
 # ============================================================================
 
+@extend_schema(
+    tags=['Datos Especializados'],
+    summary='Obtener lista de detenidos',
+    description='Obtener todos los registros de detenidos/aprehendidos con información geográfica',
+    responses={
+        200: {
+            'description': 'Lista de detenidos',
+            'example': [{
+                'ID_OPERATIVO': 'OP001',
+                'ID_PROCEDIMIENTO': 'PROC001',
+                'PROVINCIA': 'Buenos Aires',
+                'FECHA': '2025-01-15',
+                'EDAD': 25,
+                'SEXO': 'M',
+                'NACIONALIDAD': 'Argentina',
+                'LATITUD': -34.6037,
+                'LONGITUD': -58.3816
+            }]
+        }
+    }
+)
 class DetenidosListView(APIView):
     """
     Obtener solo datos de detenidos/aprehendidos
@@ -1360,6 +1242,26 @@ class DetenidosListView(APIView):
         return Response(data)
 
 
+@extend_schema(
+    tags=['Datos Especializados'],
+    summary='Obtener lista de incautaciones',
+    description='Obtener todos los registros de incautaciones con información geográfica y detalles',
+    responses={
+        200: {
+            'description': 'Lista de incautaciones',
+            'example': [{
+                'ID_OPERATIVO': 'OP001',
+                'ID_PROCEDIMIENTO': 'PROC001',
+                'PROVINCIA': 'Buenos Aires',
+                'FECHA': '2025-01-15',
+                'TIPO': 'Drogas',
+                'CANTIDAD': '5kg',
+                'LATITUD': -34.6037,
+                'LONGITUD': -58.3816
+            }]
+        }
+    }
+)
 class IncautacionesListView(APIView):
     """
     Obtener solo datos de incautaciones
@@ -1394,6 +1296,25 @@ class IncautacionesListView(APIView):
         return Response(data)
 
 
+@extend_schema(
+    tags=['Datos Especializados'],
+    summary='Obtener lista de trata de personas',
+    description='Obtener todos los registros de trata y tráfico de personas con información de víctimas',
+    responses={
+        200: {
+            'description': 'Lista de casos de trata',
+            'example': [{
+                'ID_OPERATIVO': 'OP001',
+                'PROVINCIA': 'Buenos Aires',
+                'TIPO_DELITO': 'Trata de personas',
+                'SEXO_VICTIMA': 'F',
+                'EDAD_VICTIMA': 22,
+                'LATITUD': -34.6037,
+                'LONGITUD': -58.3816
+            }]
+        }
+    }
+)
 class TrataListView(APIView):
     """
     Obtener solo datos de trata y tráfico de personas
@@ -1427,6 +1348,24 @@ class TrataListView(APIView):
         return Response(data)
 
 
+@extend_schema(
+    tags=['Datos Especializados'],
+    summary='Obtener lista de fallecidos',
+    description='Obtener todos los registros de personal fallecido en servicio',
+    responses={
+        200: {
+            'description': 'Lista de fallecidos',
+            'example': [{
+                'ID_OPERATIVO': 'OP001',
+                'SERVICIO': 'Patrullaje',
+                'FUERZA_DE_SEGURIDAD': 'Policía Federal',
+                'CANT_FALLECIDOS': 1,
+                'PROVINCIA_EVENTO': 'Buenos Aires',
+                'FECHA_EVENTO': '2025-01-15'
+            }]
+        }
+    }
+)
 class FallecidosListView(APIView):
     """
     Obtener solo datos de fallecidos
@@ -1452,6 +1391,26 @@ class FallecidosListView(APIView):
         return Response(data)
 
 
+@extend_schema(
+    tags=['Datos Especializados'],
+    summary='Obtener lista de abatidos',
+    description='Obtener todos los registros de personas abatidas en operativos',
+    responses={
+        200: {
+            'description': 'Lista de abatidos',
+            'example': [{
+                'ID_OPERATIVO': 'OP001',
+                'SERVICIO': 'Operativo antidrogas',
+                'FUERZA_DE_SEGURIDAD': 'Gendarmería',
+                'EDAD': 28,
+                'SEXO': 'M',
+                'NACIONALIDAD': 'Argentina',
+                'PROVINCIA_EVENTO': 'Buenos Aires',
+                'FECHA_EVENTO': '2025-01-15'
+            }]
+        }
+    }
+)
 class AbatidosListView(APIView):
     """
     Obtener solo datos de abatidos

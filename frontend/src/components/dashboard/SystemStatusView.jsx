@@ -35,6 +35,7 @@ import {
   Assessment as AssessmentIcon
 } from '@mui/icons-material';
 import { analysisService } from '../../services/analysisService';
+import apiService from '../../services/apiService';
 import ExcelUpload from './ExcelUpload';
 
 const SystemStatusView = () => {
@@ -47,17 +48,21 @@ const SystemStatusView = () => {
   const [etlResult, setEtlResult] = useState(null);
 
   useEffect(() => {
+    // Cargar solo al montar. Sin polling automático.
     loadAllStatus();
-    const interval = setInterval(() => {
-      loadAllStatus();
-    }, etlRunning ? 10000 : 60000);
-    
-    return () => clearInterval(interval);
-  }, [etlRunning]);
+  }, []);
 
   const loadAllStatus = async () => {
     setLoading(true);
     try {
+      // Evitar llamadas a endpoints protegidos si no hay autenticación
+      if (!apiService.isAuthenticated()) {
+        setDwStatus(null);
+        setEtlStatus(null);
+        setProvinciasDisponibles([]);
+        setLastUpdate(new Date());
+        return;
+      }
       const [dwData, etlData, provinciaData] = await Promise.all([
         analysisService.getDWStatus(),
         analysisService.getETLStatus(),
@@ -199,16 +204,18 @@ const SystemStatusView = () => {
             className="hidden md:flex"
           />
           
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={etlRunning ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
-            onClick={runETL}
-            disabled={etlRunning}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {etlRunning ? 'Ejecutando ETL...' : 'Ejecutar ETL'}
-          </Button>
+          {apiService.isAuthenticated() && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={etlRunning ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
+              onClick={runETL}
+              disabled={etlRunning}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {etlRunning ? 'Ejecutando ETL...' : 'Ejecutar ETL'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -391,16 +398,18 @@ const SystemStatusView = () => {
         </CardContent>
       </Card>
 
-      {/* Excel Upload Section */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Cargar Datos desde Excel
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-          <ExcelUpload onUploadSuccess={loadAllStatus} />
-        </CardContent>
-      </Card>
+      {/* Excel Upload Section (solo para autenticados) */}
+      {apiService.isAuthenticated() && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Cargar Datos desde Excel
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            <ExcelUpload onUploadSuccess={loadAllStatus} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Last Update */}
       <Box sx={{ mt: 2, textAlign: 'right' }}>

@@ -23,7 +23,7 @@ export class AnalysisService {
       if (filters.grain) params.append('grain', filters.grain);
       
       const response = await apiService.get(`/dw/analysis/temporal/?${params}`);
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error en análisis temporal:', error);
       throw error;
@@ -49,7 +49,7 @@ export class AnalysisService {
       if (filters.provincia_filtro) params.append('provincia_filtro', filters.provincia_filtro);
       
       const response = await apiService.get(`/dw/analysis/geografico/?${params}`);
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error en análisis geográfico:', error);
       throw error;
@@ -75,7 +75,7 @@ export class AnalysisService {
       if (filters.comparison_type) params.append('comparison_type', filters.comparison_type);
       
       const response = await apiService.get(`/dw/analysis/comparison/?${params}`);
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error en análisis comparativo:', error);
       throw error;
@@ -89,7 +89,7 @@ export class AnalysisService {
   async getDWStatus() {
     try {
       const response = await apiService.get('/dw/status/');
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error obteniendo estado del Data Warehouse:', error);
       return {
@@ -107,7 +107,7 @@ export class AnalysisService {
   async getETLStatus() {
     try {
       const response = await apiService.get('/dw/etl/status/');
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error obteniendo estado del ETL:', error);
       return {
@@ -125,7 +125,7 @@ export class AnalysisService {
   async getProvinciasDisponibles() {
     try {
       const response = await apiService.get('/dw/provincias/');
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error obteniendo provincias disponibles:', error);
       return [];
@@ -139,7 +139,7 @@ export class AnalysisService {
   async runETL() {
     try {
       const response = await apiService.post('/dw/etl/run/');
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error ejecutando ETL:', error);
       return {

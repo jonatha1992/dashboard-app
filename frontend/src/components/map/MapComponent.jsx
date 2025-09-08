@@ -102,11 +102,10 @@ const MapMarkers = memo(({ clusters }) => {
                         >
                             <Popup>
                                 <div className="max-w-xs">
-                                    <h3 className="mb-2 text-sm font-bold">{point.DESCRIPCION || 'Sin descripción'}</h3>
+                                    <h3 className="mb-2 text-sm font-bold">{(point.DESCRIPCION || point.DESCRIPCION_HECHO || point.DETALLE || point.OBSERVACION || point.OBSERVACIONES || 'Sin descripción')}</h3>
                                     <div className="space-y-1 text-xs">
-                                        <p><span className="font-medium">Tipo:</span> {point.TIPO_INTERVENCION || 'No especificado'}</p>
-                                        <p><span className="font-medium">Fecha:</span> {point.FECHA || 'No especificada'}</p>
-                                        <p><span className="font-medium">Hora:</span> {point.HORA || 'No especificada'}</p>
+                                        <p><span className="font-medium">Tipo:</span> {(point.TIPO_INTERVENCION || point.TIPO || point.CATEGORIA || 'No especificado')}</p>
+                                        <p><span className="font-medium">Fecha:</span> {(point.FECHA_ISO || point.FECHA || 'No especificada')}{point.HORA ? ` ${point.HORA}` : ''}</p>
                                         <p><span className="font-medium">Provincia:</span> {point.PROVINCIA || 'No especificada'}</p>
                                     </div>
                                 </div>
@@ -136,8 +135,8 @@ const MapMarkers = memo(({ clusters }) => {
                                     <div className="space-y-2 overflow-y-auto max-h-32">
                                         {cluster.points.slice(0, 5).map((point, idx) => (
                                             <div key={idx} className="pb-1 text-xs border-b border-gray-200">
-                                                <p className="font-medium">{point.DESCRIPCION || 'Sin descripción'}</p>
-                                                <p className="text-gray-600">{point.TIPO_INTERVENCION || 'No especificado'} - {point.FECHA || 'Sin fecha'}</p>
+                                                <p className="font-medium">{(point.DESCRIPCION || point.DESCRIPCION_HECHO || point.DETALLE || point.OBSERVACION || point.OBSERVACIONES || 'Sin descripción')}</p>
+                                                <p className="text-gray-600">{(point.TIPO_INTERVENCION || point.TIPO || point.CATEGORIA || 'No especificado')} - {(point.FECHA_ISO || point.FECHA || 'Sin fecha')}</p>
                                             </div>
                                         ))}
                                         {cluster.points.length > 5 && (
@@ -197,6 +196,25 @@ const MapComponent = memo(({ data }) => {
         }
     };
 
+    // Invalidar tamaño del mapa al montar y al redimensionar para evitar espacio en blanco
+    useEffect(() => {
+        if (!map) return;
+        const invalidate = () => {
+            try {
+                map.invalidateSize();
+            } catch {
+                // invalidation puede fallar si el mapa aún no está listo
+                console.debug('Leaflet invalidateSize skipped');
+            }
+        };
+        const t = setTimeout(invalidate, 0);
+        window.addEventListener('resize', invalidate);
+        return () => {
+            clearTimeout(t);
+            window.removeEventListener('resize', invalidate);
+        };
+    }, [map]);
+
     return (
         <div className="relative z-10 w-full h-full" style={{
             /* Controlar z-index de Leaflet para que no se superponga al header */
@@ -242,7 +260,7 @@ const MapComponent = memo(({ data }) => {
             <MapContainer
                 center={mapCenter}
                 zoom={mapZoom}
-                style={{ width: '100%', height: '100%', minHeight: '500px' }}
+                style={{ width: '100%', height: '100%' }}
                 whenCreated={setMap}
                 onZoomEnd={handleZoomEnd}
                 maxZoom={18}

@@ -6,13 +6,47 @@ export default function DataTable({ data }) {
     const [search, setSearch] = useState('');
     const itemsPerPage = 10;
 
-    // Filtrar datos según la búsqueda
-    const filteredData = data.filter(item =>
-        (item.DESCRIPCION && item.DESCRIPCION.toLowerCase().includes(search.toLowerCase())) ||
-        (item.TIPO_INTERVENCION && item.TIPO_INTERVENCION.toLowerCase().includes(search.toLowerCase())) ||
-        (item.PROVINCIA && item.PROVINCIA.toLowerCase().includes(search.toLowerCase())) ||
-        (item.ID_OPERATIVO && item.ID_OPERATIVO.toLowerCase().includes(search.toLowerCase()))
-    );
+    // Helpers de visualización
+    const pickFirstString = (obj, keys) => {
+        for (const k of keys) {
+            const v = obj[k];
+            if (typeof v === 'string' && v.trim() && v !== '-') return v.trim();
+        }
+        return '';
+    };
+
+    const getDescription = (item) => pickFirstString(item, [
+        'DESCRIPCIÓN', 'descripcion', 'DESCRIPCION_HECHO', 'DETALLE', 'OBSERVACION', 'OBSERVACIONES'
+    ]) || '-';
+
+    const getType = (item) => pickFirstString(item, [
+        'TIPO_INTERVENCION', 'TIPO', 'CATEGORIA'
+    ]) || '-';
+
+    const getLatLng = (item) => {
+        const lat = item.LATITUD ?? item.latitud ?? item.latitud_decimal ?? item['Latitud Decimal'];
+        const lng = item.LONGITUD ?? item.longitud ?? item.longitud_decimal ?? item['Longitud Decimal'];
+        if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
+            return `${Number(lat).toFixed(6)}, ${Number(lng).toFixed(6)}`;
+        }
+        return '-';
+    };
+
+    const getDateText = (item) => {
+        const iso = item.FECHA_ISO || item.FECHA;
+        const time = item.HORA || '';
+        return iso ? `${iso}${time ? ` ${time}` : ''}` : '-';
+    };
+
+    // Filtrar datos según la búsqueda (aplicada a campos derivados también)
+    const filteredData = data.filter(item => {
+        const desc = getDescription(item).toLowerCase();
+        const tipo = getType(item).toLowerCase();
+        const prov = (item.PROVINCIA || '').toLowerCase();
+        const id = (item.ID_OPERATIVO || '').toLowerCase();
+        const q = search.toLowerCase();
+        return desc.includes(q) || tipo.includes(q) || prov.includes(q) || id.includes(q);
+    });
 
     // Paginación
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -56,16 +90,11 @@ export default function DataTable({ data }) {
                         {currentItems.map((item, index) => (
                             <tr key={index}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.ID_OPERATIVO || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.DESCRIPCION || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.TIPO_INTERVENCION || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {item.FECHA ? `${item.FECHA} ${item.HORA || ''}` : '-'}
-                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getDescription(item)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getType(item)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getDateText(item)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.PROVINCIA || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {item.LATITUD && item.LONGITUD ?
-                                        `${Number(item.LATITUD).toFixed(6)}, ${Number(item.LONGITUD).toFixed(6)}` : '-'}
-                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getLatLng(item)}</td>
                             </tr>
                         ))}
                     </tbody>

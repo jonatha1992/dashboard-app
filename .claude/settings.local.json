@@ -30,7 +30,8 @@
       "mcp__playwright__browser_click",
       "Bash(npm test)",
       "Bash(node:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

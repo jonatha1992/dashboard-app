@@ -294,10 +294,9 @@ export const getChartData = (data, category) => {
         return acc;
     }, {});
 
-    // Solo incluir meses con datos reales (filtrar enero 2025 únicamente basado en datos de DB)
+    // Incluir todos los meses presentes con datos reales
     const monthlyKeys = Object.keys(monthlyMap)
-        .filter(key => monthlyMap[key] > 0) // Solo períodos con datos
-        .filter(key => key.startsWith('2025-01')) // Solo enero 2025
+        .filter(key => monthlyMap[key] > 0)
         .sort();
     const monthlyData = monthlyKeys.reduce((acc, key) => {
         const [y, m] = key.split('-');

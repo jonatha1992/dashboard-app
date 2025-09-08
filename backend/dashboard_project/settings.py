@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'drf_spectacular',
     'dashboard_api',
 ]
 
@@ -124,7 +125,61 @@ REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.MultiPartParser',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# Spectacular settings for Swagger UI
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Dashboard API - Operaciones de Seguridad',
+    'DESCRIPTION': 'API REST completa para gestión y análisis de datos operacionales de seguridad. '
+                   'Incluye autenticación JWT, gestión de datos, análisis temporal/geográfico y Data Warehouse.',
+    'VERSION': '2.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SERVE_AUTHENTICATION': [
+        'dashboard_api.authentication.JWTAuthentication'
+    ],
+    'SECURITY': [
+        {
+            'type': 'http',
+            'scheme': 'bearer',
+            'bearerFormat': 'JWT',
+        }
+    ],
+    'TAGS': [
+        {
+            'name': 'Autenticación',
+            'description': 'Endpoints de autenticación JWT'
+        },
+        {
+            'name': 'Datos Públicos',
+            'description': 'Endpoints públicos de datos (sin autenticación)'
+        },
+        {
+            'name': 'Datos Especializados',
+            'description': 'Endpoints de datos categorizados por tipo'
+        },
+        {
+            'name': 'Gestión de Datos',
+            'description': 'Upload y limpieza de datos (Solo Admin)'
+        },
+        {
+            'name': 'Data Warehouse',
+            'description': 'Análisis temporal y geográfico'
+        },
+        {
+            'name': 'Estadísticas',
+            'description': 'Estadísticas y métricas del sistema'
+        },
+    ],
+    'CONTACT': {
+        'name': 'Dashboard API Support',
+        'email': 'support@dashboard.gov.ar'
+    },
+    'LICENSE': {
+        'name': 'Propietario - Gobierno Nacional'
+    }
 }
 
 # CORS settings

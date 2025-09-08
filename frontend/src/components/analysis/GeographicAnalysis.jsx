@@ -58,19 +58,12 @@ const GeographicAnalysis = () => {
     { value: 20, label: 'Top 20' }
   ];
 
-  // Cargar datos iniciales
+  // Cargar datos iniciales (sin auto-fetch por cambios de filtros)
   useEffect(() => {
     loadInitialData();
-  }, []);
+  }, [loadInitialData]);
 
-  // Recargar datos cuando cambian los filtros
-  useEffect(() => {
-    if (provinciasDisponibles.length > 0) {
-      fetchData();
-    }
-  }, [filters, provinciasDisponibles]);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -88,6 +81,8 @@ const GeographicAnalysis = () => {
         const defaultYear = Math.max(...years);
         setFilters(prev => ({ ...prev, periodo: `${defaultYear}-01` }));
       }
+      // Carga inicial de datos una vez configurados los catálogos
+      await fetchData();
       
     } catch (error) {
       console.error('Error cargando datos iniciales:', error);
@@ -95,7 +90,7 @@ const GeographicAnalysis = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchData]);
 
   const fetchData = useCallback(async () => {
     if (!filters.periodo) {

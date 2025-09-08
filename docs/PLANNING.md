@@ -66,3 +66,11 @@ Este documento define las fases y los hitos para el desarrollo del dashboard de 
 -   [ ] **Despliegue**: Publicar la aplicación en una plataforma (ej. Vercel, Netlify, GitHub Pages).
 
 ```
+
+## Registro de Cambios (Actualizaciones de planificación)
+
+- 2025-09-07: Eliminado el polling continuo en el frontend para reducir carga al servidor.
+  - `frontend/src/components/dashboard/SystemStatusView.jsx`: se removió `setInterval`; ahora solo carga estado al montar y al presionar el botón de refresco (o tras ejecutar ETL).
+  - `frontend/src/components/analysis/TimeAnalysis.jsx`: sin auto-fetch al cambiar filtros; carga inicial y botón "Actualizar" manual.
+  - `frontend/src/components/analysis/GeographicAnalysis.jsx`: sin auto-fetch al cambiar filtros; carga inicial y botón "Actualizar" manual.
+  - Objetivo: que el frontend solo haga consultas al iniciar y cuando el usuario solicita actualización.

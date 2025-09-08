@@ -385,31 +385,26 @@ export default function Dashboard() {
                                     <SecuritySection category={catKey} showProvinceChart={false} />
                                     
                                     {/* Layout flex: Mapa izquierda (6/12) + Gráficos derecha (6/12) */}
-                                    <div className="flex gap-6 mb-8">
-                                        {/* Columna izquierda - Mapa (6/12) */}
-                                        <div className="w-1/2">
-                                            <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800">
-                                                <span className="mr-2">🗺️</span>
-                                                Mapa de {title}
-                                            </h2>
+                                    <div className="flex flex-col lg:flex-row gap-6 mb-8">
+                                        {/* Columna izquierda - Mapa (6/12 en lg+) */}
+                                        <div className="w-full lg:w-6/12">
                                             <div className="p-4 bg-white rounded-lg shadow-md" style={{ height: '600px' }}>
-                                                <MapComponent data={catData} />
+                                                <h2 className="flex items-center mb-3 text-lg font-semibold text-gray-800">
+                                                    <span className="mr-2">🗺️</span>
+                                                    Mapa de {title}
+                                                </h2>
+                                                {/* El mapa ocupa el alto restante del card (reservamos ~44px para el título) */}
+                                                <div style={{ height: 'calc(100% - 44px)' }}>
+                                                    <MapComponent data={catData} />
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* Columna derecha - Gráficos (6/12) */}
-                                        <div className="w-1/2 space-y-6">
+                                        {/* Columna derecha - Gráficos (6/12 en lg+) */}
+                                        <div className="w-full lg:w-6/12 space-y-6">
                                             {/* Gráfico de tendencia (línea) */}
                                             <div className="p-4 bg-white rounded-lg shadow-md">
-                                                <div className="flex items-center justify-between mb-3">
-                                                    <div className="text-sm font-semibold text-gray-700">Tendencia</div>
-                                                    <div className="flex gap-1">
-                                                        <button className="px-2 py-1 text-xs bg-blue-600 text-white rounded">Mes</button>
-                                                        <button className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Semana</button>
-                                                        <button className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Día</button>
-                                                    </div>
-                                                </div>
-                                                <div style={{ height: '250px' }}>
+                                               <div style={{ height: '250px' }}>
                                                     <CategoryCharts
                                                         data={catData}
                                                         categoryName={title}
@@ -421,16 +416,8 @@ export default function Dashboard() {
                                                     />
                                                 </div>
                                             </div>
-                                            
-                                            {/* Gráfico de barras por provincia */}
+
                                             <div className="p-4 bg-white rounded-lg shadow-md">
-                                                <div className="flex items-center justify-between mb-3">
-                                                    <div className="text-sm font-semibold text-gray-700">Por Ubicación</div>
-                                                    <div className="flex gap-1">
-                                                        <button className="px-2 py-1 text-xs bg-blue-600 text-white rounded">Provincia</button>
-                                                        <button className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Departamento</button>
-                                                    </div>
-                                                </div>
                                                 <div style={{ height: '250px' }}>
                                                     <CategoryCharts
                                                         data={catData}
@@ -449,7 +436,6 @@ export default function Dashboard() {
 
                                     {/* Tabla de registros para la categoría (única tabla abajo) */}
                                     <div className="mt-8">
-                                        <h2 className="mb-4 text-lg font-semibold text-gray-800">Registros - {title}</h2>
                                         <DataTable data={catData} />
                                     </div>
                                 </div>

@@ -16,6 +16,21 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
         setActiveChart('monthly');
     }, [timeGranularity]);
 
+    // Auto-seleccionar granularidad según el rango de fechas del filtro
+    useEffect(() => {
+        if (!filters || !filters.fromDate || !filters.toDate) return;
+        try {
+            const from = new Date(filters.fromDate);
+            const to = new Date(filters.toDate);
+            const days = Math.max(1, Math.round((to - from) / (1000 * 60 * 60 * 24)) + 1);
+            // Regla: <=7 días -> día, <=31 días -> semana, >31 -> mes
+            const next = days <= 7 ? 'day' : (days <= 31 ? 'week' : 'month');
+            setTimeGranularity(next);
+        } catch {
+            // Ignorar si las fechas no son válidas
+        }
+    }, [filters?.fromDate, filters?.toDate]);
+
     if (!data || data.length === 0) {
         // Nunca ocultar completamente cuando hideEmpty es true
         return (
@@ -78,15 +93,7 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
 
         // Solo incluir claves que tienen datos reales (filtrar períodos vacíos y datos espurios)
         const sortedKeys = Object.keys(map)
-            .filter(key => map[key] > 0) // Solo períodos con datos
-            .filter(key => {
-                // Filtro adicional: verificar que la clave corresponde a datos reales de enero 2025
-                if (granularity === 'month') {
-                    // Solo permitir enero 2025 basado en los datos reales de la DB
-                    return key.startsWith('2025-01');
-                }
-                return true; // Para day/week mantener lógica normal
-            })
+            .filter(key => map[key] > 0)
             .sort();
 
         // Check if all data is from the same year for smart date formatting
@@ -150,24 +157,48 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
         if (activeChart === 'monthly') {
             return (
                 <div className="h-full">
+                    {/* Header combinado: título Tendencia + botones */}
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-semibold text-gray-700">Tendencia</div>
+                        <div className="flex justify-end gap-1">
+                            <button className={`px-2 py-0.5 text-xs rounded ${timeGranularity === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                                onClick={() => setTimeGranularity('month')}>Mes</button>
+                            <button className={`px-2 py-0.5 text-xs rounded ${timeGranularity === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                                onClick={() => setTimeGranularity('week')}>Semana</button>
+                            <button className={`px-2 py-0.5 text-xs rounded ${timeGranularity === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                                onClick={() => setTimeGranularity('day')}>Día</button>
+                        </div>
+                    </div>
                     <BaseChart
                         type="line"
                         data={buildTimeSeries(timeGranularity)}
                         title={null}
-                        caption={timeCaption(timeGranularity)}
+                        granularity={timeGranularity}
+                        onGranularityChange={setTimeGranularity}
+                        chartKey={`trend-${timeGranularity}`}
+                        height={220}
                     />
                 </div>
             );
         }
-        
-        if (activeChart === 'province') {
+
+        if (activeChart === 'province' || activeChart === 'department') {
+            const isDept = activeChart === 'department';
+            const dataForChart = isDept ? chartData.byDepartment : chartData.byProvince;
             return (
                 <div className="h-full">
+                    {/* Toggle compacto Provincia/Departamento */}
+                    <div className="flex justify-end gap-1 mb-2">
+                        <button className={`px-2 py-0.5 text-xs rounded ${!isDept ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                            onClick={() => setActiveChart('province')}>Provincia</button>
+                        <button className={`px-2 py-0.5 text-xs rounded ${isDept ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                            onClick={() => setActiveChart('department')}>Departamento</button>
+                    </div>
                     <BaseChart
                         type="bar"
-                        data={chartData.byProvince}
+                        data={dataForChart}
                         title={null}
-                        caption="Provincia — Cantidad"
+                        height={220}
                     />
                 </div>
             );
@@ -245,16 +276,20 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                                     type="line"
                                     data={buildTimeSeries(timeGranularity)}
                                     title={null}
-                                    caption={timeCaption(timeGranularity)}
+                                    granularity={timeGranularity}
+                                    onGranularityChange={setTimeGranularity}
+                                    chartKey={`trend-${timeGranularity}`}
+                                    height={260}
                                 />
                             </div>
                             <div className="p-4 bg-white rounded-lg shadow-md">
                                 <div className="mb-2 text-sm font-semibold text-gray-700">Por {timeGranularity === 'month' ? 'Mes' : timeGranularity === 'week' ? 'Semana' : 'Día'} (Barras)</div>
                                 <BaseChart
+                                    key={`bars-${timeGranularity}`}
                                     type="bar"
                                     data={buildTimeSeries(timeGranularity)}
                                     title={null}
-                                    caption={`${timeCaption(timeGranularity)} — Cantidad`}
+                                    height={260}
                                 />
                             </div>
                         </>
@@ -272,6 +307,7 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                                             data={chartData.byDepartment}
                                             title={null}
                                             caption="Departamento"
+                                            height={260}
                                         />
                                     </div>
                                     <div className="p-4 bg-white rounded-lg shadow-md">
@@ -281,6 +317,7 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                                             data={chartData.byDepartment}
                                             title={null}
                                             caption="Departamento — Cantidad"
+                                            height={260}
                                         />
                                     </div>
                                 </>
@@ -293,6 +330,7 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                                             data={chartData.byProvince}
                                             title={null}
                                             caption="Provincia"
+                                            height={260}
                                         />
                                     </div>
                                     <div className="p-4 bg-white rounded-lg shadow-md">
@@ -302,6 +340,7 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                                             data={chartData.byProvince}
                                             title={null}
                                             caption="Provincia — Cantidad"
+                                            height={260}
                                         />
                                     </div>
                                 </>

@@ -15,39 +15,7 @@ export default function FilterPanel() {
     const [isOpen, setIsOpen] = useState(false);
     const hasActiveFilters = Boolean(filters.fromDate || filters.toDate || filters.province);
 
-    // Obtener rango de fechas desde las estadísticas del backend
-    const getDataDateRange = () => {
-        if (!dataStats || !dataStats.dateRange) return null;
-        
-        const { earliest, latest } = dataStats.dateRange;
-        
-        // Manejar fechas inválidas como "-"
-        if (!earliest || !latest || earliest === '-' || latest === '-') {
-            return {
-                from: 'Sin datos de fecha válidos',
-                to: '',
-                totalRecords: dataStats.totalRecords || 0
-            };
-        }
-        
-        // Convertir las fechas del backend al formato deseado
-        const formatDate = (dateStr) => {
-            try {
-                const date = new Date(dateStr);
-                return date.toLocaleDateString('es-AR');
-            } catch {
-                return dateStr;
-            }
-        };
-        
-        return {
-            from: formatDate(earliest),
-            to: formatDate(latest),
-            totalRecords: dataStats.totalRecords || 0
-        };
-    };
-
-    const dateRange = getDataDateRange();
+    // Se removió el banner informativo; no es necesario calcular 'dateRange'
 
     // Obtener límites de fechas reales desde dataStats
     const getDateLimits = () => {
@@ -77,15 +45,26 @@ export default function FilterPanel() {
         setFilters({ ...filters, province: e.target.value });
     };
     const clearAllFilters = () => {
-        // Usar las fechas reales disponibles en lugar del mes actual
-        const realDateRange = dateLimits.min && dateLimits.max 
-            ? { fromDate: dateLimits.min, toDate: dateLimits.max }
-            : { fromDate: '', toDate: '' };
-        
-        setFilters({
-            ...realDateRange,
-            province: ''
-        });
+        // Si hay rango de fechas, fijar al último mes disponible (según latest)
+        const latest = dataStats?.dateRange?.latest;
+        if (latest && latest !== '-') {
+            try {
+                const d = new Date(latest);
+                if (!isNaN(d.getTime())) {
+                    const firstOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+                    const firstISO = firstOfMonth.toISOString().slice(0,10);
+                    // último día del mes
+                    const lastOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+                    const lastISO = lastOfMonth.toISOString().slice(0,10);
+                    setFilters({ fromDate: firstISO, toDate: lastISO, province: '' });
+                    return;
+                }
+            } catch {
+                // si no es parseable, seguir con fallback
+            }
+        }
+        // Fallback: sin rango válido
+        setFilters({ fromDate: '', toDate: '', province: '' });
     };
     const toggleFilterPanel = () => {
         setIsOpen(!isOpen);
@@ -126,21 +105,6 @@ export default function FilterPanel() {
                             ))}
                         </select>
                     </div>
-
-                    {/* Información de rango de fechas disponibles */}
-                    {dateRange && (
-                        <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md">
-                            <div className="text-xs font-semibold text-blue-900 mb-1">
-                                📊 Datos actualizados:
-                            </div>
-                            <div className="text-sm font-medium text-blue-800 mb-1">
-                                {dateRange.to ? `${dateRange.from} - ${dateRange.to}` : dateRange.from}
-                            </div>
-                            <div className="text-xs text-blue-600">
-                                Total de registros: {dateRange.totalRecords.toLocaleString('es-AR')}
-                            </div>
-                        </div>
-                    )}
 
                     <div className="grid grid-cols-2 gap-2 mb-4">
                         <div>

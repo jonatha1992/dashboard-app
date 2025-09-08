@@ -117,13 +117,25 @@ export const DashboardProvider = ({ children }) => {
             const stats = await apiService.getDataStats();
             setDataStats(stats);
             
-            // Establecer filtros base usando las fechas reales de los datos
-            if (stats && stats.dateRange && stats.dateRange.earliest && stats.dateRange.latest) {
-              setFilters(prev => ({
-                fromDate: prev.fromDate || stats.dateRange.earliest,
-                toDate: prev.toDate || stats.dateRange.latest,
-                province: prev.province || ''
-              }));
+            // Establecer filtros base al ÚLTIMO MES disponible
+            if (stats && stats.dateRange && stats.dateRange.latest) {
+              try {
+                const latest = new Date(stats.dateRange.latest);
+                if (!isNaN(latest.getTime())) {
+                  const start = new Date(latest.getFullYear(), latest.getMonth(), 1).toISOString().slice(0,10);
+                  const end = new Date(latest.getFullYear(), latest.getMonth() + 1, 0).toISOString().slice(0,10);
+                  setFilters({ fromDate: start, toDate: end, province: '' });
+                }
+              } catch {
+                // Fallback a earliest/latest si no se puede parsear
+                if (stats.dateRange.earliest && stats.dateRange.latest) {
+                  setFilters(prev => ({
+                    fromDate: prev.fromDate || stats.dateRange.earliest,
+                    toDate: prev.toDate || stats.dateRange.latest,
+                    province: prev.province || ''
+                  }));
+                }
+              }
             }
             
             return; // Exit early if API works
@@ -171,13 +183,24 @@ export const DashboardProvider = ({ children }) => {
             
             setDataStats(basicStats);
             
-            // Establecer filtros base
-            if (basicStats.dateRange.earliest && basicStats.dateRange.latest) {
-              setFilters(prev => ({
-                fromDate: prev.fromDate || basicStats.dateRange.earliest,
-                toDate: prev.toDate || basicStats.dateRange.latest,
-                province: prev.province || ''
-              }));
+            // Establecer filtros base al ÚLTIMO MES disponible (datos locales)
+            if (basicStats.dateRange.latest) {
+              try {
+                const latest = new Date(basicStats.dateRange.latest);
+                if (!isNaN(latest.getTime())) {
+                  const start = new Date(latest.getFullYear(), latest.getMonth(), 1).toISOString().slice(0,10);
+                  const end = new Date(latest.getFullYear(), latest.getMonth() + 1, 0).toISOString().slice(0,10);
+                  setFilters({ fromDate: start, toDate: end, province: '' });
+                }
+              } catch {
+                if (basicStats.dateRange.earliest && basicStats.dateRange.latest) {
+                  setFilters(prev => ({
+                    fromDate: prev.fromDate || basicStats.dateRange.earliest,
+                    toDate: prev.toDate || basicStats.dateRange.latest,
+                    province: prev.province || ''
+                  }));
+                }
+              }
             }
             
           } else {

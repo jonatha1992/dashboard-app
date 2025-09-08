@@ -1,10 +1,16 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const REQUIRE_AUTH = (import.meta.env.VITE_REQUIRE_AUTH || 'false').toLowerCase() === 'true';
 
 class ApiService {
   constructor() {
     this.token = localStorage.getItem('auth_token');
-    // Auto-login for development mode
-    this.ensureAuthentication();
+    // Auto-login solo si está habilitado explícitamente
+    if (REQUIRE_AUTH) {
+      this.ensureAuthentication();
+    } else {
+      // Si no requerimos auth, asegurarnos de no enviar tokens previos
+      this.setAuthToken(null);
+    }
   }
 
   async ensureAuthentication() {
@@ -23,7 +29,7 @@ class ApiService {
     try {
       const payload = JSON.parse(atob(this.token.split('.')[1]));
       return Date.now() >= payload.exp * 1000;
-    } catch (error) {
+    } catch {
       return true;
     }
   }
@@ -94,70 +100,16 @@ class ApiService {
   }
 
   // Data operations - Using existing endpoints
-  async getCategorizedData() {
-    // Get all procedimientos and organize by category
-    const allData = await this.request('/data');
-    
-    if (!allData || !Array.isArray(allData)) {
-      return {};
-    }
-    
-    // Categorize data based on description and type
-    const categorizeData = (data) => {
-      const categories = {
-        procedimientos: data, // All data goes to procedures
-        detenidos: data.filter(item => {
-          const desc = (item.descripcion || '').toLowerCase();
-          const tipo = (item.tipo_intervencion || '').toLowerCase();
-          return desc.includes('detención') || desc.includes('detenido') ||
-                 desc.includes('arresto') || desc.includes('aprehendido') ||
-                 tipo.includes('detención') || tipo.includes('detenido');
-        }),
-        incautaciones: data.filter(item => {
-          const desc = (item.descripcion || '').toLowerCase();
-          const tipo = (item.tipo_intervencion || '').toLowerCase();
-          return desc.includes('incautación') || desc.includes('secuestro') ||
-                 desc.includes('decomiso') || desc.includes('droga') ||
-                 desc.includes('arma') || tipo.includes('incautación');
-        }),
-        controlados: data.filter(item => {
-          const desc = (item.descripcion || '').toLowerCase();
-          const tipo = (item.tipo_intervencion || '').toLowerCase();
-          return desc.includes('control') || tipo.includes('control') ||
-                 desc.includes('controlado') || desc.includes('verificación');
-        }),
-        afectados: data.filter(item => {
-          const desc = (item.descripcion || '').toLowerCase();
-          const tipo = (item.tipo_intervencion || '').toLowerCase();
-          return desc.includes('afectado') || desc.includes('víctima') ||
-                 desc.includes('herido') || tipo.includes('afectado');
-        }),
-        trata: data.filter(item => {
-          const desc = (item.descripcion || '').toLowerCase();
-          const tipo = (item.tipo_intervencion || '').toLowerCase();
-          return desc.includes('trata') || desc.includes('tráfico') ||
-                 desc.includes('explotación') || tipo.includes('trata');
-        }),
-        abatidos: data.filter(item => {
-          const desc = (item.descripcion || '').toLowerCase();
-          const tipo = (item.tipo_intervencion || '').toLowerCase();
-          return desc.includes('abatido') || desc.includes('enfrentamiento') ||
-                 desc.includes('tiroteo') || tipo.includes('abatido');
-        })
-      };
-      return categories;
-    };
-    
-    return categorizeData(allData);
+  async getDataRaw() {
+    // Lectura directa del endpoint maestro
+    return await this.request('/data');
   }
 
-  async getDataStats() {
-    return await this.request('/data/stats');
-  }
+  // eliminado duplicado getDataStats
 
-  // Legacy method for backward compatibility
+  // Legacy method for backward compatibility: devuelve el dataset maestro sin categorizar
   async getData() {
-    return await this.getCategorizedData();
+    return await this.getDataRaw();
   }
 
   async uploadData(file) {
@@ -236,11 +188,11 @@ class ApiService {
     return await this.request('/data/abatidos');
   }
 
-  // Get all categorized data at once
+  // Get all categorized data at once (sin recursión)
   async getCategorizedData() {
     try {
       const [general, detenidos, incautaciones, trata, fallecidos, abatidos, controlados, afectados] = await Promise.all([
-        this.getData(), // Tabla maestra (GeografiaProcedimiento)
+        this.getDataRaw(), // Tabla maestra
         this.getDetenidos(),
         this.getIncautaciones(), 
         this.getTrata(),
@@ -259,8 +211,7 @@ class ApiService {
         abatidos: abatidos || [],
         controlados: controlados || [],
         afectados: afectados || [],
-        // Derivadas
-        procedimientos: general || [], // Los procedimientos son todos los registros de la tabla maestra
+        procedimientos: general || [],
       };
     } catch (error) {
       console.error('Error obteniendo datos categorizados:', error);

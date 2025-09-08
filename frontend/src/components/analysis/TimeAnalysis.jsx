@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Line, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -43,27 +43,24 @@ const TimeAnalysis = () => {
     showComparison: false
   });
 
-  // Opciones de métricas disponibles
-  const metricas = [
+  // Opciones de métricas disponibles (memoizado para dependencias estables)
+  const metricas = useMemo(() => ([
     { key: 'total_procedimientos', label: 'Procedimientos', color: 'rgb(75, 192, 192)' },
     { key: 'total_detenidos', label: 'Detenidos', color: 'rgb(255, 99, 132)' },
     { key: 'total_incautaciones', label: 'Incautaciones', color: 'rgb(54, 162, 235)' },
     { key: 'total_vehiculos_controlados', label: 'Vehículos Controlados', color: 'rgb(255, 205, 86)' }
-  ];
+  ]), []);
 
   // Cargar datos iniciales
   useEffect(() => {
     loadInitialData();
-  }, []);
+  }, [loadInitialData]);
 
-  // Recargar datos cuando cambian los filtros
-  useEffect(() => {
-    if (provinciasDisponibles.length > 0) {
-      fetchData();
-    }
-  }, [filters, provinciasDisponibles]);
+  // Nota: Se deshabilita el auto-fetch al cambiar filtros.
+  // Solo carga inicial y mediante botón "Actualizar".
 
-  const loadInitialData = async () => {
+
+  const loadInitialData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -75,6 +72,8 @@ const TimeAnalysis = () => {
       
       setProvinciasDisponibles(provincias);
       setAvailableYears(years);
+      // Carga inicial de datos una vez que hay configuración
+      await fetchData();
       
     } catch (error) {
       console.error('Error cargando datos iniciales:', error);
@@ -82,9 +81,9 @@ const TimeAnalysis = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchData]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!analysisService.validateFilters(filters, ['year'])) {
       return;
     }
@@ -108,7 +107,7 @@ const TimeAnalysis = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   // Preparar datos para el gráfico
   const chartData = useMemo(() => {
@@ -133,7 +132,7 @@ const TimeAnalysis = () => {
       // Mostrar solo métrica seleccionada
       return analysisService.formatTemporalDataForChart(data, chartConfig.metrica);
     }
-  }, [data, chartConfig]);
+  }, [data, chartConfig, metricas]);
 
   // Configuración del gráfico
   const chartOptions = {

@@ -487,5 +487,4 @@ class CodigoOperativo(models.Model):
         return f"{self.procedimiento.id_operativo} - Código: {self.codigo_operativo}"
 
 
-# Import Data Warehouse models to register them for migrations
-from .dw_models import DimTiempo, DimGeografia, FactProcedimientos, AggMensualProvincia, AggMensualDepartamento
+# DW models import removed - files deleted
