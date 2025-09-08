@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import apiService from '../services/apiService';
 import { analysisService } from '../services/analysisService';
-import { loadData } from '../services/dataService';
+import { loadData, getCategorizedData } from '../services/dataService';
 
 const DashboardContext = createContext();
 
@@ -14,16 +14,43 @@ const parseDateToISO = (dateStr) => {
   const str = String(dateStr).trim();
   if (!str || str === '-') return null;
   
+  // Si ya está en formato ISO, retornar la parte de fecha
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
   
+  // Formato dd/mm/yyyy (más común en los datos)
   const dmy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (dmy) {
     const dd = dmy[1].padStart(2, '0');
     const mm = dmy[2].padStart(2, '0');
     const yyyy = dmy[3];
-    return `${yyyy}-${mm}-${dd}`;
+    const isoDate = `${yyyy}-${mm}-${dd}`;
+    
+    // Validar que la fecha sea válida
+    const testDate = new Date(isoDate);
+    if (!isNaN(testDate.getTime()) && 
+        testDate.getFullYear() == yyyy && 
+        testDate.getMonth() + 1 == parseInt(mm) && 
+        testDate.getDate() == parseInt(dd)) {
+      return isoDate;
+    }
   }
   
+  // Formato mm/dd/yyyy (menos común pero posible)
+  const mdy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdy) {
+    const mm = mdy[1].padStart(2, '0');
+    const dd = mdy[2].padStart(2, '0');
+    const yyyy = mdy[3];
+    const isoDate = `${yyyy}-${mm}-${dd}`;
+    
+    // Solo usar si la fecha es válida y el mes <= 12
+    const testDate = new Date(isoDate);
+    if (!isNaN(testDate.getTime()) && parseInt(mm) <= 12) {
+      return isoDate;
+    }
+  }
+  
+  // Último intento: parseo directo
   try {
     const parsed = new Date(str);
     if (!isNaN(parsed.getTime())) {
@@ -32,11 +59,30 @@ const parseDateToISO = (dateStr) => {
       const d = String(parsed.getDate()).padStart(2, '0');
       return `${y}-${m}-${d}`;
     }
-  } catch {
-    // Si hay error en el parsing, retornar null
+  } catch (e) {
+    console.warn(`⚠️ No se pudo parsear fecha: "${str}"`, e);
   }
   
   return null;
+};
+
+// Función para formatear fechas de manera consistente para display
+const formatDateForDisplay = (dateStr) => {
+  if (!dateStr) return 'Sin fecha';
+  
+  const isoDate = parseDateToISO(dateStr);
+  if (!isoDate) return dateStr; // Retornar original si no se puede parsear
+  
+  try {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    });
+  } catch {
+    return dateStr; // Fallback al string original
+  }
 };
 
 const makeKey = (s) => {
@@ -111,6 +157,14 @@ export const DashboardProvider = ({ children }) => {
     viewType: 'chart' // chart, table, hybrid
   });
 
+  // Estado para forzar re-render cuando sea necesario
+  const [forceRender, setForceRender] = useState(0);
+
+  // Effect para forzar re-render cuando cambian los filtros
+  useEffect(() => {
+    console.log('🔄 Filtros cambiaron, forzando re-render:', filters);
+    setForceRender(prev => prev + 1);
+  }, [filters]);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -118,45 +172,33 @@ export const DashboardProvider = ({ children }) => {
       try {
         setLoading(true);
         
-        // Intentar cargar datos desde API del backend
+        // Intentar cargar datos desde API del backend (endpoints unificados)
         try {
-          console.log('Cargando datos desde API del backend...');
+          console.log('Cargando datos desde API del backend (endpoints unificados)...');
           
-          // Cargar datos categorizados desde API
+          // Cargar datos categorizados unificados desde endpoints del backend
           const allCategorizedData = await apiService.getCategorizedData();
           
           if (allCategorizedData && Object.keys(allCategorizedData).length > 0) {
-            // Establecer datos generales (procedimientos es la tabla maestra)
-            setData(allCategorizedData.procedimientos || []);
+            // Usar datos RAW como base general (tabla maestra completa)
+            const rawData = allCategorizedData.general || [];
+            setData(rawData);
             setCategorizedData(allCategorizedData);
             
-            console.log(`✅ Datos cargados correctamente desde API`);
+            console.log(`✅ Datos cargados desde endpoints backend unificados`);
             console.log('Categorías disponibles:', Object.keys(allCategorizedData));
             
-            // Cargar estadísticas desde API
+            // Cargar estadísticas desde API  
             const stats = await apiService.getDataStats();
             setDataStats(stats);
             
-            // Establecer filtros base al ÚLTIMO MES disponible
-            if (stats && stats.dateRange && stats.dateRange.latest) {
-              try {
-                const latest = new Date(stats.dateRange.latest);
-                if (!isNaN(latest.getTime())) {
-                  const start = new Date(latest.getFullYear(), latest.getMonth(), 1).toISOString().slice(0,10);
-                  const end = new Date(latest.getFullYear(), latest.getMonth() + 1, 0).toISOString().slice(0,10);
-                  setFilters({ fromDate: start, toDate: end, province: '' });
-                }
-              } catch {
-                // Fallback a earliest/latest si no se puede parsear
-                if (stats.dateRange.earliest && stats.dateRange.latest) {
-                  setFilters(prev => ({
-                    fromDate: prev.fromDate || stats.dateRange.earliest,
-                    toDate: prev.toDate || stats.dateRange.latest,
-                    province: prev.province || ''
-                  }));
-                }
-              }
-            }
+            // Inicializar sin filtros automáticos para mostrar todos los datos
+            console.log('📊 Inicializando sin filtros automáticos - mostrando todos los datos:', {
+              totalRecords: stats.totalRecords || rawData.length,
+              dateRange: stats.dateRange
+            });
+            
+            setFilters({ fromDate: '', toDate: '', province: '' });
             
             return; // Exit early if API works
           }
@@ -173,13 +215,13 @@ export const DashboardProvider = ({ children }) => {
           if (localData && localData.length > 0) {
             setData(localData);
             
-            // Crear datos categorizados básicos
-            setCategorizedData({
-              procedimientos: localData
-            });
+            // Usar categorización local mejorada también para datos locales
+            console.log(`🔄 Aplicando categorización local a datos locales (${localData.length} registros)`);
+            const categorizedDataLocal = getCategorizedData(localData);
+            setCategorizedData(categorizedDataLocal);
             
-            console.log(`✅ Datos cargados correctamente desde archivos locales`);
-            console.log(`Total registros: ${localData.length}`);
+            console.log(`✅ Datos cargados y categorizados desde archivos locales`);
+            console.log(`Total registros: ${localData.length}`, categorizedDataLocal);
             
             // Crear estadísticas básicas
             const dates = localData
@@ -203,25 +245,14 @@ export const DashboardProvider = ({ children }) => {
             
             setDataStats(basicStats);
             
-            // Establecer filtros base al ÚLTIMO MES disponible (datos locales)
-            if (basicStats.dateRange.latest) {
-              try {
-                const latest = new Date(basicStats.dateRange.latest);
-                if (!isNaN(latest.getTime())) {
-                  const start = new Date(latest.getFullYear(), latest.getMonth(), 1).toISOString().slice(0,10);
-                  const end = new Date(latest.getFullYear(), latest.getMonth() + 1, 0).toISOString().slice(0,10);
-                  setFilters({ fromDate: start, toDate: end, province: '' });
-                }
-              } catch {
-                if (basicStats.dateRange.earliest && basicStats.dateRange.latest) {
-                  setFilters(prev => ({
-                    fromDate: prev.fromDate || basicStats.dateRange.earliest,
-                    toDate: prev.toDate || basicStats.dateRange.latest,
-                    province: prev.province || ''
-                  }));
-                }
-              }
-            }
+            // CAMBIO: Inicializar SIN filtros automáticos para mostrar todos los datos locales
+            console.log('📊 Datos locales cargados - inicializando sin filtros automáticos:', {
+              totalRecords: basicStats.totalRecords,
+              dateRange: basicStats.dateRange
+            });
+            
+            // Solo establecer filtros vacíos inicialmente
+            setFilters({ fromDate: '', toDate: '', province: '' });
             
           } else {
             console.warn('⚠️ No se encontraron datos locales');
@@ -394,14 +425,26 @@ export const DashboardProvider = ({ children }) => {
 
   // Datos categorizados filtrados (aplicar filtros a cada categoría)
   const filteredCategorizedData = useMemo(() => {
+    console.log('🔄 Recalculando filteredCategorizedData:', {
+      hasCategorizdData: !!categorizedData,
+      categoriesCount: Object.keys(categorizedData || {}).length,
+      filters: filters
+    });
+
     if (!categorizedData || Object.keys(categorizedData).length === 0) {
+      console.log('❌ No hay categorizedData disponible');
       return {};
     }
 
-    const filterDataArray = (dataArray) => {
-      if (!dataArray || !Array.isArray(dataArray)) return [];
+    const filterDataArray = (dataArray, categoryName) => {
+      if (!dataArray || !Array.isArray(dataArray)) {
+        console.log(`❌ ${categoryName}: dataArray inválido`);
+        return [];
+      }
       
-      return dataArray.filter(item => {
+      const originalCount = dataArray.length;
+      
+      const filtered = dataArray.filter(item => {
         // Aplicar filtros de fecha
         const itemISO = parseDateToISO(item.FECHA);
         if (!itemISO) return true; // si no hay fecha, permitirlo
@@ -412,24 +455,53 @@ export const DashboardProvider = ({ children }) => {
         if (filters.province) {
           const filterKey = makeKey(filters.province);
           const itemProvKey = getProvinceKeyFromItem(item);
-          return itemProvKey === filterKey;
+          const matches = itemProvKey === filterKey;
+          
+          // Debug específico para problemas de provincia
+          if (!matches && Math.random() < 0.01) { // Solo log 1% para no saturar
+            console.log(`🔍 ${categoryName} - Provincia no match:`, {
+              filterKey,
+              itemProvKey,
+              originalProvince: item.PROVINCIA,
+              item: item
+            });
+          }
+          
+          return matches;
         }
         
         return true;
       });
+      
+      const filteredCount = filtered.length;
+      if (originalCount !== filteredCount) {
+        console.log(`📊 ${categoryName}: ${originalCount} → ${filteredCount} (filtrado)`);
+      }
+      
+      return filtered;
     };
 
     // Aplicar filtros a cada categoría
     const filtered = {};
     for (const [category, dataArray] of Object.entries(categorizedData)) {
-      filtered[category] = filterDataArray(dataArray);
+      filtered[category] = filterDataArray(dataArray, category);
     }
+
+    console.log('✅ filteredCategorizedData actualizado:', Object.keys(filtered).reduce((acc, key) => {
+      acc[key] = filtered[key].length;
+      return acc;
+    }, {}));
 
     return filtered;
   }, [categorizedData, filters]);
 
   // Actualizar filtros
   const updateFilters = (newFilters) => {
+    console.log('🎯 Actualizando filtros:', {
+      current: filters,
+      new: newFilters,
+      merged: { ...filters, ...newFilters }
+    });
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
@@ -442,21 +514,28 @@ export const DashboardProvider = ({ children }) => {
   const refreshData = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Iniciando refresh de datos...');
       
-      // Intentar cargar datos desde API del backend primero
+      // Intentar cargar datos desde API del backend (endpoints unificados)
       try {
-        console.log('Refrescando datos desde API del backend...');
+        console.log('Refrescando datos desde API del backend (endpoints unificados)...');
         
+        // Cargar datos categorizados unificados desde endpoints del backend
         const allCategorizedData = await apiService.getCategorizedData();
         
         if (allCategorizedData && Object.keys(allCategorizedData).length > 0) {
-          setData(allCategorizedData.procedimientos || []);
+          const rawData = allCategorizedData.general || [];
+          setData(rawData);
           setCategorizedData(allCategorizedData);
           
-          console.log(`✅ Datos refrescados desde API`);
+          console.log(`✅ Datos refrescados desde endpoints backend unificados`);
           
           const stats = await apiService.getDataStats();
           setDataStats(stats);
+          
+          // Forzar re-evaluación de filtros
+          console.log('🔄 Forzando re-evaluación de filtros después de refresh...');
+          setForceRender(prev => prev + 1);
           
           return { success: true, source: 'api', data: allCategorizedData };
         }
@@ -472,9 +551,12 @@ export const DashboardProvider = ({ children }) => {
         
         if (localData && localData.length > 0) {
           setData(localData);
-          setCategorizedData({ procedimientos: localData });
           
-          console.log(`✅ Datos refrescados desde archivos locales`);
+          // Usar categorización local mejorada en refresh también
+          const categorizedDataLocal = getCategorizedData(localData);
+          setCategorizedData(categorizedDataLocal);
+          
+          console.log(`✅ Datos refrescados y categorizados desde archivos locales`);
           
           // Crear estadísticas básicas
           const dates = localData
@@ -497,6 +579,10 @@ export const DashboardProvider = ({ children }) => {
           };
           
           setDataStats(basicStats);
+          
+          // Forzar re-evaluación de filtros
+          console.log('🔄 Forzando re-evaluación de filtros después de refresh...');
+          setForceRender(prev => prev + 1);
           
           return { success: true, source: 'local', data: localData };
         }
@@ -530,6 +616,7 @@ export const DashboardProvider = ({ children }) => {
     setFilters: updateFilters,
     filteredData,
     filteredCategorizedData,
+    forceRender, // Para debugging y forzar re-renders
     
     // Funciones de datos
     refreshData,
@@ -554,7 +641,11 @@ export const DashboardProvider = ({ children }) => {
     clearAnalysisData,
     
     // Utilidades de análisis
-    analysisService
+    analysisService,
+    
+    // Utilidades de fecha
+    parseDateToISO,
+    formatDateForDisplay
   };
 
   return (

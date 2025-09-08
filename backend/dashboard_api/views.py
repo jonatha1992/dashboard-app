@@ -333,13 +333,54 @@ class FilteringStatsView(APIView):
 class FilteredIncautacionesView(APIView):
     """
     Get filtered incautaciones (only records with real seizures)
+    Devuelve datos unificados: tabla maestra + datos específicos de incautaciones
     """
     
     def get(self, request):
-        # Get only incautaciones with actual seizure data
-        queryset = Incautaciones.objects.select_related('procedimiento').all()
-        serializer = FilteredIncautacionesSerializer(queryset, many=True)
-        return Response(serializer.data)
+        # GET incautaciones with JOIN to procedimiento (tabla maestra)
+        incautaciones = Incautaciones.objects.select_related('procedimiento').all()
+        
+        # Crear estructura unificada combinando ambas tablas
+        unified_data = []
+        for incautacion in incautaciones:
+            procedimiento = incautacion.procedimiento
+            
+            # Combinar datos de tabla maestra + datos específicos de incautaciones
+            unified_record = {
+                # Campos de tabla maestra (GeografiaProcedimiento)
+                'ID_OPERATIVO': procedimiento.id_operativo,
+                'ID_PROCEDIMIENTO': procedimiento.id_procedimiento,
+                'PROVINCIA': procedimiento.provincia,
+                'FECHA': procedimiento.fecha,
+                'FECHA_ISO': procedimiento.fecha_iso.isoformat() if procedimiento.fecha_iso else None,
+                'HORA': procedimiento.hora,
+                'LATITUD': float(procedimiento.latitud) if procedimiento.latitud else None,
+                'LONGITUD': float(procedimiento.longitud) if procedimiento.longitud else None,
+                'DESCRIPCIÓN': procedimiento.descripcion,
+                'TIPO_INTERVENCION': procedimiento.tipo_intervencion,
+                'FUERZA_INTERVINIENTE': procedimiento.fuerza_interviniente,
+                'LOCALIDAD': procedimiento.localidad,
+                'DIRECCION': procedimiento.direccion,
+                'DEPARTAMENTO_O_PARTIDO': procedimiento.departamento_o_partido,
+                
+                # Campos específicos de Incautaciones
+                'INCAUTACIONES': incautacion.incautaciones,
+                'TIPO': incautacion.tipo,
+                'SUBTIPO': incautacion.subtipo,
+                'CANTIDAD': incautacion.cantidad,
+                'MEDIDAS': incautacion.medidas,
+                'AFORO': incautacion.aforo,
+                'OBSERVACIONES_INCAUTACION': incautacion.observaciones,
+                
+                # Metadatos
+                'FECHA_IMPORTACION': procedimiento.fecha_importacion.isoformat() if procedimiento.fecha_importacion else None,
+                'ARCHIVO_ORIGINAL': procedimiento.archivo_original,
+                'HOJA': procedimiento.hoja
+            }
+            
+            unified_data.append(unified_record)
+        
+        return Response(unified_data)
 
 
 @extend_schema(
@@ -353,13 +394,53 @@ class FilteredIncautacionesView(APIView):
 class FilteredDetenidosView(APIView):
     """
     Get filtered detenidos (only records with real detained persons)
+    Devuelve datos unificados: tabla maestra + datos específicos de detenidos
     """
     
     def get(self, request):
-        # Get only detenidos with actual age data (real persons)
-        queryset = DetenidosAprehendidos.objects.select_related('procedimiento').all()
-        serializer = FilteredDetenidosSerializer(queryset, many=True)
-        return Response(serializer.data)
+        # GET detenidos with JOIN to procedimiento (tabla maestra)
+        detenidos = DetenidosAprehendidos.objects.select_related('procedimiento').all()
+        
+        # Crear estructura unificada combinando ambas tablas
+        unified_data = []
+        for detenido in detenidos:
+            procedimiento = detenido.procedimiento
+            
+            # Combinar datos de tabla maestra + datos específicos de detenidos
+            unified_record = {
+                # Campos de tabla maestra (GeografiaProcedimiento)
+                'ID_OPERATIVO': procedimiento.id_operativo,
+                'ID_PROCEDIMIENTO': procedimiento.id_procedimiento,
+                'PROVINCIA': procedimiento.provincia,
+                'FECHA': procedimiento.fecha,
+                'FECHA_ISO': procedimiento.fecha_iso.isoformat() if procedimiento.fecha_iso else None,
+                'HORA': procedimiento.hora,
+                'LATITUD': float(procedimiento.latitud) if procedimiento.latitud else None,
+                'LONGITUD': float(procedimiento.longitud) if procedimiento.longitud else None,
+                'DESCRIPCIÓN': procedimiento.descripcion,
+                'TIPO_INTERVENCION': procedimiento.tipo_intervencion,
+                'FUERZA_INTERVINIENTE': procedimiento.fuerza_interviniente,
+                'LOCALIDAD': procedimiento.localidad,
+                'DIRECCION': procedimiento.direccion,
+                'DEPARTAMENTO_O_PARTIDO': procedimiento.departamento_o_partido,
+                
+                # Campos específicos de DetenidosAprehendidos
+                'EDAD': detenido.edad,
+                'SEXO': detenido.sexo,
+                'NACIONALIDAD': detenido.nacionalidad,
+                'SITUACION_PROCESAL': detenido.situacion_procesal,
+                'DELITO_IMPUTADO': detenido.delito_imputado,
+                'JUZGADO_INTERVINIENTE': detenido.juzgado_interviniente,
+                
+                # Metadatos
+                'FECHA_IMPORTACION': procedimiento.fecha_importacion.isoformat() if procedimiento.fecha_importacion else None,
+                'ARCHIVO_ORIGINAL': procedimiento.archivo_original,
+                'HOJA': procedimiento.hoja
+            }
+            
+            unified_data.append(unified_record)
+        
+        return Response(unified_data)
 
 
 @extend_schema(
@@ -373,13 +454,52 @@ class FilteredDetenidosView(APIView):
 class FilteredControladosView(APIView):
     """
     Get filtered controlados (only records with real vehicle/person controls)
+    Devuelve datos unificados: tabla maestra + datos específicos de controlados
     """
     
     def get(self, request):
-        # Get only controlados with actual control data
-        queryset = VehiculosPersonasControladas.objects.select_related('procedimiento').all()
-        serializer = FilteredControladosSerializer(queryset, many=True)
-        return Response(serializer.data)
+        # GET controlados with JOIN to procedimiento (tabla maestra)
+        controlados = VehiculosPersonasControladas.objects.select_related('procedimiento').all()
+        
+        # Crear estructura unificada combinando ambas tablas
+        unified_data = []
+        for controlado in controlados:
+            procedimiento = controlado.procedimiento
+            
+            # Combinar datos de tabla maestra + datos específicos de controlados
+            unified_record = {
+                # Campos de tabla maestra (GeografiaProcedimiento)
+                'ID_OPERATIVO': procedimiento.id_operativo,
+                'ID_PROCEDIMIENTO': procedimiento.id_procedimiento,
+                'PROVINCIA': procedimiento.provincia,
+                'FECHA': procedimiento.fecha,
+                'FECHA_ISO': procedimiento.fecha_iso.isoformat() if procedimiento.fecha_iso else None,
+                'HORA': procedimiento.hora,
+                'LATITUD': float(procedimiento.latitud) if procedimiento.latitud else None,
+                'LONGITUD': float(procedimiento.longitud) if procedimiento.longitud else None,
+                'DESCRIPCIÓN': procedimiento.descripcion,
+                'TIPO_INTERVENCION': procedimiento.tipo_intervencion,
+                'FUERZA_INTERVINIENTE': procedimiento.fuerza_interviniente,
+                'LOCALIDAD': procedimiento.localidad,
+                'DIRECCION': procedimiento.direccion,
+                'DEPARTAMENTO_O_PARTIDO': procedimiento.departamento_o_partido,
+                
+                # Campos específicos de VehiculosPersonasControladas
+                'vehiculos_controlados': controlado.vehiculos_controlados,
+                'personas_controladas': controlado.personas_controladas,
+                'cant_averiguaciones_secuestro': controlado.cant_averiguaciones_secuestro,
+                'cant_embarcaciones_controladas': controlado.cant_embarcaciones_controladas,
+                'cant_solicitudes_antecedentes': controlado.cant_solicitudes_antecedentes,
+                
+                # Metadatos
+                'FECHA_IMPORTACION': procedimiento.fecha_importacion.isoformat() if procedimiento.fecha_importacion else None,
+                'ARCHIVO_ORIGINAL': procedimiento.archivo_original,
+                'HOJA': procedimiento.hoja
+            }
+            
+            unified_data.append(unified_record)
+        
+        return Response(unified_data)
 
 
 @extend_schema(
@@ -393,13 +513,59 @@ class FilteredControladosView(APIView):
 class FilteredAfectadosView(APIView):
     """
     Get filtered afectados (only records with personnel count > 0)
+    Devuelve datos unificados: tabla maestra + datos específicos de afectados
     """
     
     def get(self, request):
-        # Get only afectados with actual personnel affected
-        queryset = PersonalElementosAfectados.objects.select_related('procedimiento').all()
-        serializer = FilteredAfectadosSerializer(queryset, many=True)
-        return Response(serializer.data)
+        # GET afectados with JOIN to procedimiento (tabla maestra)
+        afectados = PersonalElementosAfectados.objects.select_related('procedimiento').all()
+        
+        # Crear estructura unificada combinando ambas tablas
+        unified_data = []
+        for afectado in afectados:
+            procedimiento = afectado.procedimiento
+            
+            # Combinar datos de tabla maestra + datos específicos de afectados
+            unified_record = {
+                # Campos de tabla maestra (GeografiaProcedimiento)
+                'ID_OPERATIVO': procedimiento.id_operativo,
+                'ID_PROCEDIMIENTO': procedimiento.id_procedimiento,
+                'PROVINCIA': procedimiento.provincia,
+                'FECHA': procedimiento.fecha,
+                'FECHA_ISO': procedimiento.fecha_iso.isoformat() if procedimiento.fecha_iso else None,
+                'HORA': procedimiento.hora,
+                'LATITUD': float(procedimiento.latitud) if procedimiento.latitud else None,
+                'LONGITUD': float(procedimiento.longitud) if procedimiento.longitud else None,
+                'DESCRIPCIÓN': procedimiento.descripcion,
+                'TIPO_INTERVENCION': procedimiento.tipo_intervencion,
+                'FUERZA_INTERVINIENTE': procedimiento.fuerza_interviniente,
+                'LOCALIDAD': procedimiento.localidad,
+                'DIRECCION': procedimiento.direccion,
+                'DEPARTAMENTO_O_PARTIDO': procedimiento.departamento_o_partido,
+                
+                # Campos específicos de PersonalElementosAfectados
+                'CANT_EFECTIVOS': afectado.cant_efectivos,
+                'CANT_AUTOS_CAMIONETAS': afectado.cant_autos_camionetas,
+                'CANT_MOTOS': afectado.cant_motos,
+                'CANT_SCANNERS': afectado.cant_scanners,
+                'CANT_CABALLOS': afectado.cant_caballos,
+                'CANT_CANES': afectado.cant_canes,
+                'CANT_EMBARCACIONES': afectado.cant_embarcaciones,
+                'CANT_MORPHRAPID': afectado.cant_morphrapid,
+                'CANT_LPR': afectado.cant_lpr,
+                'cant_efectivos': afectado.cant_efectivos,  # Duplicado para compatibilidad
+                'cant_autos_camionetas': afectado.cant_autos_camionetas,
+                'cant_motocicletas': afectado.cant_motos,  # Compatibilidad
+                
+                # Metadatos
+                'FECHA_IMPORTACION': procedimiento.fecha_importacion.isoformat() if procedimiento.fecha_importacion else None,
+                'ARCHIVO_ORIGINAL': procedimiento.archivo_original,
+                'HOJA': procedimiento.hoja
+            }
+            
+            unified_data.append(unified_record)
+        
+        return Response(unified_data)
 
 
 @extend_schema(

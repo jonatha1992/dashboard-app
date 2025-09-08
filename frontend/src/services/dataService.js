@@ -198,38 +198,115 @@ export const getStatistics = (data) => {
 
 // Función para categorizar datos por tipo de operativo - SOLO DATOS REALES
 export const getCategorizedData = (data) => {
-    if (!data || data.length === 0) return {};
+    if (!data || data.length === 0) {
+        console.log('❌ getCategorizedData: No hay datos para categorizar');
+        return {};
+    }
+
+    console.log(`🔄 getCategorizedData: Categorizando ${data.length} registros`);
 
     // Categorías basadas ÚNICAMENTE en contenido real de datos
     // Sin hash artificial - solo keywords reales
     const categories = {
         detenidos: data.filter(item => {
-            const desc = (item.DESCRIPCION || '').toLowerCase();
+            const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-
-            return desc.includes('detención') || desc.includes('detenido') ||
+            const delito = (item.DELITO_IMPUTADO || '').toLowerCase();
+            
+            // CRITERIO PRINCIPAL: Si tiene campos específicos de detenido, es un detenido
+            const tieneInfoDetenido = (item.EDAD !== undefined && item.EDAD !== null) ||
+                                     (item.SEXO && item.SEXO.trim() !== '') ||
+                                     (item.SITUACION_PROCESAL && item.SITUACION_PROCESAL.trim() !== '') ||
+                                     (item.DELITO_IMPUTADO && item.DELITO_IMPUTADO.trim() !== '') ||
+                                     (item.NACIONALIDAD && item.NACIONALIDAD.trim() !== '');
+            
+            // CRITERIO SECUNDARIO: Keywords en descripción/tipo
+            const tieneKeywordsDetenido = desc.includes('detención') || desc.includes('detenido') ||
                 desc.includes('arresto') || desc.includes('aprehendido') ||
                 desc.includes('capturado') || desc.includes('arrestado') ||
                 tipo.includes('detención') || tipo.includes('detenido') ||
-                tipo.includes('aprehensión') || tipo.includes('arrestado');
+                tipo.includes('aprehensión') || tipo.includes('arrestado') ||
+                delito.includes('captura') || delito.includes('detención');
+            
+            const esDetenido = tieneInfoDetenido || tieneKeywordsDetenido;
+            
+            if (esDetenido && Math.random() < 0.01) { // Log 1% para debugging
+                console.log('✅ Detenido detectado:', {
+                    ID: item.ID_OPERATIVO,
+                    tieneInfo: tieneInfoDetenido,
+                    tieneKeywords: tieneKeywordsDetenido,
+                    edad: item.EDAD,
+                    sexo: item.SEXO,
+                    situacion: item.SITUACION_PROCESAL,
+                    delito: item.DELITO_IMPUTADO
+                });
+            }
+            
+            return esDetenido;
         }),
         controlados: data.filter(item => {
-            const desc = (item.DESCRIPCION || '').toLowerCase();
+            const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-
-            return desc.includes('control') || tipo.includes('control') ||
+            
+            // NO incluir si ya es un detenido (tiene info personal)
+            const esDetenido = (item.EDAD !== undefined && item.EDAD !== null) ||
+                              (item.SEXO && item.SEXO.trim() !== '') ||
+                              (item.SITUACION_PROCESAL && item.SITUACION_PROCESAL.trim() !== '') ||
+                              (item.DELITO_IMPUTADO && item.DELITO_IMPUTADO.trim() !== '');
+            
+            // Solo considerar controlados si NO es detenido
+            const tieneKeywordsControl = desc.includes('control') || tipo.includes('control') ||
                 desc.includes('verificación') || desc.includes('despliegue') ||
                 desc.includes('controlado') || desc.includes('revisión') ||
                 desc.includes('inspección') || desc.includes('identificación') ||
                 tipo.includes('preventivo');
+            
+            // CRITERIO: Es control Y NO es detenido
+            const esControlado = tieneKeywordsControl && !esDetenido;
+            
+            if (tieneKeywordsControl && esDetenido && Math.random() < 0.01) {
+                console.log('🔄 Control excluido (es detenido):', {
+                    ID: item.ID_OPERATIVO,
+                    desc: desc.substring(0, 50),
+                    edad: item.EDAD,
+                    delito: item.DELITO_IMPUTADO
+                });
+            }
+            
+            return esControlado;
         }),
         afectados: data.filter(item => {
-            const desc = (item.DESCRIPCION || '').toLowerCase();
+            const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-
-            return desc.includes('afectado') || desc.includes('víctima') ||
-                desc.includes('damnificado') || desc.includes('herido') ||
-                tipo.includes('afectado');
+            
+            // CRITERIO PRINCIPAL: Si tiene campos específicos de personal afectado
+            const tieneInfoAfectados = (item.CANT_EFECTIVOS !== undefined && item.CANT_EFECTIVOS !== null) ||
+                                      (item.CANT_AUTOS_CAMIONETAS !== undefined && item.CANT_AUTOS_CAMIONETAS !== null) ||
+                                      (item.CANT_MOTOCICLETAS !== undefined && item.CANT_MOTOCICLETAS !== null) ||
+                                      (item.cant_efectivos !== undefined && item.cant_efectivos !== null) ||
+                                      (item.cant_autos_camionetas !== undefined && item.cant_autos_camionetas !== null) ||
+                                      (item.cant_motocicletas !== undefined && item.cant_motocicletas !== null);
+            
+            // CRITERIO SECUNDARIO: Keywords de personal/recursos afectados  
+            const tieneKeywordsAfectados = desc.includes('afectado') || desc.includes('efectivos') ||
+                desc.includes('personal') || desc.includes('móviles') ||
+                desc.includes('patrulleros') || desc.includes('recursos') ||
+                tipo.includes('afectado') || tipo.includes('recursos');
+            
+            const esAfectado = tieneInfoAfectados || tieneKeywordsAfectados;
+            
+            if (esAfectado && Math.random() < 0.01) { // Log 1% para debugging
+                console.log('👥 Afectados detectado:', {
+                    ID: item.ID_OPERATIVO,
+                    tieneInfo: tieneInfoAfectados,
+                    tieneKeywords: tieneKeywordsAfectados,
+                    efectivos: item.CANT_EFECTIVOS || item.cant_efectivos,
+                    autos: item.CANT_AUTOS_CAMIONETAS || item.cant_autos_camionetas,
+                    motos: item.CANT_MOTOCICLETAS || item.cant_motocicletas
+                });
+            }
+            
+            return esAfectado;
         }),
         procedimientos: data.filter(item => {
             const desc = (item.DESCRIPCION || '').toLowerCase();
@@ -272,6 +349,32 @@ export const getCategorizedData = (data) => {
                 tipo.includes('incautación') || tipo.includes('secuestro');
         }),
     };
+
+    // Logging de resultados de categorización
+    const summary = Object.keys(categories).reduce((acc, key) => {
+        acc[key] = categories[key].length;
+        return acc;
+    }, {});
+    
+    console.log('📊 Resultados de categorización:', summary);
+    
+    // Log específico para controlados y afectados
+    if (categories.controlados.length > 0) {
+        console.log('🔍 Muestra de controlados:', categories.controlados.slice(0, 2).map(item => ({
+            ID: item.ID_OPERATIVO,
+            desc: (item.DESCRIPCION || item.DESCRIPCIÓN || '').substring(0, 50),
+            tieneEdad: !!item.EDAD
+        })));
+    }
+    
+    if (categories.afectados.length > 0) {
+        console.log('👥 Muestra de afectados:', categories.afectados.slice(0, 2).map(item => ({
+            ID: item.ID_OPERATIVO,
+            efectivos: item.CANT_EFECTIVOS || item.cant_efectivos,
+            autos: item.CANT_AUTOS_CAMIONETAS || item.cant_autos_camionetas,
+            desc: (item.DESCRIPCION || item.DESCRIPCIÓN || '').substring(0, 30)
+        })));
+    }
 
     return categories;
 };

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import apiService from '../../services/apiService';
+import MapComponent from '../map/MapComponent';
+import DataTable from './DataTable';
 
 export default function FilteredDataTables() {
     const { user } = useAuth();
@@ -298,8 +300,32 @@ export default function FilteredDataTables() {
                 </button>
             </div>
 
-            {/* Table Content */}
-            {renderTable()}
+            {/* Main Content Area - Mapa y Tabla */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Columna izquierda - Mapa */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+                        <span className="mr-2">🗺️</span>
+                        Mapa de {tabs.find(t => t.id === activeTab)?.label}
+                    </h4>
+                    <div style={{ height: '400px' }}>
+                        <MapComponent data={currentData} />
+                    </div>
+                </div>
+
+                {/* Columna derecha - Tabla */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                    <DataTable data={currentData} />
+                </div>
+            </div>
+
+            {/* Tabla completa abajo */}
+            <div className="mt-6">
+                <h4 className="text-md font-semibold text-gray-800 mb-4">
+                    Tabla Detallada
+                </h4>
+                {renderTable()}
+            </div>
         </div>
     );
 }

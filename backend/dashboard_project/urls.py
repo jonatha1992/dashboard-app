@@ -14,7 +14,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('dashboard_api.urls')),
     
-    # Swagger/OpenAPI documentation
+    # Swagger/OpenAPI documentation (must be before catch-all React routes)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
@@ -26,15 +26,12 @@ if not settings.DEBUG:
     urlpatterns += [
         re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
         re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-        # Catch-all pattern for React Router (must be last)
+    ]
+    # Catch-all pattern for React Router (must be last)
+    urlpatterns += [
         re_path(r'^.*$', TemplateView.as_view(template_name='index.html'), name='react-app'),
     ]
 else:
     # Development static files
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    
-    # In development, serve React app like production
-    urlpatterns += [
-        re_path(r'^.*$', TemplateView.as_view(template_name='index.html'), name='react-app'),
-    ]

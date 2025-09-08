@@ -155,6 +155,18 @@ export default function Dashboard() {
                 </div>
 
                 {/* Controles / Controlados (único botón más abajo) */}
+
+                <button
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'procedimientos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                    onClick={() => setActiveNav('procedimientos')}
+                >
+                    <span className="flex items-center justify-between w-full">
+                        <span>📋Procedimientos</span>
+                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'procedimientos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {(filteredCategorizedData.procedimientos || []).length}
+                        </span>
+                    </span>
+                </button>
                 <button
                     className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'detenidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('detenidos')}
@@ -188,17 +200,7 @@ export default function Dashboard() {
                         </span>
                     </span>
                 </button>
-                <button
-                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'procedimientos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                    onClick={() => setActiveNav('procedimientos')}
-                >
-                    <span className="flex items-center justify-between w-full">
-                        <span>📋 Procedimientos</span>
-                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'procedimientos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {(filteredCategorizedData.procedimientos || []).length}
-                        </span>
-                    </span>
-                </button>
+
                 <button
                     className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'abatidos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('abatidos')}

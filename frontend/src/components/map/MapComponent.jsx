@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useState, useEffect, useMemo, memo } from 'react';
 import L from 'leaflet';
+import { useDashboard } from '../../contexts/DashboardContext';
 
 // Fix para los íconos de Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -48,8 +49,11 @@ const clusterPoints = (points, zoom) => {
     points.forEach((point, index) => {
         if (processed.has(index)) return;
 
-        const lat = point.LATITUD ?? point.latitud ?? point.latitud_decimal ?? point["Latitud Decimal"];
-        const lng = point.LONGITUD ?? point.longitud ?? point.longitud_decimal ?? point["Longitud Decimal"];
+        // Usar la misma lógica de búsqueda de coordenadas que en validData
+        const lat = point.LATITUD ?? point.latitud ?? point.latitud_decimal ?? 
+                   point["Latitud Decimal"] ?? point.Latitud ?? point.lat;
+        const lng = point.LONGITUD ?? point.longitud ?? point.longitud_decimal ?? 
+                   point["Longitud Decimal"] ?? point.Longitud ?? point.lng;
 
         if (!lat || !lng) return;
 
@@ -64,8 +68,10 @@ const clusterPoints = (points, zoom) => {
         points.forEach((otherPoint, otherIndex) => {
             if (processed.has(otherIndex) || index === otherIndex) return;
 
-            const otherLat = otherPoint.LATITUD ?? otherPoint.latitud ?? otherPoint.latitud_decimal ?? otherPoint["Latitud Decimal"];
-            const otherLng = otherPoint.LONGITUD ?? otherPoint.longitud ?? otherPoint.longitud_decimal ?? otherPoint["Longitud Decimal"];
+            const otherLat = otherPoint.LATITUD ?? otherPoint.latitud ?? otherPoint.latitud_decimal ?? 
+                            otherPoint["Latitud Decimal"] ?? otherPoint.Latitud ?? otherPoint.lat;
+            const otherLng = otherPoint.LONGITUD ?? otherPoint.longitud ?? otherPoint.longitud_decimal ?? 
+                            otherPoint["Longitud Decimal"] ?? otherPoint.Longitud ?? otherPoint.lng;
 
             if (!otherLat || !otherLng) return;
 
@@ -87,27 +93,97 @@ const clusterPoints = (points, zoom) => {
     return clusters;
 };
 
+// Función para detectar el tipo de dato y generar contenido específico del popup
+const getSpecificPopupContent = (point) => {
+    // Detectar tipo de datos
+    if (point.INCAUTACIONES || point.TIPO || point.CANTIDAD) {
+        // Datos de incautaciones
+        return (
+            <div className="space-y-1 text-xs">
+                <p><span className="font-medium">Incautación:</span> {point.INCAUTACIONES || 'No especificada'}</p>
+                <p><span className="font-medium">Tipo:</span> {point.TIPO || 'No especificado'}</p>
+                <p><span className="font-medium">Cantidad:</span> {point.CANTIDAD || 'No especificada'} {point.MEDIDAS || ''}</p>
+                {point.OBSERVACIONES_INCAUTACION && (
+                    <p><span className="font-medium">Observaciones:</span> {point.OBSERVACIONES_INCAUTACION}</p>
+                )}
+            </div>
+        );
+    } else if (point.EDAD !== undefined || point.SEXO || point.DELITO_IMPUTADO) {
+        // Datos de detenidos
+        return (
+            <div className="space-y-1 text-xs">
+                <p><span className="font-medium">Edad:</span> {point.EDAD || 'No especificada'}</p>
+                <p><span className="font-medium">Sexo:</span> {point.SEXO || 'No especificado'}</p>
+                <p><span className="font-medium">Nacionalidad:</span> {point.NACIONALIDAD || 'No especificada'}</p>
+                <p><span className="font-medium">Situación:</span> {point.SITUACION_PROCESAL || 'No especificada'}</p>
+                {point.DELITO_IMPUTADO && (
+                    <p><span className="font-medium">Delito:</span> {point.DELITO_IMPUTADO}</p>
+                )}
+            </div>
+        );
+    } else if (point.vehiculos_controlados !== undefined || point.personas_controladas !== undefined) {
+        // Datos de controlados
+        return (
+            <div className="space-y-1 text-xs">
+                <p><span className="font-medium">Vehículos:</span> {point.vehiculos_controlados || 0}</p>
+                <p><span className="font-medium">Personas:</span> {point.personas_controladas || 0}</p>
+                {point.cant_averiguaciones_secuestro !== null && (
+                    <p><span className="font-medium">Averiguaciones:</span> {point.cant_averiguaciones_secuestro || 0}</p>
+                )}
+                {point.cant_solicitudes_antecedentes !== null && (
+                    <p><span className="font-medium">Antecedentes:</span> {point.cant_solicitudes_antecedentes || 0}</p>
+                )}
+            </div>
+        );
+    } else if (point.CANT_EFECTIVOS !== undefined || point.cant_efectivos !== undefined) {
+        // Datos de personal afectado
+        return (
+            <div className="space-y-1 text-xs">
+                <p><span className="font-medium">Efectivos:</span> {point.CANT_EFECTIVOS || point.cant_efectivos || 0}</p>
+                {(point.CANT_AUTOS_CAMIONETAS || point.cant_autos_camionetas) && (
+                    <p><span className="font-medium">Vehículos:</span> {point.CANT_AUTOS_CAMIONETAS || point.cant_autos_camionetas || 0}</p>
+                )}
+                {point.CANT_MOTOS && (
+                    <p><span className="font-medium">Motocicletas:</span> {point.CANT_MOTOS || 0}</p>
+                )}
+                {point.CANT_SCANNERS && (
+                    <p><span className="font-medium">Scanners:</span> {point.CANT_SCANNERS || 0}</p>
+                )}
+            </div>
+        );
+    }
+    
+    // Contenido general por defecto
+    return (
+        <div className="space-y-1 text-xs">
+            <p><span className="font-medium">Tipo:</span> {(point.TIPO_INTERVENCION || point.TIPO || point.CATEGORIA || 'No especificado')}</p>
+        </div>
+    );
+};
+
 // Componente memorizado para los marcadores
-const MapMarkers = memo(({ clusters }) => {
+const MapMarkers = memo(({ clusters, formatDateForDisplay }) => {
     return (
         <>
             {clusters.map((cluster) => {
                 if (cluster.points.length === 1) {
                     // Marcador individual
                     const point = cluster.points[0];
+                    const formattedDate = formatDateForDisplay(point.FECHA_ISO || point.FECHA);
                     return (
                         <Marker
                             key={cluster.id}
                             position={[cluster.lat, cluster.lng]}
                         >
                             <Popup>
-                                <div className="max-w-xs">
+                                <div className="max-w-sm">
                                     <h3 className="mb-2 text-sm font-bold">{(point.DESCRIPCION || point.DESCRIPCION_HECHO || point.DETALLE || point.OBSERVACION || point.OBSERVACIONES || 'Sin descripción')}</h3>
-                                    <div className="space-y-1 text-xs">
-                                        <p><span className="font-medium">Tipo:</span> {(point.TIPO_INTERVENCION || point.TIPO || point.CATEGORIA || 'No especificado')}</p>
-                                        <p><span className="font-medium">Fecha:</span> {(point.FECHA_ISO || point.FECHA || 'No especificada')}{point.HORA ? ` ${point.HORA}` : ''}</p>
+                                    <div className="mb-2 space-y-1 text-xs">
+                                        <p><span className="font-medium">Fecha:</span> {formattedDate}{point.HORA ? ` ${point.HORA}` : ''}</p>
                                         <p><span className="font-medium">Provincia:</span> {point.PROVINCIA || 'No especificada'}</p>
+                                        <p><span className="font-medium">ID Operativo:</span> {point.ID_OPERATIVO || 'No especificado'}</p>
                                     </div>
+                                    {getSpecificPopupContent(point)}
                                 </div>
                             </Popup>
                         </Marker>
@@ -133,12 +209,31 @@ const MapMarkers = memo(({ clusters }) => {
                                         {cluster.points.length} eventos en esta área
                                     </h3>
                                     <div className="space-y-2 overflow-y-auto max-h-32">
-                                        {cluster.points.slice(0, 5).map((point, idx) => (
-                                            <div key={idx} className="pb-1 text-xs border-b border-gray-200">
-                                                <p className="font-medium">{(point.DESCRIPCION || point.DESCRIPCION_HECHO || point.DETALLE || point.OBSERVACION || point.OBSERVACIONES || 'Sin descripción')}</p>
-                                                <p className="text-gray-600">{(point.TIPO_INTERVENCION || point.TIPO || point.CATEGORIA || 'No especificado')} - {(point.FECHA_ISO || point.FECHA || 'Sin fecha')}</p>
-                                            </div>
-                                        ))}
+                                        {cluster.points.slice(0, 5).map((point, idx) => {
+                                            const formattedDate = formatDateForDisplay(point.FECHA_ISO || point.FECHA);
+                                            
+                                            // Obtener información específica resumida
+                                            let specificInfo = '';
+                                            if (point.INCAUTACIONES || point.TIPO || point.CANTIDAD) {
+                                                specificInfo = `${point.TIPO || 'Incautación'}: ${point.CANTIDAD || '?'} ${point.MEDIDAS || ''}`;
+                                            } else if (point.EDAD !== undefined || point.SEXO || point.DELITO_IMPUTADO) {
+                                                specificInfo = `${point.SEXO || '?'}, ${point.EDAD || '?'} años - ${point.DELITO_IMPUTADO || 'Sin delito'}`;
+                                            } else if (point.vehiculos_controlados !== undefined || point.personas_controladas !== undefined) {
+                                                specificInfo = `${point.vehiculos_controlados || 0} veh, ${point.personas_controladas || 0} pers`;
+                                            } else if (point.CANT_EFECTIVOS !== undefined || point.cant_efectivos !== undefined) {
+                                                specificInfo = `${point.CANT_EFECTIVOS || point.cant_efectivos || 0} efectivos`;
+                                            } else {
+                                                specificInfo = point.TIPO_INTERVENCION || point.TIPO || point.CATEGORIA || 'No especificado';
+                                            }
+                                            
+                                            return (
+                                                <div key={idx} className="pb-1 text-xs border-b border-gray-200">
+                                                    <p className="font-medium">{point.ID_OPERATIVO || 'Sin ID'}</p>
+                                                    <p className="text-gray-600">{specificInfo}</p>
+                                                    <p className="text-gray-500">{formattedDate}</p>
+                                                </div>
+                                            );
+                                        })}
                                         {cluster.points.length > 5 && (
                                             <p className="text-xs italic text-gray-500">
                                                 +{cluster.points.length - 5} eventos más...
@@ -158,34 +253,87 @@ const MapMarkers = memo(({ clusters }) => {
 MapMarkers.displayName = 'MapMarkers';
 
 const MapComponent = memo(({ data }) => {
+    const { formatDateForDisplay } = useDashboard();
     const [mapCenter, setMapCenter] = useState([-34.6037, -58.3816]); // Buenos Aires por defecto
     const [mapZoom, setMapZoom] = useState(5);
     const [map, setMap] = useState(null);
 
     // Filtrar y validar datos una sola vez
     const validData = useMemo(() => {
-        if (!data || data.length === 0) return [];
+        if (!data || data.length === 0) {
+            console.log('🗺️ MapComponent: No hay datos para mostrar');
+            return [];
+        }
 
-        return data.filter(point => {
-            const lat = point.LATITUD ?? point.latitud ?? point.latitud_decimal ?? point["Latitud Decimal"];
-            const lng = point.LONGITUD ?? point.longitud ?? point.longitud_decimal ?? point["Longitud Decimal"];
-            return lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
+        console.log(`🗺️ MapComponent: Procesando ${data.length} puntos de datos`);
+
+        const valid = data.filter(point => {
+            // Buscar coordenadas en múltiples campos posibles
+            const lat = point.LATITUD ?? point.latitud ?? point.latitud_decimal ?? 
+                       point["Latitud Decimal"] ?? point.Latitud ?? point.lat;
+            const lng = point.LONGITUD ?? point.longitud ?? point.longitud_decimal ?? 
+                       point["Longitud Decimal"] ?? point.Longitud ?? point.lng;
+            
+            // Validar que existan y sean números válidos
+            const latNum = parseFloat(lat);
+            const lngNum = parseFloat(lng);
+            
+            const isValid = lat && lng && 
+                          !isNaN(latNum) && !isNaN(lngNum) &&
+                          latNum >= -90 && latNum <= 90 &&
+                          lngNum >= -180 && lngNum <= 180;
+            
+            if (!isValid && Math.random() < 0.05) { // Log solo 5% para no saturar
+                console.log('🚫 Punto sin coordenadas válidas:', {
+                    lat: lat,
+                    lng: lng,
+                    latNum: latNum,
+                    lngNum: lngNum,
+                    point: point
+                });
+            }
+            
+            return isValid;
         });
+
+        console.log(`🗺️ MapComponent: ${valid.length}/${data.length} puntos con coordenadas válidas`);
+        
+        if (valid.length === 0) {
+            console.warn('⚠️ MapComponent: No hay puntos con coordenadas válidas para mostrar');
+        }
+
+        return valid;
     }, [data]);
 
     // Crear clusters optimizados
     const clusters = useMemo(() => {
-        return clusterPoints(validData, mapZoom);
+        const clustered = clusterPoints(validData, mapZoom);
+        console.log(`🗺️ Clustering: ${validData.length} puntos → ${clustered.length} clusters (zoom: ${mapZoom})`);
+        
+        // Log estadísticas de clustering
+        const singlePoints = clustered.filter(c => c.points.length === 1).length;
+        const multiPoints = clustered.filter(c => c.points.length > 1).length;
+        if (clustered.length > 0) {
+            console.log(`📊 Clusters: ${singlePoints} individuales, ${multiPoints} agrupados`);
+        }
+        
+        return clustered;
     }, [validData, mapZoom]);
 
     // Centrar el mapa cuando hay nuevos datos
     useEffect(() => {
         if (validData.length > 0 && map) {
             const firstPoint = validData[0];
-            const lat = firstPoint.LATITUD ?? firstPoint.latitud ?? firstPoint.latitud_decimal ?? firstPoint["Latitud Decimal"];
-            const lng = firstPoint.LONGITUD ?? firstPoint.longitud ?? firstPoint.longitud_decimal ?? firstPoint["Longitud Decimal"];
-            setMapCenter([parseFloat(lat), parseFloat(lng)]);
-            map.setView([parseFloat(lat), parseFloat(lng)], mapZoom);
+            // Usar la misma lógica de búsqueda de coordenadas
+            const lat = firstPoint.LATITUD ?? firstPoint.latitud ?? firstPoint.latitud_decimal ?? 
+                       firstPoint["Latitud Decimal"] ?? firstPoint.Latitud ?? firstPoint.lat;
+            const lng = firstPoint.LONGITUD ?? firstPoint.longitud ?? firstPoint.longitud_decimal ?? 
+                       firstPoint["Longitud Decimal"] ?? firstPoint.Longitud ?? firstPoint.lng;
+            
+            const newCenter = [parseFloat(lat), parseFloat(lng)];
+            console.log(`🗺️ Centrando mapa en:`, newCenter);
+            setMapCenter(newCenter);
+            map.setView(newCenter, mapZoom);
         }
     }, [validData, map, mapZoom]);
 
@@ -214,6 +362,26 @@ const MapComponent = memo(({ data }) => {
             window.removeEventListener('resize', invalidate);
         };
     }, [map]);
+
+    // Si no hay datos geográficos válidos, mostrar un mensaje
+    if (validData.length === 0) {
+        return (
+            <div className="relative z-10 w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
+                <div className="text-center p-8">
+                    <div className="text-4xl mb-4 text-gray-400">🗺️</div>
+                    <h3 className="text-lg font-medium text-gray-600 mb-2">
+                        Sin datos geográficos
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                        {data.length === 0 
+                            ? 'No hay datos disponibles para mostrar en el mapa'
+                            : `${data.length} registro${data.length > 1 ? 's' : ''} sin coordenadas válidas`
+                        }
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative z-10 w-full h-full" style={{
@@ -271,7 +439,7 @@ const MapComponent = memo(({ data }) => {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
 
-                <MapMarkers clusters={clusters} />
+                <MapMarkers clusters={clusters} formatDateForDisplay={formatDateForDisplay} />
             </MapContainer>
         </div>
     );

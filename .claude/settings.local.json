@@ -31,7 +31,9 @@
       "Bash(npm test)",
       "Bash(node:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm run build:*)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": []

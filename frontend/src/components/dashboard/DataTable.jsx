@@ -1,10 +1,27 @@
-// Componente para mostrar los datos en formato de tabla
-import { useState } from 'react';
+// Componente para mostrar los datos en formato de tabla especializada
+import { useState, useMemo } from 'react';
 
 export default function DataTable({ data }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState('');
     const itemsPerPage = 10;
+
+    // Detectar tipo de tabla basado en campos únicos
+    const tableType = useMemo(() => {
+        if (!data || data.length === 0) return 'general';
+        
+        const firstItem = data[0];
+        if (firstItem.INCAUTACIONES || firstItem.TIPO || firstItem.CANTIDAD) {
+            return 'incautaciones';
+        } else if (firstItem.EDAD !== undefined || firstItem.SEXO || firstItem.DELITO_IMPUTADO) {
+            return 'detenidos';
+        } else if (firstItem.vehiculos_controlados !== undefined || firstItem.personas_controladas !== undefined) {
+            return 'controlados';
+        } else if (firstItem.CANT_EFECTIVOS !== undefined || firstItem.cant_efectivos !== undefined) {
+            return 'afectados';
+        }
+        return 'general';
+    }, [data]);
 
     // Helpers de visualización
     const pickFirstString = (obj, keys) => {
@@ -38,14 +55,88 @@ export default function DataTable({ data }) {
         return iso ? `${iso}${time ? ` ${time}` : ''}` : '-';
     };
 
-    // Filtrar datos según la búsqueda (aplicada a campos derivados también)
+    // Configuraciones específicas para cada tipo de tabla
+    const tableConfigs = {
+        incautaciones: {
+            title: 'Incautaciones',
+            searchFields: ['INCAUTACIONES', 'TIPO', 'SUBTIPO', 'CANTIDAD', 'PROVINCIA', 'ID_OPERATIVO'],
+            columns: [
+                { key: 'ID_OPERATIVO', label: 'ID Operativo', className: 'font-mono text-xs' },
+                { key: 'PROVINCIA', label: 'Provincia' },
+                { key: 'FECHA_ISO', label: 'Fecha', render: (item) => getDateText(item) },
+                { key: 'INCAUTACIONES', label: 'Incautación' },
+                { key: 'TIPO', label: 'Tipo' },
+                { key: 'CANTIDAD', label: 'Cantidad', className: 'text-right' },
+                { key: 'MEDIDAS', label: 'Medidas' }
+            ]
+        },
+        detenidos: {
+            title: 'Detenidos',
+            searchFields: ['DELITO_IMPUTADO', 'NACIONALIDAD', 'SITUACION_PROCESAL', 'PROVINCIA', 'ID_OPERATIVO'],
+            columns: [
+                { key: 'ID_OPERATIVO', label: 'ID Operativo', className: 'font-mono text-xs' },
+                { key: 'PROVINCIA', label: 'Provincia' },
+                { key: 'FECHA_ISO', label: 'Fecha', render: (item) => getDateText(item) },
+                { key: 'EDAD', label: 'Edad', className: 'text-right' },
+                { key: 'SEXO', label: 'Sexo' },
+                { key: 'NACIONALIDAD', label: 'Nacionalidad' },
+                { key: 'SITUACION_PROCESAL', label: 'Situación' },
+                { key: 'DELITO_IMPUTADO', label: 'Delito', className: 'max-w-xs truncate' }
+            ]
+        },
+        controlados: {
+            title: 'Controlados',
+            searchFields: ['PROVINCIA', 'ID_OPERATIVO', 'DESCRIPCIÓN'],
+            columns: [
+                { key: 'ID_OPERATIVO', label: 'ID Operativo', className: 'font-mono text-xs' },
+                { key: 'PROVINCIA', label: 'Provincia' },
+                { key: 'FECHA_ISO', label: 'Fecha', render: (item) => getDateText(item) },
+                { key: 'vehiculos_controlados', label: 'Vehículos', className: 'text-right' },
+                { key: 'personas_controladas', label: 'Personas', className: 'text-right' },
+                { key: 'cant_averiguaciones_secuestro', label: 'Averiguaciones', className: 'text-right' },
+                { key: 'cant_solicitudes_antecedentes', label: 'Antecedentes', className: 'text-right' }
+            ]
+        },
+        afectados: {
+            title: 'Personal Afectado',
+            searchFields: ['PROVINCIA', 'ID_OPERATIVO', 'DESCRIPCIÓN'],
+            columns: [
+                { key: 'ID_OPERATIVO', label: 'ID Operativo', className: 'font-mono text-xs' },
+                { key: 'PROVINCIA', label: 'Provincia' },
+                { key: 'FECHA_ISO', label: 'Fecha', render: (item) => getDateText(item) },
+                { key: 'CANT_EFECTIVOS', label: 'Efectivos', className: 'text-right font-semibold' },
+                { key: 'CANT_AUTOS_CAMIONETAS', label: 'Autos/Cam', className: 'text-right' },
+                { key: 'CANT_MOTOS', label: 'Motos', className: 'text-right' },
+                { key: 'CANT_SCANNERS', label: 'Scanners', className: 'text-right' },
+                { key: 'CANT_CANES', label: 'Canes', className: 'text-right' }
+            ]
+        },
+        general: {
+            title: 'Datos Generales',
+            searchFields: ['DESCRIPCIÓN', 'TIPO_INTERVENCION', 'PROVINCIA', 'ID_OPERATIVO'],
+            columns: [
+                { key: 'ID_OPERATIVO', label: 'ID' },
+                { key: 'DESCRIPCIÓN', label: 'Descripción', render: (item) => getDescription(item) },
+                { key: 'TIPO_INTERVENCION', label: 'Tipo', render: (item) => getType(item) },
+                { key: 'FECHA_ISO', label: 'Fecha', render: (item) => getDateText(item) },
+                { key: 'PROVINCIA', label: 'Provincia' },
+                { key: 'LATITUD', label: 'Coordenadas', render: (item) => getLatLng(item) }
+            ]
+        }
+    };
+
+    const config = tableConfigs[tableType];
+
+    // Filtrar datos según la búsqueda usando los campos específicos de cada tabla
     const filteredData = data.filter(item => {
-        const desc = getDescription(item).toLowerCase();
-        const tipo = getType(item).toLowerCase();
-        const prov = (item.PROVINCIA || '').toLowerCase();
-        const id = (item.ID_OPERATIVO || '').toLowerCase();
+        if (!search.trim()) return true;
+        
         const q = search.toLowerCase();
-        return desc.includes(q) || tipo.includes(q) || prov.includes(q) || id.includes(q);
+        return config.searchFields.some(field => {
+            const value = item[field];
+            if (value === null || value === undefined) return false;
+            return String(value).toLowerCase().includes(q);
+        });
     });
 
     // Paginación
@@ -59,42 +150,64 @@ export default function DataTable({ data }) {
 
     return (
         <div className="bg-white rounded-lg shadow-md p-4 overflow-auto">
-            <div className="mb-4">
-                <label htmlFor="search" className="block text-sm font-medium text-gray-700">Buscar</label>
-                <input
-                    type="text"
-                    id="search"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Buscar por descripción, tipo, provincia o ID..."
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value);
-                        setCurrentPage(1); // Reset a la primera página al buscar
-                    }}
-                />
+            <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                    <h3 className="text-lg font-semibold text-gray-800">{config.title}</h3>
+                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">
+                        {filteredData.length} registros
+                    </span>
+                </div>
+                <div className="w-64">
+                    <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        placeholder={`Buscar en ${config.title.toLowerCase()}...`}
+                        value={search}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                            setCurrentPage(1); // Reset a la primera página al buscar
+                        }}
+                    />
+                </div>
             </div>
 
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provincia</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coordenadas</th>
+                            {config.columns.map((column) => (
+                                <th 
+                                    key={column.key} 
+                                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                    {column.label}
+                                </th>
+                            ))}
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {currentItems.map((item, index) => (
-                            <tr key={index}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.ID_OPERATIVO || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getDescription(item)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getType(item)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getDateText(item)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.PROVINCIA || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getLatLng(item)}</td>
+                            <tr key={index} className="hover:bg-gray-50">
+                                {config.columns.map((column) => {
+                                    let cellValue;
+                                    if (column.render) {
+                                        cellValue = column.render(item);
+                                    } else {
+                                        cellValue = item[column.key] !== null && item[column.key] !== undefined 
+                                            ? String(item[column.key]) 
+                                            : '-';
+                                    }
+                                    
+                                    return (
+                                        <td 
+                                            key={column.key}
+                                            className={`px-3 py-4 whitespace-nowrap text-sm text-gray-900 ${column.className || ''}`}
+                                            title={cellValue && cellValue.length > 50 ? cellValue : undefined}
+                                        >
+                                            {cellValue}
+                                        </td>
+                                    );
+                                })}
                             </tr>
                         ))}
                     </tbody>
