@@ -52,6 +52,26 @@ const makeKey = (s) => {
   }
 };
 
+// Obtiene una clave de provincia robusta desde distintos posibles campos
+const getProvinceKeyFromItem = (item) => {
+  if (!item || typeof item !== 'object') return '';
+  // prioridad a una clave ya normalizada
+  if (item.PROVINCIA_KEY) return item.PROVINCIA_KEY;
+  // posibles variantes de campo de provincia
+  const candidateKeys = [
+    'PROVINCIA',
+    'provincia',
+    'PROVINCIA_EVENTO',
+    'PROVINCIA_HECHO',
+    'PROVINCIA_ORIGEN',
+    'PROVINCIA_DESTINO'
+  ];
+  for (const k of candidateKeys) {
+    if (k in item && item[k]) return makeKey(item[k]);
+  }
+  return '';
+};
+
 export const DashboardProvider = ({ children }) => {
 
   // Estado global de datos y navegación
@@ -364,8 +384,8 @@ export const DashboardProvider = ({ children }) => {
     if (filters.province) {
       const filterKey = makeKey(filters.province);
       filtered = filtered.filter(item => {
-        if (item.PROVINCIA_KEY) return item.PROVINCIA_KEY === filterKey;
-        return makeKey(item.PROVINCIA) === filterKey;
+        const itemProvKey = getProvinceKeyFromItem(item);
+        return itemProvKey === filterKey;
       });
     }
 
@@ -391,8 +411,8 @@ export const DashboardProvider = ({ children }) => {
         // Aplicar filtro de provincia
         if (filters.province) {
           const filterKey = makeKey(filters.province);
-          if (item.PROVINCIA_KEY) return item.PROVINCIA_KEY === filterKey;
-          return makeKey(item.PROVINCIA) === filterKey;
+          const itemProvKey = getProvinceKeyFromItem(item);
+          return itemProvKey === filterKey;
         }
         
         return true;
