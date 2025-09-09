@@ -145,6 +145,8 @@ const processJsonData = (jsonData) => {
             // Clave normalizada sin tildes para comparaciones robustas - FUNCIÓN CENTRALIZADA
             PROVINCIA_KEY: normalizeProvinceKey(item.PROVINCIA || ''),
             DEPARTAMENTO_O_PARTIDO: item['DEPARTAMENTO O PARTIDO'] || '',
+            // Mapear campos de unidad interviniente
+            UNIDAD_INTERVINIENTE: item.UNIDAD_INTERVINIENTE || item.unidad_interviniente || item.FUERZA_INTERVINIENTE || '',
         };
     });
 };

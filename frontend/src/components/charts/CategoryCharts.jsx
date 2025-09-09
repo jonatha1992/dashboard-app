@@ -8,6 +8,7 @@ import { getChartData } from '../../services/dataService';
 const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = true, compactMode = false, defaultView = 'monthly' }) => {
     const [activeChart, setActiveChart] = useState(defaultView);
     const [timeGranularity, setTimeGranularity] = useState('month'); // 'day' | 'week' | 'month'
+    const [manualGranularitySelection, setManualGranularitySelection] = useState(false); // Track if user manually selected granularity
     const { filters } = useDashboard();
     const hasProvinceFilter = Boolean(filters && filters.province);
     
@@ -21,14 +22,18 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
         });
     }
 
-    // Ensure that when the user changes the time granularity we show the temporal charts
+    // Only auto-switch to temporal charts when granularity changes manually
     useEffect(() => {
-        setActiveChart('monthly');
-    }, [timeGranularity]);
+        if (manualGranularitySelection) {
+            setActiveChart('monthly');
+        }
+    }, [timeGranularity, manualGranularitySelection]);
 
     // Auto-seleccionar granularidad inteligente basada en densidad de datos
+    // SOLO cuando el usuario NO ha hecho selección manual
     useEffect(() => {
-        if (!data || data.length === 0) return;
+        // Skip auto-selection if user has manually chosen granularity
+        if (manualGranularitySelection || !data || data.length === 0) return;
         
         // Obtener todas las fechas válidas de los datos
         const validDates = data
@@ -65,7 +70,7 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
         if (nextGranularity !== timeGranularity) {
             setTimeGranularity(nextGranularity);
         }
-    }, [data, timeGranularity]);
+    }, [data, timeGranularity, manualGranularitySelection]);
 
     if (!data || data.length === 0) {
         // Nunca ocultar completamente cuando hideEmpty es true
@@ -226,11 +231,11 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                         <div className="text-sm font-semibold text-gray-700">Tendencia</div>
                         <div className="flex justify-end gap-1">
                             <button className={`px-2 py-0.5 text-xs rounded ${timeGranularity === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                                onClick={() => setTimeGranularity('month')}>Mes</button>
+                                onClick={() => { setTimeGranularity('month'); setManualGranularitySelection(true); }}>Mes</button>
                             <button className={`px-2 py-0.5 text-xs rounded ${timeGranularity === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                                onClick={() => setTimeGranularity('week')}>Semana</button>
+                                onClick={() => { setTimeGranularity('week'); setManualGranularitySelection(true); }}>Semana</button>
                             <button className={`px-2 py-0.5 text-xs rounded ${timeGranularity === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                                onClick={() => setTimeGranularity('day')}>Día</button>
+                                onClick={() => { setTimeGranularity('day'); setManualGranularitySelection(true); }}>Día</button>
                         </div>
                     </div>
                     <BaseChart
@@ -298,17 +303,17 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                 <div className="flex flex-wrap gap-2 mb-4">
                     <button
                         className={`px-3 py-1 rounded ${timeGranularity === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                        onClick={() => { setTimeGranularity('month'); setActiveChart('monthly'); }}
+                        onClick={() => { setTimeGranularity('month'); setManualGranularitySelection(true); setActiveChart('monthly'); }}
                     >
                         Mes
                     </button>
                     <button
                         className={`px-3 py-1 rounded ${timeGranularity === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                        onClick={() => { setTimeGranularity('week'); setActiveChart('monthly'); }}
+                        onClick={() => { setTimeGranularity('week'); setManualGranularitySelection(true); setActiveChart('monthly'); }}
                     >Semana</button>
                     <button
                         className={`px-3 py-1 rounded ${timeGranularity === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                        onClick={() => { setTimeGranularity('day'); setActiveChart('monthly'); }}
+                        onClick={() => { setTimeGranularity('day'); setManualGranularitySelection(true); setActiveChart('monthly'); }}
                     >Día</button>
                     <button
                         className={`px-4 py-2 rounded-md font-medium ${activeChart === 'province'
