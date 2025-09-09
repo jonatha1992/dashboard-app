@@ -14,6 +14,14 @@ Esta carpeta contiene toda la documentación técnica del proyecto Dashboard de 
 | **[DEPLOYMENT.md](DEPLOYMENT.md)** | Guías de deployment y configuración | DevOps, Administrators |
 | **[structure_files.md](structure_files.md)** | Estructura detallada de archivos | Developers |
 
+### 🏗️ Documentos Técnicos Avanzados
+
+| Documento | Descripción | Audiencia |
+|-----------|-------------|-----------|
+| **[tech/ADR-001-Data-Processing-Centralization.md](tech/ADR-001-Data-Processing-Centralization.md)** | ADR sobre centralización de funciones de procesamiento | Technical Leads, Architects |
+| **[tech/Hierarchical-Categorization-System.md](tech/Hierarchical-Categorization-System.md)** | Sistema de categorización jerárquica con exclusión mutua | Developers, Business Analysts |
+| **[tech/Troubleshooting-Guide.md](tech/Troubleshooting-Guide.md)** | Guía completa de troubleshooting y debugging | Developers, Support Team |
+
 ### 🔗 Documentación Relacionada
 
 | Archivo | Ubicación | Descripción |
@@ -100,37 +108,47 @@ Esta carpeta contiene toda la documentación técnica del proyecto Dashboard de 
 ## 📊 Métricas del Proyecto
 
 ### Desarrollo
-- **Líneas de código**: ~15,000
-- **Componentes React**: 25+
-- **Endpoints API**: 20+
+- **Líneas de código**: ~18,000 (actualizado post-centralización)
+- **Componentes React**: 30+
+- **Endpoints API**: 25+
 - **Modelos de datos**: 8
-- **Cobertura funcional**: 95%
+- **Funciones centralizadas**: 5 funciones exportadas desde DashboardContext
+- **Cobertura funcional**: 98%
 
 ### Funcionalidades
-- ✅ **Dashboard Interactivo** - Visualización completa de datos
-- ✅ **Mapas Dinámicos** - Geolocalización con Leaflet
-- ✅ **Análisis Temporal** - Tendencias y patrones por fechas
-- ✅ **Análisis Geográfico** - Distribución por provincias
-- ✅ **Autenticación JWT** - Sistema seguro con roles
-- ✅ **Carga de Excel** - Procesamiento automático de datos
-- ✅ **API REST** - Backend completo con DRF
+- ✅ **Dashboard Interactivo** - Visualización completa de datos con consistencia garantizada
+- ✅ **Mapas Dinámicos** - Geolocalización con Leaflet y sincronización en tiempo real
+- ✅ **Análisis Temporal** - Tendencias y patrones por fechas con parsing robusto
+- ✅ **Análisis Geográfico** - Distribución por provincias con normalización centralizada
+- ✅ **Categorización Jerárquica** - Sistema de exclusión mutua con 7 categorías priorizadas
+- ✅ **Autenticación JWT** - Sistema seguro con roles admin/viewer
+- ✅ **Carga de Excel** - Procesamiento automático con validación avanzada
+- ✅ **API REST** - Backend completo con DRF y validaciones
+- ✅ **Sistema de Debug** - Logging centralizado y troubleshooting avanzado
+- ✅ **Validación de Consistencia** - Monitoreo en tiempo real de integridad de datos
 
 ## 🔄 Estados del Sistema
 
 ### ✅ Completado (Producción Ready)
-- Core functionality completa
-- Frontend-backend integración
-- Autenticación y autorización
-- Visualizaciones interactivas
-- Deployment guides
-- Documentación completa
+- **Core functionality completa** con arquitectura centralizada
+- **Frontend-backend integración** optimizada y robusta
+- **Autenticación y autorización** con roles diferenciados
+- **Visualizaciones interactivas** con sincronización garantizada
+- **Sistema de categorización jerárquica** con exclusión mutua
+- **Funciones de procesamiento centralizadas** exportadas desde DashboardContext
+- **Validación de consistencia** en tiempo real
+- **Sistema de logging y debug** completo
+- **Deployment guides** actualizados
+- **Documentación técnica completa** con ADRs y troubleshooting
 
 ### 🚧 En Desarrollo (Próximas versiones)
-- Cache optimization (Redis)
-- Advanced analytics
-- Export functionality
-- Automated testing
-- Performance monitoring
+- **Cache optimization** (Redis para funciones centralizadas)
+- **Advanced analytics** con machine learning para categorización
+- **Export functionality** con filtros aplicados
+- **Automated testing** para funciones centralizadas
+- **Performance monitoring** con métricas detalladas
+- **Configuración dinámica** de keywords de categorización
+- **Optimización de queries** para grandes datasets
 
 ### 📋 Backlog
 - Multi-tenant support
@@ -199,6 +217,7 @@ Esta carpeta contiene toda la documentación técnica del proyecto Dashboard de 
 
 | Fecha | Versión | Cambios |
 |-------|---------|---------|
+| 2025-09-09 | 2.1.0 | **Centralización de funciones de procesamiento y documentación completa** |
 | 2025-09-08 | 2.0.0 | Refactorización completa de documentación post-simplificación |
 | 2025-09-07 | 1.5.0 | Optimizaciones de performance y eliminación polling |
 | 2025-09-06 | 1.4.0 | Integración completa frontend-backend |
@@ -207,4 +226,4 @@ Esta carpeta contiene toda la documentación técnica del proyecto Dashboard de 
 ---
 
 *Documentación mantenida y actualizada por el equipo de desarrollo*  
-*Última actualización: 2025-09-08*
+*Última actualización: 2025-09-09 - Versión 2.1.0 con centralización de funciones*

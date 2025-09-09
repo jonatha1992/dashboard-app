@@ -1,5 +1,6 @@
 // Servicio para cargar y procesar los datos del archivo Excel
 import * as XLSX from 'xlsx';
+import { normalizeProvinceKey, parseDateToISO, getCoordinatesFromItem } from '../contexts/DashboardContext';
 
 // NOTE: This module intentionally does NOT provide sample/demo data.
 // If no real data is available, `loadData` will return an empty processed array
@@ -80,96 +81,72 @@ export const loadData = async () => {
 
 // Función para procesar los datos JSON
 const processJsonData = (jsonData) => {
-    // Normalizar nombres de provincia: crear un nombre para mostrar (Title Case)
-    // y una clave (sin tildes, minúscula, espacios simples) para comparaciones.
-    const removeDiacritics = (str) => {
-        try {
-            return String(str).normalize('NFD').replace(/\p{M}/gu, '');
-        } catch {
-            // Fallback si el entorno no soporta \p{M}
-            return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        }
-    };
-
+    // Función helper para convertir provincia a formato de display (Title Case)
     const toDisplayName = (prov) => {
         if (!prov && prov !== 0) return '';
         const s = String(prov).trim().replace(/\s+/g, ' ');
         return s.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     };
 
-    const toKey = (prov) => {
-        if (!prov && prov !== 0) return '';
-        let s = String(prov).trim().replace(/\s+/g, ' ');
-        s = removeDiacritics(s).toLowerCase();
-        // Mapear abreviaturas y variantes comunes a una clave canónica
-        if (s === 'caba' || s.includes('ciudad autonoma') || s.includes('ciudad autonoma de buenos aires') || s.includes('ciudad autonoma buenos aires')) {
-            return 'ciudad autonoma de buenos aires';
-        }
-        return s;
-    };
-
+    // LOGGING TEMPORAL para diagnosticar pérdida de datos
+    console.log(`🔍 DIAGNÓSTICO: Procesando ${jsonData.length} registros iniciales`);
+    
     // Filtrar registros con datos válidos (sin valores "-" o vacíos en campos clave)
-    const validData = jsonData.filter(item => {
-        // Filtrar registros con fechas inválidas
+    const validData = jsonData.filter((item, index) => {
+        // Criterio 1: Filtrar registros con fechas inválidas
         const fecha = item.FECHA || '';
-        if (!fecha || fecha.toString().trim() === '-' || fecha.toString().trim() === '') return false;
+        if (!fecha || fecha.toString().trim() === '-' || fecha.toString().trim() === '') {
+            if (Math.random() < 0.01) console.log(`❌ Registro ${index} excluido por fecha vacía:`, fecha);
+            return false;
+        }
         
-        // Validar formato de fecha dd/mm/yyyy
-        if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fecha.toString().trim())) return false;
+        // Criterio 2: Validar formato de fecha dd/MM/yyyy (día/mes/año)
+        if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fecha.toString().trim())) {
+            if (Math.random() < 0.01) console.log(`❌ Registro ${index} excluido por formato de fecha inválido:`, fecha);
+            return false;
+        }
         
-        // Filtrar registros sin descripción válida
+        // Criterio 3: Filtrar registros sin descripción válida (SIENDO MENOS ESTRICTO)
         const desc = item.DESCRIPCIÓN || item.DESCRIPCION || '';
-        if (!desc || desc.toString().trim() === '-' || desc.toString().trim() === '') return false;
+        if (!desc || desc.toString().trim() === '-') {
+            if (Math.random() < 0.01) console.log(`❌ Registro ${index} excluido por descripción vacía`);
+            return false;
+        }
         
-        // Filtrar registros con coordenadas inválidas
-        const lat = parseFloat(item.LATITUD || item['Latitud Decimal'] || 0);
-        const lng = parseFloat(item.LONGITUD || 0);
-        if (lat === 0 && lng === 0) return false; // Coordenadas (0,0) probablemente inválidas
-        
-        // Filtrar registros sin provincia válida
+        // Criterio 4: Filtrar registros sin provincia válida (SIENDO MENOS ESTRICTO)
         const provincia = item.PROVINCIA || '';
-        if (!provincia || provincia.toString().trim() === '-' || provincia.toString().trim() === '') return false;
+        if (!provincia || provincia.toString().trim() === '-') {
+            if (Math.random() < 0.01) console.log(`❌ Registro ${index} excluido por provincia vacía:`, provincia);
+            return false;
+        }
         
         return true;
     });
 
-    return validData.map(item => ({
-        ...item,
-        // Asegurarse de que las coordenadas sean números
-        LATITUD: parseFloat(item.LATITUD || item['Latitud Decimal'] || 0),
-        LONGITUD: parseFloat(item.LONGITUD || 0),
-        FECHA: item.FECHA || '',
-        // FECHA_ISO: normalizamos la fecha a yyyy-mm-dd cuando sea posible
-        FECHA_ISO: (function () {
-            const raw = item.FECHA || '';
-            if (!raw) return '';
-            // dd/mm/yyyy
-            const dmy = String(raw).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-            if (dmy) {
-                const dd = dmy[1].padStart(2, '0');
-                const mm = dmy[2].padStart(2, '0');
-                const yyyy = dmy[3];
-                return `${yyyy}-${mm}-${dd}`;
-            }
-            // ISO-like or other parseable formats
-            const parsed = new Date(raw);
-            if (!isNaN(parsed.getTime())) {
-                const y = parsed.getFullYear();
-                const m = String(parsed.getMonth() + 1).padStart(2, '0');
-                const d = String(parsed.getDate()).padStart(2, '0');
-                return `${y}-${m}-${d}`;
-            }
-            return '';
-        })(),
-        HORA: item.HORA || '',
-        DESCRIPCION: item.DESCRIPCIÓN || '',
-        TIPO_INTERVENCION: item.TIPO_INTERVENCION || '',
-        ID_OPERATIVO: item.ID_OPERATIVO || '',
-        PROVINCIA: toDisplayName(item.PROVINCIA || ''),
-        // Clave normalizada sin tildes para comparaciones robustas
-        PROVINCIA_KEY: toKey(item.PROVINCIA || ''),
-        DEPARTAMENTO_O_PARTIDO: item['DEPARTAMENTO O PARTIDO'] || '',
-    }));
+    console.log(`✅ DIAGNÓSTICO: ${validData.length}/${jsonData.length} registros pasaron validación (${((validData.length/jsonData.length)*100).toFixed(1)}%)`);
+
+    return validData.map(item => {
+        // Usar función centralizada para coordenadas
+        const { lat, lng } = getCoordinatesFromItem(item);
+        
+        return {
+            ...item,
+            // Coordenadas normalizadas usando función centralizada
+            LATITUD: lat || 0,
+            LONGITUD: lng || 0,
+            FECHA: item.FECHA || '',
+            // FECHA_ISO: normalizada usando función centralizada del DashboardContext
+            FECHA_ISO: parseDateToISO(item.FECHA || ''),
+            HORA: item.HORA || '',
+            DESCRIPCION: item.DESCRIPCIÓN || '',
+            TIPO_INTERVENCION: item.TIPO_INTERVENCION || '',
+            ID_OPERATIVO: item.ID_OPERATIVO || '',
+            PROVINCIA: toDisplayName(item.PROVINCIA || ''),
+            // Clave normalizada sin tildes para comparaciones robustas - FUNCIÓN CENTRALIZADA
+            PROVINCIA_KEY: normalizeProvinceKey(item.PROVINCIA || ''),
+            DEPARTAMENTO_O_PARTIDO: item['DEPARTAMENTO O PARTIDO'] || '',
+        };
+    });
 };
 
 // Función para obtener estadísticas
@@ -196,157 +173,146 @@ export const getStatistics = (data) => {
     };
 };
 
-// Función para categorizar datos por tipo de operativo - SOLO DATOS REALES
+// Funciones helper para categorización con jerarquía
+const isDetenido = (item) => {
+    const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
+    const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
+    const delito = (item.DELITO_IMPUTADO || '').toLowerCase();
+    
+    // CRITERIO PRINCIPAL: Si tiene campos específicos de detenido, es un detenido
+    const tieneInfoDetenido = (item.EDAD !== undefined && item.EDAD !== null) ||
+                             (item.SEXO && item.SEXO.trim() !== '') ||
+                             (item.SITUACION_PROCESAL && item.SITUACION_PROCESAL.trim() !== '') ||
+                             (item.DELITO_IMPUTADO && item.DELITO_IMPUTADO.trim() !== '') ||
+                             (item.NACIONALIDAD && item.NACIONALIDAD.trim() !== '');
+    
+    // CRITERIO SECUNDARIO: Keywords en descripción/tipo
+    const tieneKeywordsDetenido = desc.includes('detención') || desc.includes('detenido') ||
+        desc.includes('arresto') || desc.includes('aprehendido') ||
+        desc.includes('capturado') || desc.includes('arrestado') ||
+        tipo.includes('detención') || tipo.includes('detenido') ||
+        tipo.includes('aprehensión') || tipo.includes('arrestado') ||
+        delito.includes('captura') || delito.includes('detención');
+    
+    return tieneInfoDetenido || tieneKeywordsDetenido;
+};
+
+const isIncautacion = (item) => {
+    const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
+    const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
+
+    return desc.includes('incautación') || desc.includes('secuestro') ||
+        desc.includes('decomiso') || desc.includes('droga') ||
+        desc.includes('arma') || desc.includes('narcótico') ||
+        desc.includes('narcotrafico') || desc.includes('narcotráfico') ||
+        desc.includes('sustancia') || desc.includes('estupefaciente') ||
+        desc.includes('cocaína') || desc.includes('marihuana') ||
+        desc.includes('cannabis') || desc.includes('heroína') ||
+        desc.includes('arma de fuego') || desc.includes('pistola') ||
+        desc.includes('revolver') || desc.includes('munición') ||
+        tipo.includes('incautación') || tipo.includes('secuestro');
+};
+
+const isAbatido = (item) => {
+    const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
+    const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
+
+    return desc.includes('abatido') || desc.includes('enfrentamiento') ||
+        desc.includes('tiroteo') || desc.includes('baja') ||
+        tipo.includes('abatido');
+};
+
+const isTrata = (item) => {
+    const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
+    const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
+
+    return desc.includes('trata') || desc.includes('tráfico') ||
+        desc.includes('explotación') || desc.includes('traficante') ||
+        tipo.includes('trata');
+};
+
+const isAfectado = (item) => {
+    const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
+    const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
+    
+    // CRITERIO PRINCIPAL: Si tiene campos específicos de personal afectado
+    const tieneInfoAfectados = (item.CANT_EFECTIVOS !== undefined && item.CANT_EFECTIVOS !== null) ||
+                              (item.CANT_AUTOS_CAMIONETAS !== undefined && item.CANT_AUTOS_CAMIONETAS !== null) ||
+                              (item.CANT_MOTOCICLETAS !== undefined && item.CANT_MOTOCICLETAS !== null) ||
+                              (item.cant_efectivos !== undefined && item.cant_efectivos !== null) ||
+                              (item.cant_autos_camionetas !== undefined && item.cant_autos_camionetas !== null) ||
+                              (item.cant_motocicletas !== undefined && item.cant_motocicletas !== null);
+    
+    // CRITERIO SECUNDARIO: Keywords de personal/recursos afectados  
+    const tieneKeywordsAfectados = desc.includes('afectado') || desc.includes('efectivos') ||
+        desc.includes('personal') || desc.includes('móviles') ||
+        desc.includes('patrulleros') || desc.includes('recursos') ||
+        tipo.includes('afectado') || tipo.includes('recursos');
+    
+    return tieneInfoAfectados || tieneKeywordsAfectados;
+};
+
+const isControlado = (item) => {
+    const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
+    const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
+    
+    // Solo considerar controlados si NO es detenido (jerarquía)
+    if (isDetenido(item)) return false;
+    
+    const tieneKeywordsControl = desc.includes('control') || tipo.includes('control') ||
+        desc.includes('verificación') || desc.includes('despliegue') ||
+        desc.includes('controlado') || desc.includes('revisión') ||
+        desc.includes('inspección') || desc.includes('identificación') ||
+        tipo.includes('preventivo');
+    
+    return tieneKeywordsControl;
+};
+
+// Función para categorizar datos por tipo de operativo - JERARQUÍA IMPLEMENTADA
 export const getCategorizedData = (data) => {
     if (!data || data.length === 0) {
         console.log('❌ getCategorizedData: No hay datos para categorizar');
         return {};
     }
 
-    console.log(`🔄 getCategorizedData: Categorizando ${data.length} registros`);
+    console.log(`🔄 getCategorizedData: Categorizando ${data.length} registros con jerarquía`);
 
-    // Categorías basadas ÚNICAMENTE en contenido real de datos
-    // Sin hash artificial - solo keywords reales
+    // JERARQUÍA DE CATEGORIZACIÓN: detenidos > incautaciones > abatidos > trata > afectados > controlados > procedimientos
     const categories = {
-        detenidos: data.filter(item => {
-            const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
-            const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            const delito = (item.DELITO_IMPUTADO || '').toLowerCase();
-            
-            // CRITERIO PRINCIPAL: Si tiene campos específicos de detenido, es un detenido
-            const tieneInfoDetenido = (item.EDAD !== undefined && item.EDAD !== null) ||
-                                     (item.SEXO && item.SEXO.trim() !== '') ||
-                                     (item.SITUACION_PROCESAL && item.SITUACION_PROCESAL.trim() !== '') ||
-                                     (item.DELITO_IMPUTADO && item.DELITO_IMPUTADO.trim() !== '') ||
-                                     (item.NACIONALIDAD && item.NACIONALIDAD.trim() !== '');
-            
-            // CRITERIO SECUNDARIO: Keywords en descripción/tipo
-            const tieneKeywordsDetenido = desc.includes('detención') || desc.includes('detenido') ||
-                desc.includes('arresto') || desc.includes('aprehendido') ||
-                desc.includes('capturado') || desc.includes('arrestado') ||
-                tipo.includes('detención') || tipo.includes('detenido') ||
-                tipo.includes('aprehensión') || tipo.includes('arrestado') ||
-                delito.includes('captura') || delito.includes('detención');
-            
-            const esDetenido = tieneInfoDetenido || tieneKeywordsDetenido;
-            
-            if (esDetenido && Math.random() < 0.01) { // Log 1% para debugging
-                console.log('✅ Detenido detectado:', {
-                    ID: item.ID_OPERATIVO,
-                    tieneInfo: tieneInfoDetenido,
-                    tieneKeywords: tieneKeywordsDetenido,
-                    edad: item.EDAD,
-                    sexo: item.SEXO,
-                    situacion: item.SITUACION_PROCESAL,
-                    delito: item.DELITO_IMPUTADO
-                });
-            }
-            
-            return esDetenido;
-        }),
-        controlados: data.filter(item => {
-            const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
-            const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            
-            // NO incluir si ya es un detenido (tiene info personal)
-            const esDetenido = (item.EDAD !== undefined && item.EDAD !== null) ||
-                              (item.SEXO && item.SEXO.trim() !== '') ||
-                              (item.SITUACION_PROCESAL && item.SITUACION_PROCESAL.trim() !== '') ||
-                              (item.DELITO_IMPUTADO && item.DELITO_IMPUTADO.trim() !== '');
-            
-            // Solo considerar controlados si NO es detenido
-            const tieneKeywordsControl = desc.includes('control') || tipo.includes('control') ||
-                desc.includes('verificación') || desc.includes('despliegue') ||
-                desc.includes('controlado') || desc.includes('revisión') ||
-                desc.includes('inspección') || desc.includes('identificación') ||
-                tipo.includes('preventivo');
-            
-            // CRITERIO: Es control Y NO es detenido
-            const esControlado = tieneKeywordsControl && !esDetenido;
-            
-            if (tieneKeywordsControl && esDetenido && Math.random() < 0.01) {
-                console.log('🔄 Control excluido (es detenido):', {
-                    ID: item.ID_OPERATIVO,
-                    desc: desc.substring(0, 50),
-                    edad: item.EDAD,
-                    delito: item.DELITO_IMPUTADO
-                });
-            }
-            
-            return esControlado;
-        }),
-        afectados: data.filter(item => {
-            const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
-            const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            
-            // CRITERIO PRINCIPAL: Si tiene campos específicos de personal afectado
-            const tieneInfoAfectados = (item.CANT_EFECTIVOS !== undefined && item.CANT_EFECTIVOS !== null) ||
-                                      (item.CANT_AUTOS_CAMIONETAS !== undefined && item.CANT_AUTOS_CAMIONETAS !== null) ||
-                                      (item.CANT_MOTOCICLETAS !== undefined && item.CANT_MOTOCICLETAS !== null) ||
-                                      (item.cant_efectivos !== undefined && item.cant_efectivos !== null) ||
-                                      (item.cant_autos_camionetas !== undefined && item.cant_autos_camionetas !== null) ||
-                                      (item.cant_motocicletas !== undefined && item.cant_motocicletas !== null);
-            
-            // CRITERIO SECUNDARIO: Keywords de personal/recursos afectados  
-            const tieneKeywordsAfectados = desc.includes('afectado') || desc.includes('efectivos') ||
-                desc.includes('personal') || desc.includes('móviles') ||
-                desc.includes('patrulleros') || desc.includes('recursos') ||
-                tipo.includes('afectado') || tipo.includes('recursos');
-            
-            const esAfectado = tieneInfoAfectados || tieneKeywordsAfectados;
-            
-            if (esAfectado && Math.random() < 0.01) { // Log 1% para debugging
-                console.log('👥 Afectados detectado:', {
-                    ID: item.ID_OPERATIVO,
-                    tieneInfo: tieneInfoAfectados,
-                    tieneKeywords: tieneKeywordsAfectados,
-                    efectivos: item.CANT_EFECTIVOS || item.cant_efectivos,
-                    autos: item.CANT_AUTOS_CAMIONETAS || item.cant_autos_camionetas,
-                    motos: item.CANT_MOTOCICLETAS || item.cant_motocicletas
-                });
-            }
-            
-            return esAfectado;
-        }),
+        // Categoría prioritaria: DETENIDOS
+        detenidos: data.filter(item => isDetenido(item)),
+        // Categoría: INCAUTACIONES (prioridad alta)
+        incautaciones: data.filter(item => !isDetenido(item) && isIncautacion(item)),
+        
+        // Categoría: ABATIDOS (prioridad alta)
+        abatidos: data.filter(item => !isDetenido(item) && !isIncautacion(item) && isAbatido(item)),
+        
+        // Categoría: TRATA (prioridad media-alta)
+        trata: data.filter(item => !isDetenido(item) && !isIncautacion(item) && !isAbatido(item) && isTrata(item)),
+        
+        // Categoría: AFECTADOS (prioridad media)
+        afectados: data.filter(item => !isDetenido(item) && !isIncautacion(item) && !isAbatido(item) && !isTrata(item) && isAfectado(item)),
+        
+        // Categoría: CONTROLADOS (prioridad media-baja, ya implementa jerarquía internamente)
+        controlados: data.filter(item => isControlado(item)),
+        
+        // Categoría: PROCEDIMIENTOS GENERALES (prioridad más baja - solo casos que no entran en categorías específicas)
         procedimientos: data.filter(item => {
-            const desc = (item.DESCRIPCION || '').toLowerCase();
+            // Solo considerar procedimientos si NO pertenece a ninguna categoría específica
+            if (isDetenido(item) || isIncautacion(item) || isAbatido(item) || isTrata(item) || isAfectado(item) || isControlado(item)) {
+                return false;
+            }
+            
+            const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
             const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-
+            
+            // Criterios más específicos para procedimientos generales
             return desc.includes('procedimiento') || desc.includes('operativo') ||
                 desc.includes('intervención') || tipo.includes('procedimiento') ||
                 tipo.includes('orden policial') || tipo.includes('orden judicial') ||
-                desc.includes('allanamiento') || desc.includes('mandato judicial');
-        }),
-        abatidos: data.filter(item => {
-            const desc = (item.DESCRIPCION || '').toLowerCase();
-            const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-
-            return desc.includes('abatido') || desc.includes('enfrentamiento') ||
-                desc.includes('tiroteo') || desc.includes('baja') ||
-                tipo.includes('abatido');
-        }),
-        trata: data.filter(item => {
-            const desc = (item.DESCRIPCION || '').toLowerCase();
-            const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-
-            return desc.includes('trata') || desc.includes('tráfico') ||
-                desc.includes('explotación') || desc.includes('traficante') ||
-                tipo.includes('trata');
-        }),
-        incautaciones: data.filter(item => {
-            const desc = (item.DESCRIPCION || '').toLowerCase();
-            const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-
-            return desc.includes('incautación') || desc.includes('secuestro') ||
-                desc.includes('decomiso') || desc.includes('droga') ||
-                desc.includes('arma') || desc.includes('narcótico') ||
-                desc.includes('narcotrafico') || desc.includes('narcotráfico') ||
-                desc.includes('sustancia') || desc.includes('estupefaciente') ||
-                desc.includes('cocaína') || desc.includes('marihuana') ||
-                desc.includes('cannabis') || desc.includes('heroína') ||
-                desc.includes('arma de fuego') || desc.includes('pistola') ||
-                desc.includes('revolver') || desc.includes('munición') ||
-                tipo.includes('incautación') || tipo.includes('secuestro');
+                desc.includes('allanamiento') || desc.includes('mandato judicial') ||
+                desc.includes('requisa') || desc.includes('inspección general') ||
+                tipo.includes('diligencia judicial');
         }),
     };
 
@@ -356,25 +322,25 @@ export const getCategorizedData = (data) => {
         return acc;
     }, {});
     
-    console.log('📊 Resultados de categorización:', summary);
+    console.log('📊 Resultados de categorización jerárquica:', summary);
     
-    // Log específico para controlados y afectados
-    if (categories.controlados.length > 0) {
-        console.log('🔍 Muestra de controlados:', categories.controlados.slice(0, 2).map(item => ({
-            ID: item.ID_OPERATIVO,
-            desc: (item.DESCRIPCION || item.DESCRIPCIÓN || '').substring(0, 50),
-            tieneEdad: !!item.EDAD
-        })));
+    // Verificar integridad de la jerarquía
+    const totalCategorized = Object.values(summary).reduce((sum, count) => sum + count, 0);
+    if (totalCategorized > data.length) {
+        console.warn('⚠️ ADVERTENCIA: Hay solapamiento en categorías (total categorizado > total datos)');
+        console.warn(`Total datos: ${data.length}, Total categorizado: ${totalCategorized}`);
     }
     
-    if (categories.afectados.length > 0) {
-        console.log('👥 Muestra de afectados:', categories.afectados.slice(0, 2).map(item => ({
-            ID: item.ID_OPERATIVO,
-            efectivos: item.CANT_EFECTIVOS || item.cant_efectivos,
-            autos: item.CANT_AUTOS_CAMIONETAS || item.cant_autos_camionetas,
-            desc: (item.DESCRIPCION || item.DESCRIPCIÓN || '').substring(0, 30)
-        })));
-    }
+    // Log específico con jerarquía implementada
+    console.log('🔄 Jerarquía aplicada correctamente:', {
+        prioridad_1_detenidos: summary.detenidos,
+        prioridad_2_incautaciones: summary.incautaciones, 
+        prioridad_3_abatidos: summary.abatidos,
+        prioridad_4_trata: summary.trata,
+        prioridad_5_afectados: summary.afectados,
+        prioridad_6_controlados: summary.controlados,
+        prioridad_7_procedimientos: summary.procedimientos
+    });
 
     return categories;
 };

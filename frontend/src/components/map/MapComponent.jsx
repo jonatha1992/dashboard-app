@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { useState, useEffect, useMemo, memo } from 'react';
 import L from 'leaflet';
 import { useDashboard } from '../../contexts/DashboardContext';
+import { getCoordinatesFromItem } from '../../contexts/DashboardContext';
 
 // Fix para los íconos de Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -49,17 +50,14 @@ const clusterPoints = (points, zoom) => {
     points.forEach((point, index) => {
         if (processed.has(index)) return;
 
-        // Usar la misma lógica de búsqueda de coordenadas que en validData
-        const lat = point.LATITUD ?? point.latitud ?? point.latitud_decimal ?? 
-                   point["Latitud Decimal"] ?? point.Latitud ?? point.lat;
-        const lng = point.LONGITUD ?? point.longitud ?? point.longitud_decimal ?? 
-                   point["Longitud Decimal"] ?? point.Longitud ?? point.lng;
+        // Usar función centralizada para obtener coordenadas
+        const { lat, lng } = getCoordinatesFromItem(point);
 
-        if (!lat || !lng) return;
+        if (lat === null || lng === null) return;
 
         const cluster = {
-            lat: parseFloat(lat),
-            lng: parseFloat(lng),
+            lat: lat,  // Ya viene como número válido de getCoordinatesFromItem
+            lng: lng,  // Ya viene como número válido de getCoordinatesFromItem
             points: [point],
             id: `cluster-${index}`
         };
@@ -68,16 +66,14 @@ const clusterPoints = (points, zoom) => {
         points.forEach((otherPoint, otherIndex) => {
             if (processed.has(otherIndex) || index === otherIndex) return;
 
-            const otherLat = otherPoint.LATITUD ?? otherPoint.latitud ?? otherPoint.latitud_decimal ?? 
-                            otherPoint["Latitud Decimal"] ?? otherPoint.Latitud ?? otherPoint.lat;
-            const otherLng = otherPoint.LONGITUD ?? otherPoint.longitud ?? otherPoint.longitud_decimal ?? 
-                            otherPoint["Longitud Decimal"] ?? otherPoint.Longitud ?? otherPoint.lng;
+            // Usar función centralizada para obtener coordenadas del otro punto
+            const { lat: otherLat, lng: otherLng } = getCoordinatesFromItem(otherPoint);
 
-            if (!otherLat || !otherLng) return;
+            if (otherLat === null || otherLng === null) return;
 
             const distance = Math.sqrt(
-                Math.pow(parseFloat(lat) - parseFloat(otherLat), 2) +
-                Math.pow(parseFloat(lng) - parseFloat(otherLng), 2)
+                Math.pow(lat - otherLat, 2) +
+                Math.pow(lng - otherLng, 2)
             );
 
             if (distance < clusterDistance) {
@@ -252,43 +248,42 @@ const MapMarkers = memo(({ clusters, formatDateForDisplay }) => {
 
 MapMarkers.displayName = 'MapMarkers';
 
-const MapComponent = memo(({ data }) => {
+const MapComponent = ({ data }) => {
     const { formatDateForDisplay } = useDashboard();
     const [mapCenter, setMapCenter] = useState([-34.6037, -58.3816]); // Buenos Aires por defecto
     const [mapZoom, setMapZoom] = useState(5);
     const [map, setMap] = useState(null);
 
-    // Filtrar y validar datos una sola vez
+    // Debug: Log cuando cambien los datos para verificar re-renderización
+    useEffect(() => {
+        console.log('🔄 MapComponent: useEffect activado por cambio de datos', {
+            dataLength: data?.length || 0,
+            timestamp: new Date().toISOString()
+        });
+    }, [data]);
+
+    // Filtrar y validar datos una sola vez - agregar logging de referencia para debug
     const validData = useMemo(() => {
         if (!data || data.length === 0) {
-            console.log('🗺️ MapComponent: No hay datos para mostrar');
+            console.log('🗺️ MapComponent: No hay datos para mostrar', { dataRef: data });
             return [];
         }
 
-        console.log(`🗺️ MapComponent: Procesando ${data.length} puntos de datos`);
+        console.log(`🗺️ MapComponent: Procesando ${data.length} puntos de datos`, { 
+            dataRef: data?.slice(0, 2),
+            provinciasUnicas: [...new Set(data.map(item => item.PROVINCIA))].filter(Boolean)
+        });
 
         const valid = data.filter(point => {
-            // Buscar coordenadas en múltiples campos posibles
-            const lat = point.LATITUD ?? point.latitud ?? point.latitud_decimal ?? 
-                       point["Latitud Decimal"] ?? point.Latitud ?? point.lat;
-            const lng = point.LONGITUD ?? point.longitud ?? point.longitud_decimal ?? 
-                       point["Longitud Decimal"] ?? point.Longitud ?? point.lng;
+            // Usar función centralizada para obtener y validar coordenadas
+            const { lat, lng } = getCoordinatesFromItem(point);
             
-            // Validar que existan y sean números válidos
-            const latNum = parseFloat(lat);
-            const lngNum = parseFloat(lng);
+            const isValid = lat !== null && lng !== null;
             
-            const isValid = lat && lng && 
-                          !isNaN(latNum) && !isNaN(lngNum) &&
-                          latNum >= -90 && latNum <= 90 &&
-                          lngNum >= -180 && lngNum <= 180;
-            
-            if (!isValid && Math.random() < 0.05) { // Log solo 5% para no saturar
-                console.log('🚫 Punto sin coordenadas válidas:', {
-                    lat: lat,
-                    lng: lng,
-                    latNum: latNum,
-                    lngNum: lngNum,
+            // El logging ya se maneja en getCoordinatesFromItem, pero podemos agregar logging específico del mapa
+            if (!isValid && Math.random() < 0.01) { // Log 1% para debugging específico del mapa
+                console.log('🗺️ MapComponent - Punto excluido por coordenadas inválidas:', {
+                    id: point.ID_OPERATIVO || 'Sin ID',
                     point: point
                 });
             }
@@ -305,7 +300,7 @@ const MapComponent = memo(({ data }) => {
         return valid;
     }, [data]);
 
-    // Crear clusters optimizados
+    // Crear clusters optimizados - forzar recálculo cuando cambien los datos
     const clusters = useMemo(() => {
         const clustered = clusterPoints(validData, mapZoom);
         console.log(`🗺️ Clustering: ${validData.length} puntos → ${clustered.length} clusters (zoom: ${mapZoom})`);
@@ -317,23 +312,33 @@ const MapComponent = memo(({ data }) => {
             console.log(`📊 Clusters: ${singlePoints} individuales, ${multiPoints} agrupados`);
         }
         
+        // Debug adicional: mostrar provincias en los clusters
+        const provinciasClusters = [...new Set(clustered.flatMap(c => c.points.map(p => p.PROVINCIA)).filter(Boolean))];
+        console.log(`🗺️ Provincias en clusters:`, provinciasClusters);
+        
         return clustered;
     }, [validData, mapZoom]);
+
+    // Crear una key única basada en los datos para forzar re-renderización de marcadores
+    const markersKey = useMemo(() => {
+        if (!data || data.length === 0) return 'empty';
+        const provincias = [...new Set(data.map(item => item.PROVINCIA))].filter(Boolean).sort().join(',');
+        return `markers-${data.length}-${provincias}`;
+    }, [data]);
 
     // Centrar el mapa cuando hay nuevos datos
     useEffect(() => {
         if (validData.length > 0 && map) {
             const firstPoint = validData[0];
-            // Usar la misma lógica de búsqueda de coordenadas
-            const lat = firstPoint.LATITUD ?? firstPoint.latitud ?? firstPoint.latitud_decimal ?? 
-                       firstPoint["Latitud Decimal"] ?? firstPoint.Latitud ?? firstPoint.lat;
-            const lng = firstPoint.LONGITUD ?? firstPoint.longitud ?? firstPoint.longitud_decimal ?? 
-                       firstPoint["Longitud Decimal"] ?? firstPoint.Longitud ?? firstPoint.lng;
+            // Usar función centralizada para obtener coordenadas
+            const { lat, lng } = getCoordinatesFromItem(firstPoint);
             
-            const newCenter = [parseFloat(lat), parseFloat(lng)];
-            console.log(`🗺️ Centrando mapa en:`, newCenter);
-            setMapCenter(newCenter);
-            map.setView(newCenter, mapZoom);
+            if (lat !== null && lng !== null) {
+                const newCenter = [lat, lng];
+                console.log(`🗺️ Centrando mapa en:`, newCenter);
+                setMapCenter(newCenter);
+                map.setView(newCenter, mapZoom);
+            }
         }
     }, [validData, map, mapZoom]);
 
@@ -439,11 +444,15 @@ const MapComponent = memo(({ data }) => {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
 
-                <MapMarkers clusters={clusters} formatDateForDisplay={formatDateForDisplay} />
+                <MapMarkers 
+                    key={markersKey}
+                    clusters={clusters} 
+                    formatDateForDisplay={formatDateForDisplay} 
+                />
             </MapContainer>
         </div>
     );
-});
+};
 
 MapComponent.displayName = 'MapComponent';
 

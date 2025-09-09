@@ -6,8 +6,8 @@ import { loadData, getCategorizedData } from '../services/dataService';
 
 const DashboardContext = createContext();
 
-// Helper functions para reutilizar lógica de filtrado
-const parseDateToISO = (dateStr) => {
+// Helper functions para reutilizar lógica de filtrado - EXPORTADA para otros módulos
+export const parseDateToISO = (dateStr) => {
   if (!dateStr) return null;
   
   // Asegurar que dateStr sea un string
@@ -17,7 +17,7 @@ const parseDateToISO = (dateStr) => {
   // Si ya está en formato ISO, retornar la parte de fecha
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
   
-  // Formato dd/mm/yyyy (más común en los datos)
+  // Formato dd/MM/yyyy (día/mes/año - formato argentino estándar)
   const dmy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (dmy) {
     const dd = dmy[1].padStart(2, '0');
@@ -25,12 +25,9 @@ const parseDateToISO = (dateStr) => {
     const yyyy = dmy[3];
     const isoDate = `${yyyy}-${mm}-${dd}`;
     
-    // Validar que la fecha sea válida
+    // Validación más permisiva - Solo verificar que sea una fecha válida básica
     const testDate = new Date(isoDate);
-    if (!isNaN(testDate.getTime()) && 
-        testDate.getFullYear() == yyyy && 
-        testDate.getMonth() + 1 == parseInt(mm) && 
-        testDate.getDate() == parseInt(dd)) {
+    if (!isNaN(testDate.getTime()) && parseInt(yyyy) > 1900 && parseInt(yyyy) < 2100) {
       return isoDate;
     }
   }
@@ -66,8 +63,8 @@ const parseDateToISO = (dateStr) => {
   return null;
 };
 
-// Función para formatear fechas de manera consistente para display
-const formatDateForDisplay = (dateStr) => {
+// Función para formatear fechas de manera consistente para display - EXPORTADA
+export const formatDateForDisplay = (dateStr) => {
   if (!dateStr) return 'Sin fecha';
   
   const isoDate = parseDateToISO(dateStr);
@@ -85,36 +82,161 @@ const formatDateForDisplay = (dateStr) => {
   }
 };
 
-const makeKey = (s) => {
+// Función unificada para normalizar claves de provincias - EXPORTADA para usar en otros módulos
+export const normalizeProvinceKey = (s) => {
   if (!s && s !== 0) return '';
   try {
     const str = String(s).trim().replace(/\s+/g, ' ');
-    // remover tildes
-    const normalized = str.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
-    if (normalized === 'caba' || normalized.includes('ciudad autonoma')) return 'ciudad autonoma de buenos aires';
+    
+    // Función helper para remover diacríticos (tildes, etc.)
+    const removeDiacritics = (text) => {
+      try {
+        return text.normalize('NFD').replace(/\p{M}/gu, '');
+      } catch {
+        // Fallback para entornos que no soporten \p{M}
+        return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      }
+    };
+    
+    // Normalizar: remover tildes y convertir a minúsculas
+    const normalized = removeDiacritics(str).toLowerCase();
+    
+    // Mapear variantes comunes de CABA a clave canónica
+    if (normalized === 'caba' || 
+        normalized.includes('ciudad autonoma') || 
+        normalized.includes('ciudad autonoma de buenos aires') || 
+        normalized.includes('ciudad autonoma buenos aires') ||
+        normalized.includes('cap fed') ||
+        normalized.includes('capital federal')) {
+      return 'ciudad autonoma de buenos aires';
+    }
+    
     return normalized;
-  } catch {
+  } catch (error) {
+    console.warn('⚠️ Error normalizando provincia:', s, error);
     return String(s).toLowerCase();
   }
 };
 
-// Obtiene una clave de provincia robusta desde distintos posibles campos
-const getProvinceKeyFromItem = (item) => {
-  if (!item || typeof item !== 'object') return '';
-  // prioridad a una clave ya normalizada
-  if (item.PROVINCIA_KEY) return item.PROVINCIA_KEY;
-  // posibles variantes de campo de provincia
-  const candidateKeys = [
-    'PROVINCIA',
-    'provincia',
-    'PROVINCIA_EVENTO',
-    'PROVINCIA_HECHO',
-    'PROVINCIA_ORIGEN',
-    'PROVINCIA_DESTINO'
+// Mantener alias para compatibilidad interna
+const makeKey = normalizeProvinceKey;
+
+// Función centralizada para extraer coordenadas de un item - EXPORTADA
+export const getCoordinatesFromItem = (item) => {
+  if (!item || typeof item !== 'object') return { lat: null, lng: null };
+  
+  // Lista de campos candidatos para latitud (ordenados por prioridad)
+  const latitudeCandidates = [
+    'LATITUD',           // Campo estándar
+    'latitud',           // Minúscula
+    'latitud_decimal',   // Con underscore
+    'Latitud Decimal',   // Con espacio (Excel)
+    'Latitud',           // Title case
+    'lat',               // Abreviación
+    'latitude',          // Inglés
+    'LAT_DECIMAL',       // Variante mayúscula
+    'coordenada_lat'     // Alternativa
   ];
-  for (const k of candidateKeys) {
-    if (k in item && item[k]) return makeKey(item[k]);
+  
+  // Lista de campos candidatos para longitud (ordenados por prioridad)
+  const longitudeCandidates = [
+    'LONGITUD',          // Campo estándar
+    'longitud',          // Minúscula
+    'longitud_decimal',  // Con underscore
+    'Longitud Decimal',  // Con espacio (Excel)
+    'Longitud',          // Title case
+    'lng',               // Abreviación común
+    'longitude',         // Inglés
+    'LON_DECIMAL',       // Variante mayúscula
+    'coordenada_lng'     // Alternativa
+  ];
+  
+  // Buscar latitud válida
+  let lat = null;
+  for (const field of latitudeCandidates) {
+    if (field in item && item[field] !== null && item[field] !== undefined) {
+      const val = parseFloat(item[field]);
+      if (!isNaN(val) && val >= -90 && val <= 90) {
+        lat = val;
+        break;
+      }
+    }
   }
+  
+  // Buscar longitud válida
+  let lng = null;
+  for (const field of longitudeCandidates) {
+    if (field in item && item[field] !== null && item[field] !== undefined) {
+      const val = parseFloat(item[field]);
+      if (!isNaN(val) && val >= -180 && val <= 180) {
+        lng = val;
+        break;
+      }
+    }
+  }
+  
+  // Validaciones adicionales
+  if (lat !== null && lng !== null) {
+    // Filtrar coordenadas (0,0) que suelen ser inválidas
+    if (lat === 0 && lng === 0) {
+      return { lat: null, lng: null };
+    }
+    
+    // Debug logging ocasional (1% de los casos)
+    if (Math.random() < 0.01) {
+      console.log(`🌍 Coordenadas válidas encontradas:`, { lat, lng, item: item.ID_OPERATIVO || 'Sin ID' });
+    }
+    
+    return { lat, lng };
+  }
+  
+  // Log ocasional para debugging de coordenadas faltantes (0.5%)
+  if (Math.random() < 0.005) {
+    console.log('⚠️ Sin coordenadas válidas:', {
+      id: item.ID_OPERATIVO || 'Sin ID',
+      latFound: lat !== null,
+      lngFound: lng !== null,
+      availableFields: Object.keys(item).filter(k => k.toLowerCase().includes('lat') || k.toLowerCase().includes('lng') || k.toLowerCase().includes('coord'))
+    });
+  }
+  
+  return { lat: null, lng: null };
+};
+
+// Función mejorada para obtener clave de provincia desde distintos campos - EXPORTADA
+export const getProvinceKeyFromItem = (item) => {
+  if (!item || typeof item !== 'object') return '';
+  
+  // Prioridad a una clave ya normalizada
+  if (item.PROVINCIA_KEY) return item.PROVINCIA_KEY;
+  
+  // Posibles variantes de campo de provincia (ordenados por prioridad)
+  const candidateKeys = [
+    'PROVINCIA',           // Campo estándar
+    'provincia',           // Minúscula
+    'PROVINCIA_EVENTO',    // Eventos específicos
+    'PROVINCIA_HECHO',     // Hechos específicos
+    'PROVINCIA_ORIGEN',    // Origen del procedimiento
+    'PROVINCIA_DESTINO',   // Destino del procedimiento
+    'PROVINCIA_LUGAR',     // Lugar del hecho
+    'PROV',               // Abreviación común
+    'Province',           // Inglés
+    'province_name'       // Alternativa con underscore
+  ];
+  
+  for (const k of candidateKeys) {
+    if (k in item && item[k] && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') {
+      const normalized = normalizeProvinceKey(item[k]);
+      if (normalized) {
+        // Debug logging ocasional (1% de los casos para no saturar)
+        if (Math.random() < 0.01) {
+          console.log(`🗺️ Provincia encontrada en campo ${k}:`, item[k], '→', normalized);
+        }
+        return normalized;
+      }
+    }
+  }
+  
   return '';
 };
 
@@ -487,21 +609,51 @@ export const DashboardProvider = ({ children }) => {
       filtered[category] = filterDataArray(dataArray, category);
     }
 
-    console.log('✅ filteredCategorizedData actualizado:', Object.keys(filtered).reduce((acc, key) => {
+    const summary = Object.keys(filtered).reduce((acc, key) => {
       acc[key] = filtered[key].length;
       return acc;
-    }, {}));
+    }, {});
+    
+    console.log('✅ filteredCategorizedData actualizado:', summary);
+    
+    // VALIDACIÓN DE CONSISTENCIA: Comparar con filteredData
+    const totalCategorized = Object.values(summary).reduce((sum, count) => sum + count, 0);
+    const rawFilteredCount = filteredData.length;
+    
+    if (Math.abs(totalCategorized - rawFilteredCount) > rawFilteredCount * 0.1) { // > 10% diferencia
+      console.warn('⚠️ INCONSISTENCIA DETECTADA entre filteredData y filteredCategorizedData:');
+      console.warn(`📊 filteredData: ${rawFilteredCount} registros`);
+      console.warn(`📊 filteredCategorizedData: ${totalCategorized} registros`);
+      console.warn(`📊 Diferencia: ${Math.abs(totalCategorized - rawFilteredCount)} registros`);
+    } else {
+      console.log('✅ Consistencia OK entre fuentes de datos:', {
+        filteredData: rawFilteredCount,
+        categorizedTotal: totalCategorized,
+        diferencia: Math.abs(totalCategorized - rawFilteredCount)
+      });
+    }
 
     return filtered;
   }, [categorizedData, filters]);
 
-  // Actualizar filtros
+  // Actualizar filtros con logging mejorado
   const updateFilters = (newFilters) => {
     console.log('🎯 Actualizando filtros:', {
       current: filters,
       new: newFilters,
       merged: { ...filters, ...newFilters }
     });
+    
+    // Log específico para filtros de provincia
+    if (newFilters.province) {
+      const normalizedProvince = normalizeProvinceKey(newFilters.province);
+      console.log('🗺️ Filtro de provincia aplicado:', {
+        original: newFilters.province,
+        normalized: normalizedProvince,
+        availableProvinces: [...new Set(data.map(item => item.PROVINCIA).filter(p => p && p !== '-'))]
+      });
+    }
+    
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
@@ -645,7 +797,12 @@ export const DashboardProvider = ({ children }) => {
     
     // Utilidades de fecha
     parseDateToISO,
-    formatDateForDisplay
+    formatDateForDisplay,
+    
+    // Utilidades centralizadas exportadas para otros módulos
+    normalizeProvinceKey,
+    getProvinceKeyFromItem,
+    getCoordinatesFromItem
   };
 
   return (

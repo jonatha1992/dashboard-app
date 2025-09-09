@@ -10,26 +10,62 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
     const [timeGranularity, setTimeGranularity] = useState('month'); // 'day' | 'week' | 'month'
     const { filters } = useDashboard();
     const hasProvinceFilter = Boolean(filters && filters.province);
+    
+    // LOGGING TEMPORAL para diagnosticar filtros
+    if (Math.random() < 0.1) { // 10% de las veces
+        console.log(`📊 CategoryCharts [${categoryName}]:`, {
+            dataCount: data?.length || 0,
+            hasProvinceFilter,
+            activeProvince: filters?.province,
+            chartType: activeChart
+        });
+    }
 
     // Ensure that when the user changes the time granularity we show the temporal charts
     useEffect(() => {
         setActiveChart('monthly');
     }, [timeGranularity]);
 
-    // Auto-seleccionar granularidad según el rango de fechas del filtro
+    // Auto-seleccionar granularidad inteligente basada en densidad de datos
     useEffect(() => {
-        if (!filters || !filters.fromDate || !filters.toDate) return;
-        try {
-            const from = new Date(filters.fromDate);
-            const to = new Date(filters.toDate);
-            const days = Math.max(1, Math.round((to - from) / (1000 * 60 * 60 * 24)) + 1);
-            // Regla: <=7 días -> día, <=31 días -> semana, >31 -> mes
-            const next = days <= 7 ? 'day' : (days <= 31 ? 'week' : 'month');
-            setTimeGranularity(next);
-        } catch {
-            // Ignorar si las fechas no son válidas
+        if (!data || data.length === 0) return;
+        
+        // Obtener todas las fechas válidas de los datos
+        const validDates = data
+            .map(item => item.FECHA_ISO || item.FECHA || '')
+            .filter(date => date && date !== '-' && date.trim() !== '')
+            .map(date => new Date(date))
+            .filter(date => !isNaN(date.getTime()))
+            .sort();
+            
+        if (validDates.length === 0) return;
+        
+        // Calcular el rango temporal real de los datos
+        const earliest = validDates[0];
+        const latest = validDates[validDates.length - 1];
+        const totalDays = Math.max(1, Math.round((latest - earliest) / (1000 * 60 * 60 * 24)) + 1);
+        
+        // Calcular densidad: registros por día
+        const density = data.length / totalDays;
+        
+        // Lógica inteligente de granularidad basada en densidad y rango
+        let nextGranularity;
+        if (totalDays <= 7 || density >= 2) {
+            // Pocos días O alta densidad -> mostrar por día
+            nextGranularity = 'day';
+        } else if (totalDays <= 60 || density >= 0.5) {
+            // Rango medio O densidad media -> mostrar por semana
+            nextGranularity = 'week';
+        } else {
+            // Rango largo Y baja densidad -> mostrar por mes
+            nextGranularity = 'month';
         }
-    }, [filters?.fromDate, filters?.toDate]);
+        
+        // Solo cambiar si hay una mejora significativa
+        if (nextGranularity !== timeGranularity) {
+            setTimeGranularity(nextGranularity);
+        }
+    }, [data, timeGranularity]);
 
     if (!data || data.length === 0) {
         // Nunca ocultar completamente cuando hideEmpty es true
@@ -53,22 +89,21 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
 
     // Helper: build time series with granularity
     const getWeekNumber = (d) => {
-        // ISO week number
+        // ISO week number with year to avoid confusion between years
         const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
         const dayNum = date.getUTCDay() || 7;
         date.setUTCDate(date.getUTCDate() + 4 - dayNum);
         const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
         const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-        // Return week label in Spanish short form: "SEM-##" (e.g., SEM-05)
-        // If you prefer to include year, change to `${date.getUTCFullYear()}-SEM-${...}`
-        return `SEM-${String(weekNo).padStart(2, '0')}`;
+        // Include year to ensure chronological sorting and avoid confusion
+        return `${date.getUTCFullYear()}-SEM-${String(weekNo).padStart(2, '0')}`;
     };
 
     const buildTimeSeries = (granularity) => {
         // Prefer FECHA_ISO (yyyy-mm-dd) when present to avoid inconsistent Date parsing
         const map = data.reduce((acc, item) => {
             const raw = item.FECHA_ISO || item.FECHA || '';
-            if (!raw) return acc;
+            if (!raw || raw === '-' || raw.trim() === '') return acc; // Skip empty/invalid dates
             const parsed = new Date(raw);
             if (isNaN(parsed.getTime())) return acc;
 
@@ -91,14 +126,41 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
             return acc;
         }, {});
 
-        // Solo incluir claves que tienen datos reales (filtrar períodos vacíos y datos espurios)
+        // CRUCIAL: Solo incluir períodos que tienen datos reales (> 0)
         const sortedKeys = Object.keys(map)
-            .filter(key => map[key] > 0)
+            .filter(key => map[key] > 0) // Solo períodos con datos reales
             .sort();
+        
+        // Debug logging para verificar filtrado de períodos vacíos
+        if (Math.random() < 0.1) { // 10% de las veces para no saturar la consola
+            console.log(`📊 buildTimeSeries [${categoryName}] ${granularity}:`, {
+                totalRecords: data.length,
+                periodsWithData: sortedKeys.length,
+                periods: sortedKeys,
+                periodCounts: sortedKeys.map(k => `${k}:${map[k]}`).slice(0, 5) // primeros 5
+            });
+        }
+
+        // Si no hay datos válidos, retornar estructura vacía
+        if (sortedKeys.length === 0) {
+            return {
+                labels: [],
+                datasets: [{
+                    label: `${categoryName} - ${granularity}`,
+                    data: [],
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2
+                }]
+            };
+        }
 
         // Check if all data is from the same year for smart date formatting
         const years = sortedKeys.map(k => {
             if (granularity === 'day' || granularity === 'month') {
+                return k.split('-')[0];
+            } else if (granularity === 'week') {
+                // k format is now "YYYY-SEM-##"
                 return k.split('-')[0];
             }
             return null;
@@ -111,7 +173,9 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                 const [y, m, d] = k.split('-');
                 return sameYear ? `${d}/${m}` : `${d}/${m}/${y}`;
             } else if (granularity === 'week') {
-                return k; // already in Y-W## format
+                // k format is now "YYYY-SEM-##", format nicely
+                const [year, sem, weekNum] = k.split('-');
+                return sameYear ? `S${weekNum}` : `${year} S${weekNum}`;
             }
             // month
             const [y, m] = k.split('-');
