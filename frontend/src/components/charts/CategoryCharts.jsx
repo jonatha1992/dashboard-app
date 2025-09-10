@@ -179,7 +179,7 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                 return sameYear ? `${d}/${m}` : `${d}/${m}/${y}`;
             } else if (granularity === 'week') {
                 // k format is now "YYYY-SEM-##", format nicely
-                const [year, sem, weekNum] = k.split('-');
+                const [year, , weekNum] = k.split('-');
                 return sameYear ? `S${weekNum}` : `${year} S${weekNum}`;
             }
             // month
@@ -292,7 +292,7 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                 />
                 <StatCard
                     title="Departamentos"
-                    value={new Set(data.map(item => item.DEPARTAMENTO_O_PARTIDO)).size}
+                    value={new Set(data.map(item => item['DEPARTAMENTO O PARTIDO'] || item.DEPARTAMENTO_O_PARTIDO)).size}
                     icon="📍"
                     color="bg-purple-500"
                 />

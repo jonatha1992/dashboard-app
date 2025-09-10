@@ -87,7 +87,7 @@ class GeografiaProcedimientoSerializer(serializers.ModelSerializer):
             'FUERZA_INTERVINIENTE': data.get('fuerza_interviniente'),
             'ID_OPERATIVO': data.get('id_operativo'),
             'ID_PROCEDIMIENTO': data.get('id_procedimiento'),
-            'UNIDAD_INTERVINIENTE': data.get('unidad_interviniente'),
+            'UNIDAD_INTERVINIENTE': data.get('unidad_interviniente') or data.get('fuerza_interviniente'),
             'DESCRIPCIÓN': data.get('descripcion'),
             'TIPO_INTERVENCION': data.get('tipo_intervencion'),
             'PROVINCIA': data.get('provincia'),

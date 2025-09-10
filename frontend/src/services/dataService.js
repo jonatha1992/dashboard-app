@@ -386,7 +386,8 @@ export const getChartData = (data, category) => {
 
     // Datos por departamento
     const departmentData = data.reduce((acc, item) => {
-        const department = item.DEPARTAMENTO_O_PARTIDO || 'Sin especificar';
+        // Usar el campo correcto que viene del backend: 'DEPARTAMENTO O PARTIDO' (con espacios)
+        const department = item['DEPARTAMENTO O PARTIDO'] || item.DEPARTAMENTO_O_PARTIDO || 'Sin especificar';
         acc[department] = (acc[department] || 0) + 1;
         return acc;
     }, {});
