@@ -240,6 +240,34 @@ export const getProvinceKeyFromItem = (item) => {
   return '';
 };
 
+// Función para obtener departamento desde distintos campos - EXPORTADA
+export const getDepartamentoFromItem = (item) => {
+  if (!item || typeof item !== 'object') return '';
+  
+  // Posibles variantes de campo de departamento (ordenados por prioridad)
+  const candidateKeys = [
+    'DEPARTAMENTO_O_PARTIDO',  // Campo estándar
+    'DEPARTAMENTO',            // Variante
+    'departamento',            // Minúscula
+    'DEPARTAMENTO O PARTIDO',  // Con espacio
+    'PARTIDO',                 // Partido (Buenos Aires)
+    'partido'                  // partido minúscula
+  ];
+  
+  for (const k of candidateKeys) {
+    if (k in item && item[k] && String(item[k]).trim() !== '' && String(item[k]).trim() !== '-') {
+      const dept = String(item[k]).trim();
+      // Debug logging ocasional
+      if (Math.random() < 0.005) {
+        console.log(`🏛️ Departamento encontrado en campo ${k}:`, dept);
+      }
+      return dept;
+    }
+  }
+  
+  return '';
+};
+
 export const DashboardProvider = ({ children }) => {
 
   // Estado global de datos y navegación
@@ -252,7 +280,8 @@ export const DashboardProvider = ({ children }) => {
   const [filters, setFilters] = useState({
     fromDate: '',
     toDate: '',
-    province: ''
+    province: '',
+    departamento: ''
   });
 
   // Estado del Data Warehouse
@@ -320,7 +349,7 @@ export const DashboardProvider = ({ children }) => {
               dateRange: stats.dateRange
             });
             
-            setFilters({ fromDate: '', toDate: '', province: '' });
+            setFilters({ fromDate: '', toDate: '', province: '', departamento: '' });
             
             return; // Exit early if API works
           }
@@ -374,7 +403,7 @@ export const DashboardProvider = ({ children }) => {
             });
             
             // Solo establecer filtros vacíos inicialmente
-            setFilters({ fromDate: '', toDate: '', province: '' });
+            setFilters({ fromDate: '', toDate: '', province: '', departamento: '' });
             
           } else {
             console.warn('⚠️ No se encontraron datos locales');
@@ -542,6 +571,20 @@ export const DashboardProvider = ({ children }) => {
       });
     }
 
+    // Filtro por departamento
+    if (filters.departamento) {
+      const filterDept = filters.departamento.toLowerCase().trim();
+      filtered = filtered.filter(item => {
+        const itemDept = (item.DEPARTAMENTO_O_PARTIDO || 
+                         item.DEPARTAMENTO || 
+                         item.departamento || 
+                         item['DEPARTAMENTO O PARTIDO'] || 
+                         item.PARTIDO || 
+                         item.partido || '').toLowerCase().trim();
+        return itemDept === filterDept;
+      });
+    }
+
     return filtered;
   }, [data, filters]);
 
@@ -589,7 +632,21 @@ export const DashboardProvider = ({ children }) => {
             });
           }
           
-          return matches;
+          if (!matches) return false;
+        }
+        
+        // Aplicar filtro de departamento
+        if (filters.departamento) {
+          const filterDept = filters.departamento.toLowerCase().trim();
+          const itemDept = (item.DEPARTAMENTO_O_PARTIDO || 
+                           item.DEPARTAMENTO || 
+                           item.departamento || 
+                           item['DEPARTAMENTO O PARTIDO'] || 
+                           item.PARTIDO || 
+                           item.partido || '').toLowerCase().trim();
+          const deptMatches = itemDept === filterDept;
+          
+          if (!deptMatches) return false;
         }
         
         return true;
@@ -802,6 +859,7 @@ export const DashboardProvider = ({ children }) => {
     // Utilidades centralizadas exportadas para otros módulos
     normalizeProvinceKey,
     getProvinceKeyFromItem,
+    getDepartamentoFromItem,
     getCoordinatesFromItem
   };
 

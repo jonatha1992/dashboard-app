@@ -181,22 +181,40 @@ const isDetenido = (item) => {
     const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
     const delito = (item.DELITO_IMPUTADO || '').toLowerCase();
     
-    // CRITERIO PRINCIPAL: Si tiene campos específicos de detenido, es un detenido
-    const tieneInfoDetenido = (item.EDAD !== undefined && item.EDAD !== null) ||
-                             (item.SEXO && item.SEXO.trim() !== '') ||
-                             (item.SITUACION_PROCESAL && item.SITUACION_PROCESAL.trim() !== '') ||
-                             (item.DELITO_IMPUTADO && item.DELITO_IMPUTADO.trim() !== '') ||
-                             (item.NACIONALIDAD && item.NACIONALIDAD.trim() !== '');
+    // CRITERIO PRINCIPAL MEJORADO: Campos específicos de detenido con validación estricta
+    const tieneInfoDetenido = (
+        (item.EDAD !== undefined && item.EDAD !== null && String(item.EDAD).trim() !== '' && String(item.EDAD).trim() !== '-') ||
+        (item.SEXO && String(item.SEXO).trim() !== '' && String(item.SEXO).trim() !== '-') ||
+        (item.SITUACION_PROCESAL && String(item.SITUACION_PROCESAL).trim() !== '' && String(item.SITUACION_PROCESAL).trim() !== '-') ||
+        (item.DELITO_IMPUTADO && String(item.DELITO_IMPUTADO).trim() !== '' && String(item.DELITO_IMPUTADO).trim() !== '-') ||
+        (item.NACIONALIDAD && String(item.NACIONALIDAD).trim() !== '' && String(item.NACIONALIDAD).trim() !== '-')
+    );
     
-    // CRITERIO SECUNDARIO: Keywords en descripción/tipo
-    const tieneKeywordsDetenido = desc.includes('detención') || desc.includes('detenido') ||
+    // CRITERIO SECUNDARIO: Keywords en descripción/tipo (más estricto)
+    const tieneKeywordsDetenido = (
+        desc.includes('detención') || desc.includes('detenido') ||
         desc.includes('arresto') || desc.includes('aprehendido') ||
         desc.includes('capturado') || desc.includes('arrestado') ||
         tipo.includes('detención') || tipo.includes('detenido') ||
         tipo.includes('aprehensión') || tipo.includes('arrestado') ||
-        delito.includes('captura') || delito.includes('detención');
+        delito.includes('captura') || delito.includes('detención')
+    ) && !(desc.includes('sin detenidos') || desc.includes('no hay detenidos'));
     
-    return tieneInfoDetenido || tieneKeywordsDetenido;
+    const result = tieneInfoDetenido || tieneKeywordsDetenido;
+    
+    // Debug logging ocasional para verificar consistency
+    if (Math.random() < 0.001 && result) { // 0.1% de los casos
+        console.log(`🔍 isDetenido TRUE:`, {
+            id: item.ID_OPERATIVO || 'Sin ID',
+            tieneInfoDetenido,
+            tieneKeywordsDetenido,
+            edad: item.EDAD,
+            sexo: item.SEXO,
+            situacion: item.SITUACION_PROCESAL
+        });
+    }
+    
+    return result;
 };
 
 const isIncautacion = (item) => {
@@ -270,52 +288,65 @@ const isControlado = (item) => {
     return tieneKeywordsControl;
 };
 
-// Función para categorizar datos por tipo de operativo - JERARQUÍA IMPLEMENTADA
+// Función para categorizar datos por tipo de operativo - JERARQUÍA MEJORADA
 export const getCategorizedData = (data) => {
     if (!data || data.length === 0) {
         console.log('❌ getCategorizedData: No hay datos para categorizar');
         return {};
     }
 
-    console.log(`🔄 getCategorizedData: Categorizando ${data.length} registros con jerarquía`);
+    console.log(`🔄 getCategorizedData: Categorizando ${data.length} registros con jerarquía mejorada`);
 
-    // JERARQUÍA DE CATEGORIZACIÓN: detenidos > incautaciones > abatidos > trata > afectados > controlados > procedimientos
+    // Pre-computar clasificaciones para evitar recálculos y inconsistencias
+    const classifications = data.map(item => {
+        const detenido = isDetenido(item);
+        const incautacion = isIncautacion(item);
+        const abatido = isAbatido(item);
+        const trata = isTrata(item);
+        const afectado = isAfectado(item);
+        const controlado = isControlado(item);
+        
+        return {
+            item,
+            detenido,
+            incautacion,
+            abatido,
+            trata,
+            afectado,
+            controlado
+        };
+    });
+
+    // JERARQUÍA DE CATEGORIZACIÓN ESTRICTA: detenidos > incautaciones > abatidos > trata > afectados > controlados > procedimientos
     const categories = {
         // Categoría prioritaria: DETENIDOS
-        detenidos: data.filter(item => isDetenido(item)),
-        // Categoría: INCAUTACIONES (prioridad alta)
-        incautaciones: data.filter(item => !isDetenido(item) && isIncautacion(item)),
+        detenidos: classifications.filter(c => c.detenido).map(c => c.item),
         
-        // Categoría: ABATIDOS (prioridad alta)
-        abatidos: data.filter(item => !isDetenido(item) && !isIncautacion(item) && isAbatido(item)),
+        // Categoría: INCAUTACIONES (prioridad alta, excluir detenidos)
+        incautaciones: classifications.filter(c => !c.detenido && c.incautacion).map(c => c.item),
         
-        // Categoría: TRATA (prioridad media-alta)
-        trata: data.filter(item => !isDetenido(item) && !isIncautacion(item) && !isAbatido(item) && isTrata(item)),
+        // Categoría: ABATIDOS (prioridad alta, excluir anteriores)
+        abatidos: classifications.filter(c => !c.detenido && !c.incautacion && c.abatido).map(c => c.item),
         
-        // Categoría: AFECTADOS (prioridad media)
-        afectados: data.filter(item => !isDetenido(item) && !isIncautacion(item) && !isAbatido(item) && !isTrata(item) && isAfectado(item)),
+        // Categoría: TRATA (prioridad media-alta, excluir anteriores)
+        trata: classifications.filter(c => !c.detenido && !c.incautacion && !c.abatido && c.trata).map(c => c.item),
         
-        // Categoría: CONTROLADOS (prioridad media-baja, ya implementa jerarquía internamente)
-        controlados: data.filter(item => isControlado(item)),
+        // Categoría: AFECTADOS (prioridad media, excluir anteriores)
+        afectados: classifications.filter(c => !c.detenido && !c.incautacion && !c.abatido && !c.trata && c.afectado).map(c => c.item),
         
-        // Categoría: PROCEDIMIENTOS GENERALES (prioridad más baja - solo casos que no entran en categorías específicas)
-        procedimientos: data.filter(item => {
+        // Categoría: CONTROLADOS (prioridad media-baja, excluir anteriores)
+        controlados: classifications.filter(c => !c.detenido && !c.incautacion && !c.abatido && !c.trata && !c.afectado && c.controlado).map(c => c.item),
+        
+        // Categoría: PROCEDIMIENTOS GENERALES (prioridad más baja - resto de casos)
+        procedimientos: classifications.filter(c => {
             // Solo considerar procedimientos si NO pertenece a ninguna categoría específica
-            if (isDetenido(item) || isIncautacion(item) || isAbatido(item) || isTrata(item) || isAfectado(item) || isControlado(item)) {
+            if (c.detenido || c.incautacion || c.abatido || c.trata || c.afectado || c.controlado) {
                 return false;
             }
             
-            const desc = (item.DESCRIPCION || item.DESCRIPCIÓN || '').toLowerCase();
-            const tipo = (item.TIPO_INTERVENCION || '').toLowerCase();
-            
-            // Criterios más específicos para procedimientos generales
-            return desc.includes('procedimiento') || desc.includes('operativo') ||
-                desc.includes('intervención') || tipo.includes('procedimiento') ||
-                tipo.includes('orden policial') || tipo.includes('orden judicial') ||
-                desc.includes('allanamiento') || desc.includes('mandato judicial') ||
-                desc.includes('requisa') || desc.includes('inspección general') ||
-                tipo.includes('diligencia judicial');
-        }),
+            // Todos los casos restantes son procedimientos generales
+            return true;
+        }).map(c => c.item),
     };
 
     // Logging de resultados de categorización
@@ -384,10 +415,25 @@ export const getChartData = (data, category) => {
         return acc;
     }, {});
 
-    // Datos por departamento
+    // Datos por departamento - MEJORADO con múltiples campos candidatos
     const departmentData = data.reduce((acc, item) => {
-        const department = item.DEPARTAMENTO_O_PARTIDO || 'Sin especificar';
-        acc[department] = (acc[department] || 0) + 1;
+        // Buscar en múltiples campos candidatos para departamento
+        const department = item.DEPARTAMENTO_O_PARTIDO || 
+                          item.DEPARTAMENTO || 
+                          item.departamento || 
+                          item['DEPARTAMENTO O PARTIDO'] || 
+                          item.PARTIDO || 
+                          item.partido || 
+                          'Sin especificar';
+        
+        // Solo contar si no es un valor vacío o placeholder
+        if (department && String(department).trim() !== '' && String(department).trim() !== '-') {
+            const deptKey = String(department).trim();
+            acc[deptKey] = (acc[deptKey] || 0) + 1;
+        } else {
+            acc['Sin especificar'] = (acc['Sin especificar'] || 0) + 1;
+        }
+        
         return acc;
     }, {});
 

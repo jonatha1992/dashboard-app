@@ -44,6 +44,10 @@ export default function DataTable({ data }) {
         'UNIDAD_INTERVINIENTE', 'unidad_interviniente', 'UNIDAD', 'FUERZA_INTERVINIENTE'
     ]) || '-';
 
+    const getDepartamento = (item) => pickFirstString(item, [
+        'DEPARTAMENTO_O_PARTIDO', 'DEPARTAMENTO', 'departamento', 'DEPARTAMENTO O PARTIDO', 'PARTIDO', 'partido'
+    ]) || 'Sin especificar';
+
     const getLatLng = (item) => {
         const lat = item.LATITUD ?? item.latitud ?? item.latitud_decimal ?? item['Latitud Decimal'];
         const lng = item.LONGITUD ?? item.longitud ?? item.longitud_decimal ?? item['Longitud Decimal'];
@@ -63,10 +67,11 @@ export default function DataTable({ data }) {
     const tableConfigs = {
         incautaciones: {
             title: 'Incautaciones',
-            searchFields: ['INCAUTACIONES', 'TIPO', 'SUBTIPO', 'CANTIDAD', 'PROVINCIA', 'ID_OPERATIVO', 'UNIDAD_INTERVINIENTE'],
+            searchFields: ['INCAUTACIONES', 'TIPO', 'SUBTIPO', 'CANTIDAD', 'PROVINCIA', 'DEPARTAMENTO_O_PARTIDO', 'ID_OPERATIVO', 'UNIDAD_INTERVINIENTE'],
             columns: [
                 { key: 'ID_OPERATIVO', label: 'ID Operativo', className: 'font-mono text-xs' },
                 { key: 'PROVINCIA', label: 'Provincia' },
+                { key: 'DEPARTAMENTO_O_PARTIDO', label: 'Departamento', render: (item) => getDepartamento(item), className: 'max-w-xs truncate' },
                 { key: 'FECHA_ISO', label: 'Fecha', render: (item) => getDateText(item) },
                 { key: 'UNIDAD_INTERVINIENTE', label: 'Unidad', render: (item) => getUnidadInterviniente(item), className: 'max-w-xs truncate' },
                 { key: 'INCAUTACIONES', label: 'Incautación' },
@@ -77,10 +82,11 @@ export default function DataTable({ data }) {
         },
         detenidos: {
             title: 'Detenidos',
-            searchFields: ['DELITO_IMPUTADO', 'NACIONALIDAD', 'SITUACION_PROCESAL', 'PROVINCIA', 'ID_OPERATIVO', 'UNIDAD_INTERVINIENTE'],
+            searchFields: ['DELITO_IMPUTADO', 'NACIONALIDAD', 'SITUACION_PROCESAL', 'PROVINCIA', 'DEPARTAMENTO_O_PARTIDO', 'ID_OPERATIVO', 'UNIDAD_INTERVINIENTE'],
             columns: [
                 { key: 'ID_OPERATIVO', label: 'ID Operativo', className: 'font-mono text-xs' },
                 { key: 'PROVINCIA', label: 'Provincia' },
+                { key: 'DEPARTAMENTO_O_PARTIDO', label: 'Departamento', render: (item) => getDepartamento(item), className: 'max-w-xs truncate' },
                 { key: 'FECHA_ISO', label: 'Fecha', render: (item) => getDateText(item) },
                 { key: 'UNIDAD_INTERVINIENTE', label: 'Unidad', render: (item) => getUnidadInterviniente(item), className: 'max-w-xs truncate' },
                 { key: 'EDAD', label: 'Edad', className: 'text-right' },
@@ -92,10 +98,11 @@ export default function DataTable({ data }) {
         },
         controlados: {
             title: 'Controlados',
-            searchFields: ['PROVINCIA', 'ID_OPERATIVO', 'DESCRIPCIÓN', 'UNIDAD_INTERVINIENTE'],
+            searchFields: ['PROVINCIA', 'DEPARTAMENTO_O_PARTIDO', 'ID_OPERATIVO', 'DESCRIPCIÓN', 'UNIDAD_INTERVINIENTE'],
             columns: [
                 { key: 'ID_OPERATIVO', label: 'ID Operativo', className: 'font-mono text-xs' },
                 { key: 'PROVINCIA', label: 'Provincia' },
+                { key: 'DEPARTAMENTO_O_PARTIDO', label: 'Departamento', render: (item) => getDepartamento(item), className: 'max-w-xs truncate' },
                 { key: 'FECHA_ISO', label: 'Fecha', render: (item) => getDateText(item) },
                 { key: 'UNIDAD_INTERVINIENTE', label: 'Unidad', render: (item) => getUnidadInterviniente(item), className: 'max-w-xs truncate' },
                 { key: 'vehiculos_controlados', label: 'Vehículos', className: 'text-right' },
@@ -106,10 +113,11 @@ export default function DataTable({ data }) {
         },
         afectados: {
             title: 'Personal Afectado',
-            searchFields: ['PROVINCIA', 'ID_OPERATIVO', 'DESCRIPCIÓN', 'UNIDAD_INTERVINIENTE'],
+            searchFields: ['PROVINCIA', 'DEPARTAMENTO_O_PARTIDO', 'ID_OPERATIVO', 'DESCRIPCIÓN', 'UNIDAD_INTERVINIENTE'],
             columns: [
                 { key: 'ID_OPERATIVO', label: 'ID Operativo', className: 'font-mono text-xs' },
                 { key: 'PROVINCIA', label: 'Provincia' },
+                { key: 'DEPARTAMENTO_O_PARTIDO', label: 'Departamento', render: (item) => getDepartamento(item), className: 'max-w-xs truncate' },
                 { key: 'FECHA_ISO', label: 'Fecha', render: (item) => getDateText(item) },
                 { key: 'UNIDAD_INTERVINIENTE', label: 'Unidad', render: (item) => getUnidadInterviniente(item), className: 'max-w-xs truncate' },
                 { key: 'CANT_EFECTIVOS', label: 'Efectivos', className: 'text-right font-semibold' },
@@ -121,13 +129,14 @@ export default function DataTable({ data }) {
         },
         general: {
             title: 'Datos Generales',
-            searchFields: ['DESCRIPCIÓN', 'TIPO_INTERVENCION', 'PROVINCIA', 'ID_OPERATIVO', 'UNIDAD_INTERVINIENTE'],
+            searchFields: ['DESCRIPCIÓN', 'TIPO_INTERVENCION', 'PROVINCIA', 'DEPARTAMENTO_O_PARTIDO', 'ID_OPERATIVO', 'UNIDAD_INTERVINIENTE'],
             columns: [
                 { key: 'ID_OPERATIVO', label: 'ID' },
                 { key: 'DESCRIPCIÓN', label: 'Descripción', render: (item) => getDescription(item) },
                 { key: 'TIPO_INTERVENCION', label: 'Tipo', render: (item) => getType(item) },
                 { key: 'FECHA_ISO', label: 'Fecha', render: (item) => getDateText(item) },
                 { key: 'PROVINCIA', label: 'Provincia' },
+                { key: 'DEPARTAMENTO_O_PARTIDO', label: 'Departamento', render: (item) => getDepartamento(item), className: 'max-w-xs truncate' },
                 { key: 'UNIDAD_INTERVINIENTE', label: 'Unidad', render: (item) => getUnidadInterviniente(item), className: 'max-w-xs truncate' },
                 { key: 'LATITUD', label: 'Coordenadas', render: (item) => getLatLng(item) }
             ]
