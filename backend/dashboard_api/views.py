@@ -334,6 +334,25 @@ class FilteredIncautacionesView(APIView):
     """
     Get filtered incautaciones (only records with real seizures)
     Devuelve datos unificados: tabla maestra + datos específicos de incautaciones
+    
+    Estructura de respuesta JSON (ejemplo real del database):
+    {
+        "FUERZA_INTERVINIENTE": "PSA",
+        "ID_OPERATIVO": "PS-0013-EZE/25",
+        "ID_PROCEDIMIENTO": "PS-111-EZE-2025",
+        "UNIDAD_INTERVINIENTE": "EZE", 
+        "PROVINCIA": "BUENOS AIRES",
+        "DEPARTAMENTO O PARTIDO": "JOSÉ M. EZEIZA",
+        "FECHA": "09/01/2025",
+        "FECHA_ISO": "2025-01-09",
+        "DESCRIPCIÓN": "CONTROL PREVENTIVO - SECTOR DE SEGURIDAD RESTRINGIDA AEROPORTUARIA",
+        "INCAUTACIONES": "ARMAS", 
+        "TIPO": "PISTOLA",
+        "CANTIDAD": "1",
+        "MEDIDAS": "UNIDADES",
+        "AFORO": null,
+        "OBSERVACIONES_INCAUTACION": "MARCA GLOCK CALIBRE 9MM"
+    }
     """
     
     def get(self, request):
@@ -359,9 +378,10 @@ class FilteredIncautacionesView(APIView):
                 'DESCRIPCIÓN': procedimiento.descripcion,
                 'TIPO_INTERVENCION': procedimiento.tipo_intervencion,
                 'FUERZA_INTERVINIENTE': procedimiento.fuerza_interviniente,
+                'UNIDAD_INTERVINIENTE': procedimiento.unidad_interviniente or procedimiento.fuerza_interviniente,
                 'LOCALIDAD': procedimiento.localidad,
                 'DIRECCION': procedimiento.direccion,
-                'DEPARTAMENTO_O_PARTIDO': procedimiento.departamento_o_partido,
+                'DEPARTAMENTO O PARTIDO': procedimiento.departamento_o_partido,
                 
                 # Campos específicos de Incautaciones
                 'INCAUTACIONES': incautacion.incautaciones,
@@ -395,6 +415,26 @@ class FilteredDetenidosView(APIView):
     """
     Get filtered detenidos (only records with real detained persons)
     Devuelve datos unificados: tabla maestra + datos específicos de detenidos
+    
+    Estructura de respuesta JSON (ejemplo real del database):
+    {
+        "FUERZA_INTERVINIENTE": "PSA",
+        "ID_OPERATIVO": "3747",
+        "ID_PROCEDIMIENTO": "RL-7-AER-2025", 
+        "UNIDAD_INTERVINIENTE": "AER",
+        "PROVINCIA": "CIUDAD AUTONOMA DE BUENOS AIRES",
+        "DEPARTAMENTO O PARTIDO": "COMUNA 14",
+        "FECHA": "02/01/2025",
+        "FECHA_ISO": "2025-01-02",
+        "HORA": "03:15",
+        "DESCRIPCIÓN": "DENUNCIA POLICIAL",
+        "EDAD": 32,
+        "SEXO": "MASCULINO",
+        "NACIONALIDAD": "ARGENTINA",
+        "DELITO_IMPUTADO": "CAPTURA",
+        "SITUACION_PROCESAL": "LIBERADO",
+        "JUZGADO_INTERVINIENTE": "NACIONAL_PRIMERA INSTANCIA_MENORES_NRO_01"
+    }
     """
     
     def get(self, request):
@@ -420,9 +460,10 @@ class FilteredDetenidosView(APIView):
                 'DESCRIPCIÓN': procedimiento.descripcion,
                 'TIPO_INTERVENCION': procedimiento.tipo_intervencion,
                 'FUERZA_INTERVINIENTE': procedimiento.fuerza_interviniente,
+                'UNIDAD_INTERVINIENTE': procedimiento.unidad_interviniente or procedimiento.fuerza_interviniente,
                 'LOCALIDAD': procedimiento.localidad,
                 'DIRECCION': procedimiento.direccion,
-                'DEPARTAMENTO_O_PARTIDO': procedimiento.departamento_o_partido,
+                'DEPARTAMENTO O PARTIDO': procedimiento.departamento_o_partido,
                 
                 # Campos específicos de DetenidosAprehendidos
                 'EDAD': detenido.edad,
@@ -480,9 +521,10 @@ class FilteredControladosView(APIView):
                 'DESCRIPCIÓN': procedimiento.descripcion,
                 'TIPO_INTERVENCION': procedimiento.tipo_intervencion,
                 'FUERZA_INTERVINIENTE': procedimiento.fuerza_interviniente,
+                'UNIDAD_INTERVINIENTE': procedimiento.unidad_interviniente or procedimiento.fuerza_interviniente,
                 'LOCALIDAD': procedimiento.localidad,
                 'DIRECCION': procedimiento.direccion,
-                'DEPARTAMENTO_O_PARTIDO': procedimiento.departamento_o_partido,
+                'DEPARTAMENTO O PARTIDO': procedimiento.departamento_o_partido,
                 
                 # Campos específicos de VehiculosPersonasControladas
                 'vehiculos_controlados': controlado.vehiculos_controlados,
@@ -539,9 +581,10 @@ class FilteredAfectadosView(APIView):
                 'DESCRIPCIÓN': procedimiento.descripcion,
                 'TIPO_INTERVENCION': procedimiento.tipo_intervencion,
                 'FUERZA_INTERVINIENTE': procedimiento.fuerza_interviniente,
+                'UNIDAD_INTERVINIENTE': procedimiento.unidad_interviniente or procedimiento.fuerza_interviniente,
                 'LOCALIDAD': procedimiento.localidad,
                 'DIRECCION': procedimiento.direccion,
-                'DEPARTAMENTO_O_PARTIDO': procedimiento.departamento_o_partido,
+                'DEPARTAMENTO O PARTIDO': procedimiento.departamento_o_partido,
                 
                 # Campos específicos de PersonalElementosAfectados
                 'CANT_EFECTIVOS': afectado.cant_efectivos,
@@ -1361,15 +1404,18 @@ class DataClearView(APIView):
         200: {
             'description': 'Lista de detenidos',
             'example': [{
-                'ID_OPERATIVO': 'OP001',
-                'ID_PROCEDIMIENTO': 'PROC001',
-                'PROVINCIA': 'Buenos Aires',
-                'FECHA': '2025-01-15',
-                'EDAD': 25,
-                'SEXO': 'M',
-                'NACIONALIDAD': 'Argentina',
-                'LATITUD': -34.6037,
-                'LONGITUD': -58.3816
+                'ID_OPERATIVO': '3747',
+                'ID_PROCEDIMIENTO': 'RL-7-AER-2025',
+                'PROVINCIA': 'CIUDAD AUTONOMA DE BUENOS AIRES',
+                'FECHA': '02/01/2025',
+                'EDAD': 32,
+                'SEXO': 'MASCULINO',
+                'NACIONALIDAD': 'ARGENTINA',
+                'UNIDAD_INTERVINIENTE': 'AER',
+                'SITUACION_PROCESAL': 'LIBERADO',
+                'DELITO_IMPUTADO': 'CAPTURA',
+                'LATITUD': -34.5580305,
+                'LONGITUD': -58.4191975
             }]
         }
     }
@@ -1416,14 +1462,17 @@ class DetenidosListView(APIView):
         200: {
             'description': 'Lista de incautaciones',
             'example': [{
-                'ID_OPERATIVO': 'OP001',
-                'ID_PROCEDIMIENTO': 'PROC001',
-                'PROVINCIA': 'Buenos Aires',
-                'FECHA': '2025-01-15',
-                'TIPO': 'Drogas',
-                'CANTIDAD': '5kg',
-                'LATITUD': -34.6037,
-                'LONGITUD': -58.3816
+                'ID_OPERATIVO': 'PS-0013-EZE/25',
+                'ID_PROCEDIMIENTO': 'PS-111-EZE-2025',
+                'PROVINCIA': 'BUENOS AIRES',
+                'FECHA': '09/01/2025',
+                'TIPO': 'PISTOLA',
+                'INCAUTACIONES': 'ARMAS',
+                'CANTIDAD': '1',
+                'MEDIDAS': 'UNIDADES',
+                'UNIDAD_INTERVINIENTE': 'EZE',
+                'LATITUD': -34.8150044,
+                'LONGITUD': -58.5370171
             }]
         }
     }
@@ -1431,6 +1480,7 @@ class DetenidosListView(APIView):
 class IncautacionesListView(APIView):
     """
     Obtener solo datos de incautaciones
+    Devuelve datos unificados: tabla maestra + datos específicos de incautaciones
     """
     
     def get(self, request):
@@ -1438,25 +1488,39 @@ class IncautacionesListView(APIView):
         data = []
         
         for incautacion in incautaciones:
+            procedimiento = incautacion.procedimiento
             data.append({
-                'ID_OPERATIVO': incautacion.procedimiento.id_operativo,
-                'ID_PROCEDIMIENTO': incautacion.procedimiento.id_procedimiento,
-                'PROVINCIA': incautacion.procedimiento.provincia,
-                'FECHA': incautacion.procedimiento.fecha,
+                # Campos de tabla maestra (GeografiaProcedimiento)
+                'ID_OPERATIVO': procedimiento.id_operativo,
+                'ID_PROCEDIMIENTO': procedimiento.id_procedimiento,
+                'PROVINCIA': procedimiento.provincia,
+                'FECHA': procedimiento.fecha,
+                'FECHA_ISO': procedimiento.fecha_iso.isoformat() if procedimiento.fecha_iso else None,
+                'HORA': procedimiento.hora,
+                'LATITUD': float(procedimiento.latitud) if procedimiento.latitud else None,
+                'LONGITUD': float(procedimiento.longitud) if procedimiento.longitud else None,
+                'DESCRIPCIÓN': procedimiento.descripcion,
+                'TIPO_INTERVENCION': procedimiento.tipo_intervencion,
+                'FUERZA_INTERVINIENTE': procedimiento.fuerza_interviniente,
+                'UNIDAD_INTERVINIENTE': procedimiento.unidad_interviniente or procedimiento.fuerza_interviniente,
+                'LOCALIDAD': procedimiento.localidad,
+                'DIRECCION': procedimiento.direccion,
+                'DEPARTAMENTO O PARTIDO': procedimiento.departamento_o_partido,
+                
+                # Campos específicos de Incautaciones
+                'INCAUTACIONES': incautacion.incautaciones,
                 'TIPO': incautacion.tipo,
                 'SUBTIPO': incautacion.subtipo,
                 'CANTIDAD': incautacion.cantidad,
                 'MEDIDAS': incautacion.medidas,
-                'AFORO': float(incautacion.aforo) if incautacion.aforo else None,
+                'AFORO': incautacion.aforo,
                 'TIPO_DELITO': incautacion.tipo_delito,
-                # Agregar información geográfica para visualización en mapas
-                'LATITUD': float(incautacion.procedimiento.latitud) if incautacion.procedimiento.latitud else None,
-                'LONGITUD': float(incautacion.procedimiento.longitud) if incautacion.procedimiento.longitud else None,
-                'DESCRIPCIÓN': incautacion.procedimiento.descripcion,
-                'LOCALIDAD': incautacion.procedimiento.localidad,
-                'DIRECCION': incautacion.procedimiento.direccion,
-                'DEPARTAMENTO O PARTIDO': incautacion.procedimiento.departamento_o_partido,
-                'FECHA_IMPORTACION': incautacion.fecha_importacion
+                'OBSERVACIONES_INCAUTACION': incautacion.observaciones,
+                
+                # Metadatos
+                'FECHA_IMPORTACION': procedimiento.fecha_importacion.isoformat() if procedimiento.fecha_importacion else None,
+                'ARCHIVO_ORIGINAL': procedimiento.archivo_original,
+                'HOJA': procedimiento.hoja
             })
         
         return Response(data)
@@ -1470,13 +1534,15 @@ class IncautacionesListView(APIView):
         200: {
             'description': 'Lista de casos de trata',
             'example': [{
-                'ID_OPERATIVO': 'OP001',
-                'PROVINCIA': 'Buenos Aires',
-                'TIPO_DELITO': 'Trata de personas',
-                'SEXO_VICTIMA': 'F',
-                'EDAD_VICTIMA': 22,
-                'LATITUD': -34.6037,
-                'LONGITUD': -58.3816
+                'ID_OPERATIVO': 'AP-0008-AER/25',
+                'PROVINCIA': 'CIUDAD AUTONOMA DE BUENOS AIRES',
+                'TIPO_DELITO': 'TRATA DE PERSONAS SIMPLE',
+                'SEXO_VICTIMA': 'FEMENINO',
+                'EDAD_VICTIMA': 20,
+                'NACIONALIDAD': 'ARGENTINA',
+                'UNIDAD_INTERVINIENTE': 'AER',
+                'LATITUD': -34.5580305,
+                'LONGITUD': -58.4191975
             }]
         }
     }
@@ -1496,15 +1562,21 @@ class TrataListView(APIView):
                 'ID_PROCEDIMIENTO': caso.procedimiento.id_procedimiento,
                 'PROVINCIA': caso.procedimiento.provincia,
                 'FECHA': caso.procedimiento.fecha,
+                'FECHA_ISO': caso.procedimiento.fecha_iso.isoformat() if caso.procedimiento.fecha_iso else None,
+                'HORA': caso.procedimiento.hora,
                 'TIPO_DELITO': caso.tipo_delito,
                 'SEXO_VICTIMA': caso.sexo_victima,
                 'GENERO_VICTIMA': caso.genero_victima,
                 'EDAD_VICTIMA': caso.edad_victima,
                 'NACIONALIDAD': caso.nacionalidad,
+                # CAMPOS CORREGIDOS: Agregar campos faltantes
+                'FUERZA_INTERVINIENTE': caso.procedimiento.fuerza_interviniente,
+                'UNIDAD_INTERVINIENTE': caso.procedimiento.unidad_interviniente or caso.procedimiento.fuerza_interviniente,
+                'DESCRIPCIÓN': caso.procedimiento.descripcion,
+                'TIPO_INTERVENCION': caso.procedimiento.tipo_intervencion,
                 # Agregar información geográfica para visualización en mapas
                 'LATITUD': float(caso.procedimiento.latitud) if caso.procedimiento.latitud else None,
                 'LONGITUD': float(caso.procedimiento.longitud) if caso.procedimiento.longitud else None,
-                'DESCRIPCIÓN': caso.procedimiento.descripcion,
                 'LOCALIDAD': caso.procedimiento.localidad,
                 'DIRECCION': caso.procedimiento.direccion,
                 'DEPARTAMENTO O PARTIDO': caso.procedimiento.departamento_o_partido,

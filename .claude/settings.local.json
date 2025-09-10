@@ -33,7 +33,20 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(npm run build:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__read_text_file",
+      "mcp__filesystem__search_files",
+      "mcp__filesystem__create_directory",
+      "mcp__git__git_status",
+      "mcp__git__git_diff_unstaged",
+      "mcp__git__git_log",
+      "mcp__git__git_add",
+      "mcp__git__git_commit",
+      "mcp__filesystem__edit_file",
+      "mcp__filesystem__write_file",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

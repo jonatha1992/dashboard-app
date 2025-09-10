@@ -58,157 +58,7 @@ export default function FilteredDataTables() {
         }
     }, [activeTab, user]);
 
-    const renderIncautacionesTable = () => {
-        const incautaciones = data.incautaciones || [];
-        
-        if (incautaciones.length === 0) {
-            return <div className="text-gray-500 text-center py-8">No hay incautaciones registradas</div>;
-        }
-
-        return (
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="bg-gray-50 border-b">
-                            <th className="text-left p-3 font-medium">ID Operativo</th>
-                            <th className="text-left p-3 font-medium">Provincia</th>
-                            <th className="text-left p-3 font-medium">Fecha</th>
-                            <th className="text-left p-3 font-medium">Incautación</th>
-                            <th className="text-left p-3 font-medium">Tipo</th>
-                            <th className="text-right p-3 font-medium">Cantidad</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {incautaciones.map((item, index) => (
-                            <tr key={index} className="border-b hover:bg-gray-50">
-                                <td className="p-3 font-mono text-xs">{item.procedimiento_info?.ID_OPERATIVO || 'N/A'}</td>
-                                <td className="p-3">{item.procedimiento_info?.PROVINCIA || 'N/A'}</td>
-                                <td className="p-3">{item.procedimiento_info?.FECHA || 'N/A'}</td>
-                                <td className="p-3">{item.incautaciones || 'N/A'}</td>
-                                <td className="p-3">{item.tipo || 'N/A'}</td>
-                                <td className="p-3 text-right">{item.cantidad || 'N/A'}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        );
-    };
-
-    const renderDetenidosTable = () => {
-        const detenidos = data.detenidos || [];
-        
-        if (detenidos.length === 0) {
-            return <div className="text-gray-500 text-center py-8">No hay detenidos registrados</div>;
-        }
-
-        return (
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="bg-gray-50 border-b">
-                            <th className="text-left p-3 font-medium">ID Operativo</th>
-                            <th className="text-left p-3 font-medium">Provincia</th>
-                            <th className="text-left p-3 font-medium">Fecha</th>
-                            <th className="text-right p-3 font-medium">Edad</th>
-                            <th className="text-left p-3 font-medium">Sexo</th>
-                            <th className="text-left p-3 font-medium">Nacionalidad</th>
-                            <th className="text-left p-3 font-medium">Situación</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {detenidos.map((item, index) => (
-                            <tr key={index} className="border-b hover:bg-gray-50">
-                                <td className="p-3 font-mono text-xs">{item.procedimiento_info?.ID_OPERATIVO || 'N/A'}</td>
-                                <td className="p-3">{item.procedimiento_info?.PROVINCIA || 'N/A'}</td>
-                                <td className="p-3">{item.procedimiento_info?.FECHA || 'N/A'}</td>
-                                <td className="p-3 text-right">{item.edad || 'N/A'}</td>
-                                <td className="p-3">{item.sexo || 'N/A'}</td>
-                                <td className="p-3">{item.nacionalidad || 'N/A'}</td>
-                                <td className="p-3">{item.situacion_procesal || 'N/A'}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        );
-    };
-
-    const renderControladosTable = () => {
-        const controlados = data.controlados || [];
-        
-        if (controlados.length === 0) {
-            return <div className="text-gray-500 text-center py-8">No hay controles registrados</div>;
-        }
-
-        return (
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="bg-gray-50 border-b">
-                            <th className="text-left p-3 font-medium">ID Operativo</th>
-                            <th className="text-left p-3 font-medium">Provincia</th>
-                            <th className="text-left p-3 font-medium">Fecha</th>
-                            <th className="text-right p-3 font-medium">Vehículos</th>
-                            <th className="text-right p-3 font-medium">Personas</th>
-                            <th className="text-right p-3 font-medium">Embarcaciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {controlados.map((item, index) => (
-                            <tr key={index} className="border-b hover:bg-gray-50">
-                                <td className="p-3 font-mono text-xs">{item.procedimiento_info?.ID_OPERATIVO || 'N/A'}</td>
-                                <td className="p-3">{item.procedimiento_info?.PROVINCIA || 'N/A'}</td>
-                                <td className="p-3">{item.procedimiento_info?.FECHA || 'N/A'}</td>
-                                <td className="p-3 text-right">{item.vehiculos_controlados || 0}</td>
-                                <td className="p-3 text-right">{item.personas_controladas || 0}</td>
-                                <td className="p-3 text-right">{item.cant_embarcaciones_controladas || 0}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        );
-    };
-
-    const renderAfectadosTable = () => {
-        const afectados = data.afectados || [];
-        
-        if (afectados.length === 0) {
-            return <div className="text-gray-500 text-center py-8">No hay personal afectado registrado</div>;
-        }
-
-        return (
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="bg-gray-50 border-b">
-                            <th className="text-left p-3 font-medium">ID Operativo</th>
-                            <th className="text-left p-3 font-medium">Provincia</th>
-                            <th className="text-left p-3 font-medium">Fecha</th>
-                            <th className="text-right p-3 font-medium">Efectivos</th>
-                            <th className="text-right p-3 font-medium">Autos/Camionetas</th>
-                            <th className="text-right p-3 font-medium">Motocicletas</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {afectados.map((item, index) => (
-                            <tr key={index} className="border-b hover:bg-gray-50">
-                                <td className="p-3 font-mono text-xs">{item.procedimiento_info?.ID_OPERATIVO || 'N/A'}</td>
-                                <td className="p-3">{item.procedimiento_info?.PROVINCIA || 'N/A'}</td>
-                                <td className="p-3">{item.procedimiento_info?.FECHA || 'N/A'}</td>
-                                <td className="p-3 text-right font-semibold">{item.cant_efectivos || 0}</td>
-                                <td className="p-3 text-right">{item.cant_autos_camionetas || 0}</td>
-                                <td className="p-3 text-right">{item.cant_motocicletas || 0}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        );
-    };
-
-    const renderTable = () => {
+    const renderContent = () => {
         if (loading[activeTab]) {
             return (
                 <div className="animate-pulse space-y-4">
@@ -230,18 +80,19 @@ export default function FilteredDataTables() {
             );
         }
 
-        switch (activeTab) {
-            case 'incautaciones':
-                return renderIncautacionesTable();
-            case 'detenidos':
-                return renderDetenidosTable();
-            case 'controlados':
-                return renderControladosTable();
-            case 'afectados':
-                return renderAfectadosTable();
-            default:
-                return <div>Selecciona una tabla para ver</div>;
+        const currentData = data[activeTab] || [];
+        
+        if (currentData.length === 0) {
+            return (
+                <div className="text-gray-500 text-center py-8">
+                    <div className="text-4xl mb-4">📊</div>
+                    <div className="text-lg font-medium mb-2">No hay {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} registrados</div>
+                    <div className="text-sm">Los datos aparecerán aquí cuando estén disponibles</div>
+                </div>
+            );
         }
+
+        return <DataTable data={currentData} />;
     };
 
     if (!user) {
@@ -254,11 +105,16 @@ export default function FilteredDataTables() {
     return (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    🗂️ Datos Filtrados por Tabla Especializada
+                <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                    <span className="mr-2">🗺️</span>
+                    Datos Filtrados por Tabla Especializada
+                    <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
+                        Con Filtros y Ordenamiento Avanzado
+                    </span>
                 </h3>
                 <p className="text-sm text-gray-600">
-                    Visualización de datos reales después del filtrado inteligente
+                    Visualización de datos reales con funcionalidades completas de filtrado, ordenamiento y búsqueda por columnas.
+                    Cada tabla incluye filtros específicos y capacidades de exportación.
                 </p>
             </div>
 
@@ -287,17 +143,39 @@ export default function FilteredDataTables() {
                 </nav>
             </div>
 
-            {/* Record Count */}
+            {/* Record Count and Actions */}
             <div className="mb-4 flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                    Mostrando {recordCount.toLocaleString()} registros con datos reales
+                <div className="flex items-center space-x-4">
+                    <div className="text-sm text-gray-600">
+                        <span className="font-medium">{recordCount.toLocaleString()}</span> registros con datos reales
+                    </div>
+                    {recordCount > 0 && (
+                        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            ✨ Datos cargados desde API autenticada
+                        </div>
+                    )}
                 </div>
-                <button
-                    onClick={() => loadData(activeTab)}
-                    className="px-3 py-1 text-xs bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
-                >
-                    Actualizar
-                </button>
+                <div className="flex items-center space-x-2">
+                    <button
+                        onClick={() => loadData(activeTab)}
+                        className="px-3 py-1 text-xs bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors flex items-center"
+                        disabled={loading[activeTab]}
+                    >
+                        {loading[activeTab] ? (
+                            <>
+                                <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Cargando...
+                            </>
+                        ) : (
+                            <>
+                                🔄 Actualizar
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
 
             {/* Main Content Area - Mapa y Tabla */}
@@ -308,23 +186,62 @@ export default function FilteredDataTables() {
                         <span className="mr-2">🗺️</span>
                         Mapa de {tabs.find(t => t.id === activeTab)?.label}
                     </h4>
+                    <div className="text-sm text-gray-600 mb-3">
+                        {recordCount > 0 ? (
+                            `Visualizando ${recordCount.toLocaleString()} puntos de datos en el mapa`
+                        ) : (
+                            'No hay datos con coordenadas para mostrar en el mapa'
+                        )}
+                    </div>
                     <div style={{ height: '400px' }}>
                         <MapComponent data={currentData} />
                     </div>
                 </div>
 
-                {/* Columna derecha - Tabla */}
+                {/* Columna derecha - Vista previa de tabla */}
                 <div className="bg-gray-50 rounded-lg p-4">
-                    <DataTable data={currentData} />
+                    <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+                        <span className="mr-2">📋</span>
+                        Vista Previa de {tabs.find(t => t.id === activeTab)?.label}
+                    </h4>
+                    <div className="text-sm text-gray-600 mb-2 flex items-center justify-between">
+                        <span>Mostrando los primeros 5 registros. Ver tabla completa abajo.</span>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded-full">
+                            ✨ Layout Estable
+                        </span>
+                    </div>
+                    {currentData.length > 0 ? (
+                        <div className="border border-gray-200 rounded-lg overflow-hidden">
+                            <DataTable data={currentData.slice(0, 5)} />
+                        </div>
+                    ) : (
+                        <div className="text-gray-500 text-center py-4">Sin datos disponibles</div>
+                    )}
                 </div>
             </div>
 
-            {/* Tabla completa abajo */}
+            {/* Tabla completa con todas las funciones */}
             <div className="mt-6">
-                <h4 className="text-md font-semibold text-gray-800 mb-4">
-                    Tabla Detallada
-                </h4>
-                {renderTable()}
+                <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-md font-semibold text-gray-800 flex items-center">
+                        <span className="mr-2">📋</span>
+                        Tabla Completa - {tabs.find(t => t.id === activeTab)?.label}
+                        <span className="ml-3 px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">
+                            🔒 Anchos Fijos
+                        </span>
+                    </h4>
+                    <div className="flex items-center space-x-3">
+                        <div className="text-sm text-gray-600">
+                            Tabla completa con filtros, ordenamiento y búsqueda avanzada
+                        </div>
+                        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            💬 Tooltips Enriquecidos
+                        </div>
+                    </div>
+                </div>
+                <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                    {renderContent()}
+                </div>
             </div>
         </div>
     );
