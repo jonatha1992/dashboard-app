@@ -206,6 +206,12 @@ export const getProvinceKeyFromItem(item)
 // - Returns normalized province key or 'UNKNOWN' if not found
 // - Robust field detection with fallback handling
 
+// Departamento extraction from data items
+export const getDepartamentoFromItem(item)
+// - Searches candidate fields: DEPARTAMENTO_O_PARTIDO, DEPARTAMENTO, departamento, PARTIDO, etc.
+// - Returns departamento/partido string or empty string if not found
+// - Handles various field naming conventions and validates non-empty values
+
 // Coordinate extraction from data items  
 export const getCoordinatesFromItem(item)
 // - Searches candidate fields: LATITUD, latitud, latitud_decimal, lat, etc.

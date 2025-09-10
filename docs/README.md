@@ -19,8 +19,16 @@ Esta carpeta contiene toda la documentación técnica del proyecto Dashboard de 
 | Documento | Descripción | Audiencia |
 |-----------|-------------|-----------|
 | **[tech/ADR-001-Data-Processing-Centralization.md](tech/ADR-001-Data-Processing-Centralization.md)** | ADR sobre centralización de funciones de procesamiento | Technical Leads, Architects |
+| **[tech/ADR-002-Departamento-Filtering-Implementation.md](tech/ADR-002-Departamento-Filtering-Implementation.md)** | ADR sobre implementación de filtrado por departamento/partido | Technical Leads, Architects |
 | **[tech/Hierarchical-Categorization-System.md](tech/Hierarchical-Categorization-System.md)** | Sistema de categorización jerárquica con exclusión mutua | Developers, Business Analysts |
 | **[tech/Troubleshooting-Guide.md](tech/Troubleshooting-Guide.md)** | Guía completa de troubleshooting y debugging | Developers, Support Team |
+
+### 🎨 Diagramas de Arquitectura
+
+| Documento | Descripción | Audiencia |
+|-----------|-------------|-----------|
+| **[structure/system-architecture.md](structure/system-architecture.md)** | Diagramas de arquitectura general del sistema | Technical Leads, Architects |
+| **[structure/data-processing-architecture.md](structure/data-processing-architecture.md)** | Arquitectura de procesamiento de datos y flujos | Developers, Data Engineers |
 
 ### 🔗 Documentación Relacionada
 

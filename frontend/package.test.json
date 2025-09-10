@@ -1,0 +1,50 @@
+{
+  "name": "dashboard-app-testing",
+  "description": "Testing configuration and dependencies for the dashboard application",
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:security": "npm audit && npm run test:security:custom",
+    "test:security:custom": "node scripts/security-tests.js",
+    "test:performance": "node scripts/performance-tests.js"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.4",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/user-event": "^14.5.1",
+    "@vitest/coverage-v8": "^1.0.4",
+    "@vitest/ui": "^1.0.4",
+    "vitest": "^1.0.4",
+    "@playwright/test": "^1.40.0",
+    "jsdom": "^23.0.1",
+    "msw": "^2.0.0",
+    "factory-girl": "^5.0.4"
+  },
+  "testConfiguration": {
+    "coverage": {
+      "threshold": {
+        "global": {
+          "branches": 80,
+          "functions": 80,
+          "lines": 80,
+          "statements": 80
+        }
+      },
+      "exclude": [
+        "node_modules/**",
+        "src/test/**",
+        "**/*.test.{js,jsx,ts,tsx}",
+        "**/*.spec.{js,jsx,ts,tsx}"
+      ]
+    },
+    "e2e": {
+      "baseURL": "http://localhost:5173",
+      "timeout": 30000,
+      "retries": 2
+    }
+  }
+}
