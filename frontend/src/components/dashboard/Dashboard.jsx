@@ -1,5 +1,6 @@
 // Componente principal del dashboard
 import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDashboard } from '../../contexts/DashboardContext';
 import MapComponent from '../map/MapComponent';
@@ -17,6 +18,7 @@ import SystemStatusView from './SystemStatusView';
 import SecuritySection from '../security/SecuritySection';
 import FilteringStatsDashboard from './FilteringStatsDashboard';
 import FilteredDataTables from './FilteredDataTables';
+import ProblematicasDashboard from './specialized/ProblematicasDashboard';
 import logo from '../../assets/react.svg';
 
 
@@ -151,7 +153,7 @@ export default function Dashboard() {
             <nav className="fixed top-0 left-0 z-50 flex flex-col w-48 h-screen px-4 py-8 bg-white shadow-md">
                 <div className="flex flex-col items-center mb-6">
                     <img src={logo} alt="Logo" className="w-12 h-12 mb-2" />
-                    <h2 className="text-base font-bold text-gray-800">Menú</h2>
+                    <h2 className="text-base font-bold text-gray-800">Secciones</h2>
                 </div>
 
                 {/* Controles / Controlados (único botón más abajo) */}
@@ -160,11 +162,8 @@ export default function Dashboard() {
                     className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'procedimientos' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
                     onClick={() => setActiveNav('procedimientos')}
                 >
-                    <span className="flex items-center justify-between w-full">
+                    <span className="flex items-center w-full">
                         <span>📋Procedimientos</span>
-                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'procedimientos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {(filteredCategorizedData.procedimientos || []).length}
-                        </span>
                     </span>
                 </button>
                 <button
@@ -173,9 +172,7 @@ export default function Dashboard() {
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>🚨 Detenidos</span>
-                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'detenidos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {(filteredCategorizedData.detenidos || []).length}
-                        </span>
+
                     </span>
                 </button>
                 <button
@@ -184,9 +181,7 @@ export default function Dashboard() {
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>👁️ Controlados</span>
-                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'controlados' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {(filteredCategorizedData.controlados || []).length}
-                        </span>
+
                     </span>
                 </button>
                 <button
@@ -195,9 +190,7 @@ export default function Dashboard() {
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>👥 Afectados</span>
-                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'afectados' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {(filteredCategorizedData.afectados || []).length}
-                        </span>
+
                     </span>
                 </button>
 
@@ -207,9 +200,7 @@ export default function Dashboard() {
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>💀 Abatidos</span>
-                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'abatidos' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {(filteredCategorizedData.abatidos || []).length}
-                        </span>
+
                     </span>
                 </button>
                 <button
@@ -218,9 +209,7 @@ export default function Dashboard() {
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>🚫 Trata</span>
-                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'trata' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {(filteredCategorizedData.trata || []).length}
-                        </span>
+
                     </span>
                 </button>
                 <button
@@ -229,42 +218,21 @@ export default function Dashboard() {
                 >
                     <span className="flex items-center justify-between w-full">
                         <span>📦 Incautaciones</span>
-                        <span className={`px-1 py-0.5 text-xs rounded-full ${activeNav === 'incautaciones' ? 'bg-white text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {(filteredCategorizedData.incautaciones || []).length}
-                        </span>
+
                     </span>
                 </button>
 
-                {/* Sección de Estado - solo para administradores */}
-                {user?.role === 'admin' && (
-                    <>
-                        <div className="my-2 border-t border-gray-200"></div>
-                        <button
-                            className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'estado' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                            onClick={() => setActiveNav('estado')}
-                        >
-                            <span className="flex items-center justify-between w-full">
-                                <span>⚙️ Estado</span>
-                            </span>
-                        </button>
-                        <button
-                            className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'filtrado' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                            onClick={() => setActiveNav('filtrado')}
-                        >
-                            <span className="flex items-center justify-between w-full">
-                                <span>🔍 Filtrado</span>
-                            </span>
-                        </button>
-                        <button
-                            className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'tablas-filtradas' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
-                            onClick={() => setActiveNav('tablas-filtradas')}
-                        >
-                            <span className="flex items-center justify-between w-full">
-                                <span>🗂️ Tablas</span>
-                            </span>
-                        </button>
-                    </>
-                )}
+                {/* Dashboard de Problemáticas */}
+                <button
+                    className={`text-left px-3 py-1.5 rounded-md mb-1.5 text-sm font-normal ${activeNav === 'problematicas' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-purple-100'}`}
+                    onClick={() => setActiveNav('problematicas')}
+                >
+                    <span className="flex items-center justify-between w-full">
+                        <span>📊 Análisis Problemáticas</span>
+                    </span>
+                </button>
+
+                {/* Se quitaron acciones de admin del dashboard para separar la vista de administración */}
 
                 <div className="flex-1" />
                 <button
@@ -280,11 +248,10 @@ export default function Dashboard() {
                 <header className="fixed top-0 right-0 z-40 bg-white shadow-md" style={{ width: 'calc(100% - 12rem)' }}>
                     <div className="px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="flex flex-wrap items-center justify-between gap-4">
-                            <div className="flex items-center space-x-4">
-                                <div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-full">
-                                    <span className="text-xl text-white">📊</span>
-                                </div>
-                                <h1 className="text-xl font-bold text-gray-800">Sistema de Monitoreo</h1>
+                            <div className="flex items-end space-x-4">
+    
+                    
+                                <FilterPanel inline className="hidden md:flex" />
                             </div>
 
                             <div className="flex items-center space-x-4">
@@ -301,18 +268,7 @@ export default function Dashboard() {
                                     </div>
                                 </div>
 
-                                {/* User Info */}
-                                <div className="flex items-center px-3 py-2 bg-gray-100 rounded-md">
-                                    <div className="flex items-center justify-center w-6 h-6 mr-2 bg-blue-600 rounded-full">
-                                        <span className="text-xs text-white">
-                                            {user?.role === 'admin' ? '👑' : '👤'}
-                                        </span>
-                                    </div>
-                                    <div className="text-sm">
-                                        <div className="font-medium text-gray-700">{user?.username}</div>
-                                        <div className="text-xs text-gray-500 capitalize">{user?.role}</div>
-                                    </div>
-                                </div>
+                            
                                 
                                 {/* Refresh Button */}
                                 <button
@@ -328,10 +284,7 @@ export default function Dashboard() {
                                     <span className={`mr-2 ${refreshing ? 'animate-spin' : ''}`}>
                                         {refreshing ? '⟳' : '🔄'}
                                     </span>
-                                    {refreshing ? 'Actualizando...' : 'Actualizar'}
                                 </button>
-                                
-                                <FilterPanel />
                                 
                             </div>
                         </div>
@@ -343,6 +296,7 @@ export default function Dashboard() {
                     {activeNav === 'estado' && <SystemStatusView />}
                     {activeNav === 'filtrado' && <FilteringStatsDashboard />}
                     {activeNav === 'tablas-filtradas' && <FilteredDataTables />}
+                    {activeNav === 'problematicas' && <ProblematicasDashboard />}
                     {['detenidos', 'controlados', 'afectados', 'procedimientos', 'abatidos', 'trata', 'incautaciones'].map(catKey => (
                         activeNav === catKey && (() => {
                             const catData = filteredCategorizedData[catKey] || [];
@@ -384,7 +338,7 @@ export default function Dashboard() {
 
                             return (
                                 <div key={catKey}>
-                                    <SecuritySection category={catKey} showProvinceChart={false} />
+                                    <SecuritySection category={catKey} showProvinceChart={false} showHeader={false} />
                                     
                                     {/* Layout flex: Mapa izquierda (6/12) + Gráficos derecha (6/12) */}
                                     <div className="flex flex-col lg:flex-row gap-6 mb-8">

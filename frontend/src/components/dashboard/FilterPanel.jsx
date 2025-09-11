@@ -9,9 +9,8 @@ const ARGENTINE_PROVINCES = [
     'Tierra del Fuego', 'Tucumán'
 ].sort();
 
-
-export default function FilterPanel() {
-    const { filters, setFilters, dataStats } = useDashboard();
+export default function FilterPanel({ inline = false, className = '' }) {
+    const { filters, setFilters, dataStats, filteredData } = useDashboard();
     const [isOpen, setIsOpen] = useState(false);
     const hasActiveFilters = Boolean(filters.fromDate || filters.toDate || filters.province);
 
@@ -42,7 +41,7 @@ export default function FilterPanel() {
         setFilters({ ...filters, toDate: e.target.value });
     };
     const handleProvinceChange = (e) => {
-        setFilters({ ...filters, province: e.target.value });
+        setFilters({ ...filters, province: e.target.value, departamento: '' });
     };
     const clearAllFilters = () => {
         // Si hay rango de fechas, fijar al último mes disponible (según latest)
@@ -64,12 +63,110 @@ export default function FilterPanel() {
             }
         }
         // Fallback: sin rango válido
-        setFilters({ fromDate: '', toDate: '', province: '' });
+        setFilters({ fromDate: '', toDate: '', province: '', departamento: '', unidad: '' });
     };
     const toggleFilterPanel = () => {
         setIsOpen(!isOpen);
     };
 
+    // Listas dinámicas: Departamentos y Unidades desde filteredData (según provincia si aplica)
+    const computeUniqueSorted = (arr) => {
+        return Array.from(new Set(arr.filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
+    };
+    const deptList = computeUniqueSorted(
+        (filteredData || [])
+            .filter(item => !filters.province || (item.PROVINCIA && item.PROVINCIA.trim() !== '-'))
+            .map(item => item.DEPARTAMENTO_O_PARTIDO || item.DEPARTAMENTO || item.departamento || item['DEPARTAMENTO O PARTIDO'] || item.PARTIDO || item.partido)
+    );
+    const unitList = computeUniqueSorted(
+        (filteredData || [])
+            .map(item => item.UNIDAD_INTERVINIENTE || item.unidad_interviniente || item.UNIDAD || item.FUERZA_INTERVINIENTE)
+    );
+
+    // Render inline (visible) controls next to the title in the navbar
+    if (inline) {
+        return (
+            <div className={`flex items-end gap-2 ${className}`}>
+                <div>
+                    <label htmlFor="province-inline" className="block mb-1 text-xs font-medium text-gray-700">Provincia</label>
+                    <select
+                        id="province-inline"
+                        value={filters.province || ''}
+                        onChange={handleProvinceChange}
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="">Todas</option>
+                        {ARGENTINE_PROVINCES.map((province) => (
+                            <option key={province} value={province}>{province}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="fromDate-inline" className="block mb-1 text-xs font-medium text-gray-700">Desde</label>
+                    <input
+                        id="fromDate-inline"
+                        type="date"
+                        value={filters.fromDate || ''}
+                        min={dateLimits.min || undefined}
+                        max={dateLimits.max || undefined}
+                        onChange={handleFromDateChange}
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="toDate-inline" className="block mb-1 text-xs font-medium text-gray-700">Hasta</label>
+                    <input
+                        id="toDate-inline"
+                        type="date"
+                        value={filters.toDate || ''}
+                        min={dateLimits.min || undefined}
+                        max={dateLimits.max || undefined}
+                        onChange={handleToDateChange}
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="departamento-inline" className="block mb-1 text-xs font-medium text-gray-700">Departamento</label>
+                    <select
+                        id="departamento-inline"
+                        value={filters.departamento || ''}
+                        onChange={(e) => setFilters({ ...filters, departamento: e.target.value })}
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="">Todos</option>
+                        {deptList.map((d) => (
+                            <option key={d} value={d}>{d}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="unidad-inline" className="block mb-1 text-xs font-medium text-gray-700">Unidad</label>
+                    <select
+                        id="unidad-inline"
+                        value={filters.unidad || ''}
+                        onChange={(e) => setFilters({ ...filters, unidad: e.target.value })}
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="">Todas</option>
+                        {unitList.map((u) => (
+                            <option key={u} value={u}>{u}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="pb-0.5">
+                    <button
+                        onClick={clearAllFilters}
+                        className="mt-5 px-3 py-1.5 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300"
+                        title="Limpiar filtros"
+                    >
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Default: button + dropdown panel
     return (
         <div className="relative">
             <button
@@ -102,6 +199,36 @@ export default function FilterPanel() {
                                 <option key={province} value={province}>
                                     {province}
                                 </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="mb-3">
+                        <label htmlFor="departamento" className="block mb-1 text-xs font-medium text-gray-700">Departamento</label>
+                        <select
+                            id="departamento"
+                            value={filters.departamento || ''}
+                            onChange={(e) => setFilters({ ...filters, departamento: e.target.value })}
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">Todos los departamentos</option>
+                            {deptList.map((d) => (
+                                <option key={d} value={d}>{d}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="mb-3">
+                        <label htmlFor="unidad" className="block mb-1 text-xs font-medium text-gray-700">Unidad</label>
+                        <select
+                            id="unidad"
+                            value={filters.unidad || ''}
+                            onChange={(e) => setFilters({ ...filters, unidad: e.target.value })}
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">Todas las unidades</option>
+                            {unitList.map((u) => (
+                                <option key={u} value={u}>{u}</option>
                             ))}
                         </select>
                     </div>
