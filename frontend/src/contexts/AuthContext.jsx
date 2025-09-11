@@ -11,7 +11,13 @@
 
 // STUBS para evitar errores de importación durante desarrollo
 export function useAuth() {
-    return { authenticated: true, user: null, error: '', loading: false };
+    return {
+        authenticated: true,
+        user: null,
+        error: '',
+        loading: false,
+        logout: () => console.log('Logout - modo desarrollo')
+    };
 }
 
 export function AuthProvider({ children }) {
