@@ -1,6 +1,5 @@
 # Logs
 logs
-packege-lock.json
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -28,20 +27,25 @@ dist-ssr
 *.sln
 *.sw?
 
+# Python cache
 __pycache__/
 **/__pycache__/
-**/**/__pycache__/
-**/**/**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-backend/dashboard_api/__pycache__/__init__.cpython-311.pyc
-backend/dashboard_api/__pycache__/admin.cpython-311.pyc
-backend/dashboard_api/__pycache__/apps.cpython-311.pyc
-backend/dashboard_api/__pycache__/authentication.cpython-311.pyc
-backend/dashboard_api/__pycache__/models.cpython-311.pyc
-backend/dashboard_api/__pycache__/serializers.cpython-311.pyc
-backend/dashboard_api/__pycache__/urls.cpython-311.pyc
-backend/dashboard_api/__pycache__/views.cpython-311.pyc
-backend/dashboard_project/__pycache__/__init__.cpython-311.pyc
-backend/dashboard_project/__pycache__/settings.cpython-311.pyc
-backend/dashboard_project/__pycache__/urls.cpython-311.pyc
-backend/dashboard_project/__pycache__/wsgi.cpython-311.pyc
+# Django
+backend/db.sqlite3
+backend/*.sqlite3
+backend/media/
+backend/static/
+
+# Claude settings
+.claude/
+
+# Excel temp files
+**/~$*.xlsx
+**/~$*.xls
+
+# Package locks (keep only one)
+frontend/package-lock.json
