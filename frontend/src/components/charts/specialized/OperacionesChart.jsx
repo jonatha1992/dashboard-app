@@ -114,9 +114,9 @@ const OperacionesChart = ({ data, variant = 'efficiency' }) => {
         layout: {
             padding: {
                 top: 20,
-                bottom: 20,
-                left: 10,
-                right: 10
+                bottom: 60,
+                left: 15,
+                right: 15
             }
         },
         plugins: {
@@ -359,9 +359,11 @@ const OperacionesChart = ({ data, variant = 'efficiency' }) => {
                                 maxRotation: 45,
                                 minRotation: 0,
                                 font: {
-                                    size: 10
+                                    size: 11,
+                                    weight: 'normal'
                                 },
-                                color: '#666666'
+                                color: '#444444',
+                                padding: 5
                             },
                             grid: {
                                 display: false

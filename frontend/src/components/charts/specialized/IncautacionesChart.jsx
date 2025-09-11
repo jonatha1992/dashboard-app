@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Bar, Doughnut, Line, Scatter } from 'react-chartjs-2';
 import { Box, Typography, Grid, Paper, Chip } from '@mui/material';
 import analyticsService from '../../../services/analyticsService';
+import { getChartConfig, CHART_COLORS, generateColorPalette } from '../../../utils/chartConfig';
 
 const IncautacionesChart = ({ data, variant = 'treemap' }) => {
     const analysis = useMemo(() => {
@@ -116,9 +117,9 @@ const IncautacionesChart = ({ data, variant = 'treemap' }) => {
         layout: {
             padding: {
                 top: 20,
-                bottom: 40, // Increased bottom padding for x-axis labels
-                left: 10,
-                right: 10
+                bottom: 60, // Increased bottom padding for x-axis labels
+                left: 15,
+                right: 15
             }
         },
         plugins: {
@@ -159,9 +160,11 @@ const IncautacionesChart = ({ data, variant = 'treemap' }) => {
                     maxRotation: 45,
                     minRotation: 0,
                     font: {
-                        size: 10
+                        size: 11,
+                        weight: 'normal'
                     },
-                    color: '#666666'
+                    color: '#444444',
+                    padding: 5
                 },
                 grid: {
                     display: false

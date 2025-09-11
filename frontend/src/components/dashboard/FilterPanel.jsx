@@ -9,7 +9,7 @@ const ARGENTINE_PROVINCES = [
     'Tierra del Fuego', 'Tucumán'
 ].sort();
 
-export default function FilterPanel({ inline = false, className = '' }) {
+export default function FilterPanel({ inline = false, className = '', compact = false }) {
     const { filters, setFilters, dataStats, filteredData } = useDashboard();
     const [isOpen, setIsOpen] = useState(false);
     const hasActiveFilters = Boolean(filters.fromDate || filters.toDate || filters.province);
@@ -19,13 +19,13 @@ export default function FilterPanel({ inline = false, className = '' }) {
     // Obtener límites de fechas reales desde dataStats
     const getDateLimits = () => {
         if (!dataStats || !dataStats.dateRange) return { min: null, max: null };
-        
+
         const { earliest, latest } = dataStats.dateRange;
-        
+
         if (!earliest || !latest || earliest === '-' || latest === '-') {
             return { min: null, max: null };
         }
-        
+
         return {
             min: earliest,
             max: latest
@@ -51,10 +51,10 @@ export default function FilterPanel({ inline = false, className = '' }) {
                 const d = new Date(latest);
                 if (!isNaN(d.getTime())) {
                     const firstOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
-                    const firstISO = firstOfMonth.toISOString().slice(0,10);
+                    const firstISO = firstOfMonth.toISOString().slice(0, 10);
                     // último día del mes
                     const lastOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-                    const lastISO = lastOfMonth.toISOString().slice(0,10);
+                    const lastISO = lastOfMonth.toISOString().slice(0, 10);
                     setFilters({ fromDate: firstISO, toDate: lastISO, province: '' });
                     return;
                 }
@@ -85,6 +85,89 @@ export default function FilterPanel({ inline = false, className = '' }) {
 
     // Render inline (visible) controls next to the title in the navbar
     if (inline) {
+        if (compact) {
+            return (
+                <div className={`flex items-center gap-2 ${className}`}>
+                    <button
+                        onClick={toggleFilterPanel}
+                        className="px-3 py-1.5 text-xs font-medium bg-gray-200 hover:bg-gray-300 rounded-md"
+                        title="Mostrar/Ocultar filtros"
+                    >
+                        {isOpen ? 'Ocultar Filtros' : 'Filtros'}
+                    </button>
+                    {hasActiveFilters && (
+                        <span className="px-2 py-0.5 text-[10px] bg-blue-100 text-blue-700 rounded-full">
+                            Activos
+                        </span>
+                    )}
+                    {isOpen && (
+                        <div className="flex items-end gap-2">
+                            <div>
+                                <label htmlFor="province-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Prov.</label>
+                                <select
+                                    id="province-inline"
+                                    value={filters.province || ''}
+                                    onChange={handleProvinceChange}
+                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">Todas</option>
+                                    {ARGENTINE_PROVINCES.map((province) => (
+                                        <option key={province} value={province}>{province}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label htmlFor="fromDate-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Desde</label>
+                                <input
+                                    id="fromDate-inline"
+                                    type="date"
+                                    value={filters.fromDate || ''}
+                                    min={dateLimits.min || undefined}
+                                    max={dateLimits.max || undefined}
+                                    onChange={handleFromDateChange}
+                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="toDate-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Hasta</label>
+                                <input
+                                    id="toDate-inline"
+                                    type="date"
+                                    value={filters.toDate || ''}
+                                    min={dateLimits.min || undefined}
+                                    max={dateLimits.max || undefined}
+                                    onChange={handleToDateChange}
+                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="unidad-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Unidad</label>
+                                <select
+                                    id="unidad-inline"
+                                    value={filters.unidad || ''}
+                                    onChange={(e) => setFilters({ ...filters, unidad: e.target.value })}
+                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 max-w-[120px]"
+                                >
+                                    <option value="">Todas</option>
+                                    {unitList.map((u) => (
+                                        <option key={u} value={u}>{u}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="pb-0.5">
+                                <button
+                                    onClick={clearAllFilters}
+                                    className="mt-4 px-2 py-1 bg-gray-200 text-gray-700 text-[10px] rounded-md hover:bg-gray-300"
+                                    title="Limpiar filtros"
+                                >
+                                    Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
         return (
             <div className={`flex items-end gap-2 ${className}`}>
                 <div>
