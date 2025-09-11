@@ -5,6 +5,18 @@ import { useState, useEffect, useMemo, memo } from 'react';
 import L from 'leaflet';
 import { useDashboard } from '../../contexts/DashboardContext';
 import { getCoordinatesFromItem } from '../../contexts/DashboardContext';
+import { formatDateForDisplay } from '../../utils/dataUtils';
+
+// Fallback function in case import fails
+const fallbackFormatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  try {
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('es-AR');
+  } catch {
+    return '-';
+  }
+};
 
 // Fix para los íconos de Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -51,9 +63,11 @@ const clusterPoints = (points, zoom) => {
         if (processed.has(index)) return;
 
         // Usar función centralizada para obtener coordenadas
-        const { lat, lng } = getCoordinatesFromItem(point);
+        const coords = getCoordinatesFromItem(point);
 
-        if (lat === null || lng === null) return;
+        if (!coords || coords.lat === null || coords.lng === null) return;
+        
+        const { lat, lng } = coords;
 
         const cluster = {
             lat: lat,  // Ya viene como número válido de getCoordinatesFromItem
@@ -67,7 +81,10 @@ const clusterPoints = (points, zoom) => {
             if (processed.has(otherIndex) || index === otherIndex) return;
 
             // Usar función centralizada para obtener coordenadas del otro punto
-            const { lat: otherLat, lng: otherLng } = getCoordinatesFromItem(otherPoint);
+            const otherCoords = getCoordinatesFromItem(otherPoint);
+            if (!otherCoords) return;
+            
+            const { lat: otherLat, lng: otherLng } = otherCoords;
 
             if (otherLat === null || otherLng === null) return;
 
@@ -158,14 +175,15 @@ const getSpecificPopupContent = (point) => {
 };
 
 // Componente memorizado para los marcadores
-const MapMarkers = memo(({ clusters, formatDateForDisplay }) => {
+const MapMarkers = memo(({ clusters }) => {
     return (
         <>
             {clusters.map((cluster) => {
                 if (cluster.points.length === 1) {
                     // Marcador individual
                     const point = cluster.points[0];
-                    const formattedDate = formatDateForDisplay(point.FECHA_ISO || point.FECHA);
+                    const dateFunction = typeof formatDateForDisplay === 'function' ? formatDateForDisplay : fallbackFormatDate;
+                    const formattedDate = dateFunction(point.FECHA_ISO || point.FECHA);
                     return (
                         <Marker
                             key={cluster.id}
@@ -206,7 +224,8 @@ const MapMarkers = memo(({ clusters, formatDateForDisplay }) => {
                                     </h3>
                                     <div className="space-y-2 overflow-y-auto max-h-32">
                                         {cluster.points.slice(0, 5).map((point, idx) => {
-                                            const formattedDate = formatDateForDisplay(point.FECHA_ISO || point.FECHA);
+                                            const dateFunction = typeof formatDateForDisplay === 'function' ? formatDateForDisplay : fallbackFormatDate;
+                                            const formattedDate = dateFunction(point.FECHA_ISO || point.FECHA);
                                             
                                             // Obtener información específica resumida
                                             let specificInfo = '';
@@ -249,7 +268,6 @@ const MapMarkers = memo(({ clusters, formatDateForDisplay }) => {
 MapMarkers.displayName = 'MapMarkers';
 
 const MapComponent = ({ data }) => {
-    const { formatDateForDisplay } = useDashboard();
     const [mapCenter, setMapCenter] = useState([-34.6037, -58.3816]); // Buenos Aires por defecto
     const [mapZoom, setMapZoom] = useState(5);
     const [map, setMap] = useState(null);
@@ -276,9 +294,9 @@ const MapComponent = ({ data }) => {
 
         const valid = data.filter(point => {
             // Usar función centralizada para obtener y validar coordenadas
-            const { lat, lng } = getCoordinatesFromItem(point);
+            const coords = getCoordinatesFromItem(point);
             
-            const isValid = lat !== null && lng !== null;
+            const isValid = coords && coords.lat !== null && coords.lng !== null;
             
             // El logging ya se maneja en getCoordinatesFromItem, pero podemos agregar logging específico del mapa
             if (!isValid && Math.random() < 0.01) { // Log 1% para debugging específico del mapa
@@ -331,9 +349,10 @@ const MapComponent = ({ data }) => {
         if (validData.length > 0 && map) {
             const firstPoint = validData[0];
             // Usar función centralizada para obtener coordenadas
-            const { lat, lng } = getCoordinatesFromItem(firstPoint);
+            const coords = getCoordinatesFromItem(firstPoint);
             
-            if (lat !== null && lng !== null) {
+            if (coords && coords.lat !== null && coords.lng !== null) {
+                const { lat, lng } = coords;
                 const newCenter = [lat, lng];
                 console.log(`🗺️ Centrando mapa en:`, newCenter);
                 setMapCenter(newCenter);
@@ -447,7 +466,6 @@ const MapComponent = ({ data }) => {
                 <MapMarkers 
                     key={markersKey}
                     clusters={clusters} 
-                    formatDateForDisplay={formatDateForDisplay} 
                 />
             </MapContainer>
         </div>
