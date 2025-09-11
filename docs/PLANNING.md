@@ -140,3 +140,10 @@ El sistema fue refactorizado eliminando la complejidad del Data Warehouse y mant
 - ✅ **Autenticación JWT**: Sistema de auth robusto implementado
 - ✅ **Análisis Avanzado**: Componentes geográficos y temporales
 - ✅ **Mapas Interactivos**: Leaflet con funcionalidad completa
+
+
+
+Graficos a mostrar
+Procedimientos
+
+1. Cantidad de 
