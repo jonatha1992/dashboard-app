@@ -292,11 +292,7 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                 />
                 <StatCard
                     title="Departamentos"
-<<<<<<< HEAD
-                    value={new Set(data.map(item => item.DEPARTAMENTO_O_PARTIDO)).size}
-=======
                     value={new Set(data.map(item => item['DEPARTAMENTO O PARTIDO'] || item.DEPARTAMENTO_O_PARTIDO)).size}
->>>>>>> 4120b0e25a233608a9e898080797186ee1d9b4c2
                     icon="📍"
                     color="bg-purple-500"
                 />

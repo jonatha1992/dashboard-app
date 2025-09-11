@@ -115,6 +115,14 @@ El sistema fue refactorizado eliminando la complejidad del Data Warehouse y mant
 
 ## 📝 Registro de Cambios Recientes
 
+### 2025-09-10: Corrección de build (Vite/esbuild) y resolución de conflictos
+- ✅ Se resolvieron conflictos de merge en `frontend/src/components/charts/CategoryCharts.jsx` eliminando marcadores (`<<<<<<<`, `=======`, `>>>>>>>`) y unificando la métrica de "Departamentos" para soportar ambos campos: `DEPARTAMENTO O PARTIDO` y `DEPARTAMENTO_O_PARTIDO`.
+- ✅ Se limpiaron conflictos en `frontend/src/services/dataService.js`:
+  - Se mantuvo la versión mejorada de `isDetenido` con validaciones estrictas y logging de diagnóstico.
+  - Se unificó `getCategorizedData()` con pre-cálculo `classifications` y jerarquía estricta.
+  - Se mejoró `departmentData` para aceptar múltiples campos candidatos (compatibilidad con `DEPARTAMENTO O PARTIDO`, `DEPARTAMENTO`, `departamento`, `PARTIDO`, etc.).
+- ✅ Resultado: el servidor de desarrollo de Vite puede compilar nuevamente sin errores de marcadores de conflicto.
+
 ### 2025-09-08: Refactorización Arquitectural Mayor
 - ✅ **Eliminación de Data Warehouse**: Removido sistema DW complejo innecesario
 - ✅ **Modelo Unificado**: Consolidación en `OperationalData` único
