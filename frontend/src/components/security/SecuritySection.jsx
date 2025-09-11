@@ -6,7 +6,7 @@ import { getCategoryConfig } from '../../services/securityStatsService';
 import { useDashboard } from '../../contexts/DashboardContext';
 
 
-const SecuritySection = ({ category, showProvinceChart = true }) => {
+const SecuritySection = ({ category, showProvinceChart = true, showHeader = true }) => {
   const { filteredCategorizedData, loading, error, filters } = useDashboard();
   const data = filteredCategorizedData[category] || [];
   const config = getCategoryConfig(category);
@@ -66,12 +66,13 @@ const SecuritySection = ({ category, showProvinceChart = true }) => {
 
   return (
     <div className="mt-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center mb-6 space-x-3">
-        <span className="text-3xl">{config.icon}</span>
-        <h2 className="text-2xl font-bold text-gray-800">{config.title}</h2>
-      </div>
-
+      {/* Header opcional */}
+      {showHeader && (
+        <div className="flex items-center mb-6 space-x-3">
+          <span className="text-3xl">{config.icon}</span>
+          <h2 className="text-2xl font-bold text-gray-800">{config.title}</h2>
+        </div>
+      )}
 
       {/* Gráfico por provincias - Solo mostrar si hay datos de provincias y si se permite */}
       {showProvinceChart && hasProvinceData && (

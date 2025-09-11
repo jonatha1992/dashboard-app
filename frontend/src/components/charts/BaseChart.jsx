@@ -28,12 +28,48 @@ ChartJS.register(
 
 const BaseChart = ({ type = 'bar', data, options, title, className = '', height = 300, granularity, onGranularityChange, chartKey }) => {
     const [showModal, setShowModal] = useState(false);
+    // Paleta en tonos de azul
+    const bluePalette = [
+        '#0ea5e9', // sky-500
+        '#0284c7', // sky-600
+        '#2563eb', // indigo-600
+        '#1d4ed8', // blue-700
+        '#38bdf8', // sky-400
+        '#60a5fa', // blue-400
+        '#3b82f6', // blue-500
+        '#1e40af', // indigo-800
+        '#93c5fd', // blue-300
+        '#0ea5e9'  // repeat for safety
+    ];
+
+    // Si el dataset no trae colores, aplicamos la paleta por defecto
+    const ensureDatasetColors = (incoming) => {
+        try {
+            if (!incoming || !incoming.datasets) return incoming;
+            const ds = incoming.datasets.map((d, idx) => ({
+                ...d,
+                backgroundColor: d.backgroundColor || (type === 'line' ? 'rgba(37, 99, 235, 0.25)' : bluePalette[idx % bluePalette.length]),
+                borderColor: d.borderColor || '#1d4ed8',
+                borderWidth: d.borderWidth ?? (type === 'line' ? 2 : 1)
+            }));
+            return { ...incoming, datasets: ds };
+        } catch {
+            return incoming;
+        }
+    };
+
+    const safeData = ensureDatasetColors(data);
+
     const defaultOptions = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'top',
+                labels: {
+                    color: '#0f172a', // slate-900
+                    boxWidth: 12,
+                }
             },
             title: {
                 display: !!title,
@@ -43,6 +79,29 @@ const BaseChart = ({ type = 'bar', data, options, title, className = '', height 
                     weight: 'bold'
                 }
             },
+            tooltip: {
+                titleColor: '#0f172a',
+                bodyColor: '#0f172a'
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: '#334155',
+                    maxRotation: 0,
+                    autoSkip: true,
+                    callback: (val, idx, ticks) => {
+                        const label = (ticks && ticks[idx] && ticks[idx].label) ? String(ticks[idx].label) : '';
+                        const s = label.length > 14 ? label.slice(0, 12) + '…' : label; // truncado para etiquetas largas (provincias)
+                        return s;
+                    }
+                },
+                grid: { color: 'rgba(203,213,225,0.3)' }
+            },
+            y: {
+                ticks: { color: '#334155' },
+                grid: { color: 'rgba(203,213,225,0.3)' }
+            }
         },
         ...options,
     };
@@ -50,12 +109,12 @@ const BaseChart = ({ type = 'bar', data, options, title, className = '', height 
     const renderChart = () => {
         switch (type) {
             case 'pie':
-                return <Pie key={chartKey} data={data} options={defaultOptions} />;
+                return <Pie key={chartKey} data={safeData} options={defaultOptions} />;
             case 'line':
-                return <Line key={chartKey} data={data} options={defaultOptions} />;
+                return <Line key={chartKey} data={safeData} options={defaultOptions} />;
             case 'bar':
             default:
-                return <Bar key={chartKey} data={data} options={defaultOptions} />;
+                return <Bar key={chartKey} data={safeData} options={defaultOptions} />;
         }
     };
 

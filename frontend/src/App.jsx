@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 // import { AuthProvider, useAuth } from './contexts/AuthContext' // Comentado para modo desarrollo
 // import Login from './components/auth/Login' // Comentado para modo desarrollo
 import Dashboard from './components/dashboard/Dashboard'
+import AdminDashboard from './components/admin/AdminDashboard'
+import ErrorBoundary from './components/common/ErrorBoundary'
 
 // Componente para proteger rutas - COMENTADO PARA DESARROLLO
 // const ProtectedRoute = ({ children }) => {
@@ -36,7 +38,19 @@ function App() {
         {/* <Route path="/login" element={<Login />} /> */} {/* Comentado para desarrollo */}
         <Route
           path="/dashboard"
-          element={<Dashboard />} // Sin ProtectedRoute para desarrollo
+          element={
+            <ErrorBoundary>
+              <Dashboard />
+            </ErrorBoundary>
+          } // Sin ProtectedRoute para desarrollo
+        />
+        <Route
+          path="/admin"
+          element={
+            <ErrorBoundary>
+              <AdminDashboard />
+            </ErrorBoundary>
+          } // Vista de administración separada
         />
       </Routes>
     </BrowserRouter>
