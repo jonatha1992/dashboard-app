@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDashboard } from '../../../contexts/DashboardContext';
 import IncautacionesKPIs from './IncautacionesKPIs';
+import IncautacionesTable from './IncautacionesTable';
 import DynamicChartsByCategory from '../../charts/DynamicChartsByCategory';
 import DashboardLayout from '../../common/DashboardLayout';
 import FilterPanel from '../../dashboard/FilterPanel';
@@ -55,7 +56,12 @@ const IncautacionesDashboard = () => {
                 </div>
 
                 {/* Gráficos dinámicos */}
-                <DynamicChartsByCategory category="incautaciones" />
+                <div className="mb-8">
+                    <DynamicChartsByCategory category="incautaciones" />
+                </div>
+
+                {/* Tabla especializada de incautaciones */}
+                <IncautacionesTable data={incautacionesData} />
             </div>
         </DashboardLayout>
     );

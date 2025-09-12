@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { Grid, Box, Typography } from '@mui/material';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
-import { useDashboard, normalizeProvinceKey, getDepartamentoFromItem } from '../../contexts/DashboardContext';
+import { useDashboard } from '../../contexts/DashboardContext';
+import { normalizeProvinceKey, getDepartamentoFromItem } from '../../utils/dataUtils';
 import ChartCard from '../common/ChartCard';
 
 const DynamicChartsByCategory = ({ category }) => {

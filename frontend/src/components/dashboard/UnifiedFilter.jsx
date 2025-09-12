@@ -1,4 +1,5 @@
-import { useDashboard, getDepartamentoFromItem } from '../../contexts/DashboardContext';
+import { useDashboard } from '../../contexts/DashboardContext';
+import { getDepartamentoFromItem } from '../../utils/dataUtils';
 import { useMemo } from 'react';
 
 const ARGENTINE_PROVINCES = [
@@ -104,7 +105,7 @@ export default function UnifiedFilter() {
                         id="province"
                         value={filters.province || ''}
                         onChange={handleProvinceChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                         <option value="">Todas las provincias</option>
                         {ARGENTINE_PROVINCES.map((province) => (
@@ -124,7 +125,7 @@ export default function UnifiedFilter() {
                         id="departamento"
                         value={filters.departamento || ''}
                         onChange={handleDepartamentoChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         disabled={availableDepartamentos.length === 0}
                     >
                         <option value="">Todos los departamentos</option>
@@ -151,7 +152,7 @@ export default function UnifiedFilter() {
                         min={dateLimits.min || undefined}
                         max={dateLimits.max || undefined}
                         onChange={handleFromDateChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                 </div>
 
@@ -167,7 +168,7 @@ export default function UnifiedFilter() {
                         min={dateLimits.min || undefined}
                         max={dateLimits.max || undefined}
                         onChange={handleToDateChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                 </div>
 

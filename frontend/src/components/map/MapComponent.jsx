@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { useState, useEffect, useMemo, memo } from 'react';
 import L from 'leaflet';
 import { useDashboard } from '../../contexts/DashboardContext';
-import { getCoordinatesFromItem } from '../../contexts/DashboardContext';
+import { getCoordinatesFromItem } from '../../utils/dataUtils';
 import { formatDateForDisplay } from '../../utils/dataUtils';
 
 // Fallback function in case import fails

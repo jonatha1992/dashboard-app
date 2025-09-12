@@ -1,6 +1,6 @@
 // Servicio para cargar y procesar los datos del archivo Excel
 import * as XLSX from 'xlsx';
-import { normalizeProvinceKey, parseDateToISO, getCoordinatesFromItem } from '../contexts/DashboardContext';
+import { normalizeProvinceKey, parseDateToISO, getCoordinatesFromItem } from '../utils/dataUtils';
 
 // NOTE: This module intentionally does NOT provide sample/demo data.
 // If no real data is available, `loadData` will return an empty processed array

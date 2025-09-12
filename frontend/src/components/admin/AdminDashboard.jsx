@@ -25,7 +25,7 @@ export default function AdminDashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto border-b-2 border-blue-600 rounded-full animate-spin"></div>
+          <div className="w-16 h-16 mx-auto border-b-2 border-primary-600 rounded-full animate-spin"></div>
           <p className="mt-4 text-gray-700">Cargando datos...</p>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default function AdminDashboard() {
           <p className="text-red-500">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 mt-4 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            className="px-4 py-2 mt-4 text-white bg-primary-600 rounded-md hover:bg-primary-700"
           >
             Reintentar
           </button>
@@ -59,26 +59,26 @@ export default function AdminDashboard() {
         </div>
 
         <button
-          className={`text-left px-3 py-2 rounded-md mb-2 text-sm font-medium ${activeSection === 'analisis' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+          className={`text-left px-3 py-2 rounded-md mb-2 text-sm font-medium ${activeSection === 'analisis' ? 'bg-primary-600 text-white' : 'text-gray-700 hover:bg-primary-100'}`}
           onClick={() => setActiveSection('analisis')}
         >
           📊 Análisis
         </button>
 
         <button
-          className={`text-left px-3 py-2 rounded-md mb-2 text-sm font-medium ${activeSection === 'estado' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+          className={`text-left px-3 py-2 rounded-md mb-2 text-sm font-medium ${activeSection === 'estado' ? 'bg-primary-600 text-white' : 'text-gray-700 hover:bg-primary-100'}`}
           onClick={() => setActiveSection('estado')}
         >
           ⚙️ Estado del sistema
         </button>
         <button
-          className={`text-left px-3 py-2 rounded-md mb-2 text-sm font-medium ${activeSection === 'filtrado' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+          className={`text-left px-3 py-2 rounded-md mb-2 text-sm font-medium ${activeSection === 'filtrado' ? 'bg-primary-600 text-white' : 'text-gray-700 hover:bg-primary-100'}`}
           onClick={() => setActiveSection('filtrado')}
         >
           🔍 Diagnóstico de filtros
         </button>
         <button
-          className={`text-left px-3 py-2 rounded-md mb-2 text-sm font-medium ${activeSection === 'tablas' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+          className={`text-left px-3 py-2 rounded-md mb-2 text-sm font-medium ${activeSection === 'tablas' ? 'bg-primary-600 text-white' : 'text-gray-700 hover:bg-primary-100'}`}
           onClick={() => setActiveSection('tablas')}
         >
           🗂️ Tablas filtradas
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
               <div className="flex items-center space-x-2">
                 {user?.username && (
                   <div className="flex items-center px-3 py-1.5 bg-gray-100 rounded-md">
-                    <div className="flex items-center justify-center w-6 h-6 mr-2 bg-blue-600 rounded-full">
+                    <div className="flex items-center justify-center w-6 h-6 mr-2 bg-primary-600 rounded-full">
                       <span className="text-xs text-white">{user?.role === 'admin' ? '👑' : '👤'}</span>
                     </div>
                     <div className="text-sm">
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
                   <select
                     value={activeCategory}
                     onChange={(e) => setActiveCategory(e.target.value)}
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="procedimientos">Procedimientos</option>
                     <option value="detenidos">Detenidos</option>
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
                         categoryName={activeCategory}
                         title="Tendencia temporal"
                         icon="📈"
-                        color="bg-blue-500"
+                        color="bg-primary-500"
                         showTable={false}
                         compactMode={true}
                       />

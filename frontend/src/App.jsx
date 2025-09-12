@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-// import { AuthProvider, useAuth } from './contexts/AuthContext' // Comentado para modo desarrollo
-// import Login from './components/auth/Login' // Comentado para modo desarrollo
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import Login from './components/auth/Login'
 import Dashboard from './components/dashboard/Dashboard'
 import AdminDashboard from './components/admin/AdminDashboard'
 import ErrorBoundary from './components/common/ErrorBoundary'
@@ -13,116 +13,138 @@ import IncautacionesDashboard from './components/views/incautaciones/Incautacion
 import AbatidosDashboard from './components/views/abatidos/AbatidosDashboard'
 import TrataDashboard from './components/views/trata/TrataDashboard'
 
-// Componente para proteger rutas - COMENTADO PARA DESARROLLO
-// const ProtectedRoute = ({ children }) => {
-//   const { authenticated, loading } = useAuth();
-//
-//   if (loading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-//         <div className="text-center">
-//           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-//           <p className="text-gray-600 mt-2">Cargando...</p>
-//         </div>
-//       </div>
-//     );
-//   }
-//
-//   if (!authenticated) {
-//     return <Navigate to="/login" replace />;
-//   }
-//
-//   return children;
-// };
+// Componente para proteger rutas
+const ProtectedRoute = ({ children }) => {
+  const { authenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-primary">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+          <p className="text-white mt-4">Verificando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard/main" replace />} />
-        {/* <Route path="/login" element={<Login />} /> */} {/* Comentado para desarrollo */}
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard/main" replace />} />
+          <Route path="/login" element={<Login />} />
         <Route
           path="/dashboard"
           element={
-            <ErrorBoundary>
-              <Dashboard />
-            </ErrorBoundary>
-          } // Sin ProtectedRoute para desarrollo
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <Dashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/dashboard/main"
           element={
-            <ErrorBoundary>
-              <MainDashboard />
-            </ErrorBoundary>
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <MainDashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/dashboard/detenidos"
           element={
-            <ErrorBoundary>
-              <DetenidosDashboard />
-            </ErrorBoundary>
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <DetenidosDashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/dashboard/afectados"
           element={
-            <ErrorBoundary>
-              <AfectadosDashboard />
-            </ErrorBoundary>
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AfectadosDashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/dashboard/controlados"
           element={
-            <ErrorBoundary>
-              <ControladosDashboard />
-            </ErrorBoundary>
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <ControladosDashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/dashboard/procedimientos"
           element={
-            <ErrorBoundary>
-              <ProcedimientosDashboard />
-            </ErrorBoundary>
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <ProcedimientosDashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/dashboard/incautaciones"
           element={
-            <ErrorBoundary>
-              <IncautacionesDashboard />
-            </ErrorBoundary>
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <IncautacionesDashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/dashboard/abatidos"
           element={
-            <ErrorBoundary>
-              <AbatidosDashboard />
-            </ErrorBoundary>
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AbatidosDashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/dashboard/trata"
           element={
-            <ErrorBoundary>
-              <TrataDashboard />
-            </ErrorBoundary>
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <TrataDashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/admin"
           element={
-            <ErrorBoundary>
-              <AdminDashboard />
-            </ErrorBoundary>
-          } // Vista de administración separada
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AdminDashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
         />
       </Routes>
     </BrowserRouter>
+    </AuthProvider>
   );
 }
 

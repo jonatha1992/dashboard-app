@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useDashboard } from '../../contexts/DashboardContext';
+import DateInput from '../common/DateInput';
 
 const ARGENTINE_PROVINCES = [
     'Buenos Aires', 'Catamarca', 'Chaco', 'Chubut', 'Ciudad Autónoma de Buenos Aires',
@@ -100,7 +101,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                                 id="province-inline"
                                 value={filters.province || ''}
                                 onChange={handleProvinceChange}
-                                className="px-2 py-1 text-xs bg-blue-800 text-white border border-blue-600 rounded-md focus:ring-blue-400 focus:border-blue-400"
+                                className="px-2 py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400"
                             >
                                 <option value="">Todas</option>
                                 {ARGENTINE_PROVINCES.map((province) => (
@@ -110,26 +111,24 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                         </div>
                         <div>
                             <label htmlFor="fromDate-inline" className="block mb-1 text-[10px] font-medium text-white">Desde</label>
-                            <input
+                            <DateInput
                                 id="fromDate-inline"
-                                type="date"
                                 value={filters.fromDate || ''}
                                 min={dateLimits.min || undefined}
                                 max={dateLimits.max || undefined}
                                 onChange={handleFromDateChange}
-                                className="px-2 py-1 text-xs bg-blue-800 text-white border border-blue-600 rounded-md focus:ring-blue-400 focus:border-blue-400"
+                                className="bg-primary-800 text-white border-primary-600"
                             />
                         </div>
                         <div>
                             <label htmlFor="toDate-inline" className="block mb-1 text-[10px] font-medium text-white">Hasta</label>
-                            <input
+                            <DateInput
                                 id="toDate-inline"
-                                type="date"
                                 value={filters.toDate || ''}
                                 min={dateLimits.min || undefined}
                                 max={dateLimits.max || undefined}
                                 onChange={handleToDateChange}
-                                className="px-2 py-1 text-xs bg-blue-800 text-white border border-blue-600 rounded-md focus:ring-blue-400 focus:border-blue-400"
+                                className="bg-primary-800 text-white border-primary-600"
                             />
                         </div>
                         <div>
@@ -138,7 +137,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                         id="departamento-inline"
                         value={filters.departamento || ''}
                         onChange={(e) => setFilters({ ...filters, departamento: e.target.value })}
-                        className="px-2 py-1 text-xs bg-blue-800 text-white border border-blue-600 rounded-md focus:ring-blue-400 focus:border-blue-400 max-w-[120px]"
+                        className="px-2 py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400 max-w-[120px]"
                         >
                         <option value="">Todos</option>
                         {deptList.map((d) => (
@@ -152,7 +151,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                         id="unidad-inline"
                         value={filters.unidad || ''}
                         onChange={(e) => setFilters({ ...filters, unidad: e.target.value })}
-                        className="px-2 py-1 text-xs bg-blue-800 text-white border border-blue-600 rounded-md focus:ring-blue-400 focus:border-blue-400 max-w-[120px]"
+                        className="px-2 py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400 max-w-[120px]"
                     >
                         <option value="">Todas</option>
                         {unitList.map((u) => (
@@ -181,7 +180,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                         id="province-inline"
                         value={filters.province || ''}
                         onChange={handleProvinceChange}
-                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
                     >
                         <option value="">Todas</option>
                         {ARGENTINE_PROVINCES.map((province) => (
@@ -191,26 +190,24 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                 </div>
                 <div>
                     <label htmlFor="fromDate-inline" className="block mb-1 text-xs font-medium text-gray-700">Desde</label>
-                    <input
+                    <DateInput
                         id="fromDate-inline"
-                        type="date"
                         value={filters.fromDate || ''}
                         min={dateLimits.min || undefined}
                         max={dateLimits.max || undefined}
                         onChange={handleFromDateChange}
-                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        className="py-1.5 text-sm border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500"
                     />
                 </div>
                 <div>
                     <label htmlFor="toDate-inline" className="block mb-1 text-xs font-medium text-gray-700">Hasta</label>
-                    <input
+                    <DateInput
                         id="toDate-inline"
-                        type="date"
                         value={filters.toDate || ''}
                         min={dateLimits.min || undefined}
                         max={dateLimits.max || undefined}
                         onChange={handleToDateChange}
-                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        className="py-1.5 text-sm border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500"
                     />
                 </div>
                 <div>
@@ -219,7 +216,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                         id="departamento-inline"
                         value={filters.departamento || ''}
                         onChange={(e) => setFilters({ ...filters, departamento: e.target.value })}
-                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
                     >
                         <option value="">Todos</option>
                         {deptList.map((d) => (
@@ -233,7 +230,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                         id="unidad-inline"
                         value={filters.unidad || ''}
                         onChange={(e) => setFilters({ ...filters, unidad: e.target.value })}
-                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
                     >
                         <option value="">Todas</option>
                         {unitList.map((u) => (
@@ -260,7 +257,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
             <button
                 onClick={toggleFilterPanel}
                 className={`flex items-center px-3 py-2 border rounded-md transition-all ${hasActiveFilters
-                    ? 'bg-blue-600 text-white border-blue-700'
+                    ? 'bg-primary-600 text-white border-primary-700'
                     : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
                     }`}
             >
@@ -280,7 +277,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                             id="province"
                             value={filters.province || ''}
                             onChange={handleProvinceChange}
-                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
                         >
                             <option value="">Todas las provincias</option>
                             {ARGENTINE_PROVINCES.map((province) => (
@@ -297,7 +294,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                             id="departamento"
                             value={filters.departamento || ''}
                             onChange={(e) => setFilters({ ...filters, departamento: e.target.value })}
-                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
                         >
                             <option value="">Todos los departamentos</option>
                             {deptList.map((d) => (
@@ -312,7 +309,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                             id="unidad"
                             value={filters.unidad || ''}
                             onChange={(e) => setFilters({ ...filters, unidad: e.target.value })}
-                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
                         >
                             <option value="">Todas las unidades</option>
                             {unitList.map((u) => (
@@ -326,14 +323,13 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                             <label htmlFor="fromDate" className="block mb-1 text-xs font-medium text-gray-700">
                                 Desde
                             </label>
-                            <input
+                            <DateInput
                                 id="fromDate"
-                                type="date"
                                 value={filters.fromDate || ''}
                                 min={dateLimits.min || undefined}
                                 max={dateLimits.max || undefined}
                                 onChange={handleFromDateChange}
-                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full py-1.5 text-sm border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500"
                             />
                         </div>
 
@@ -341,14 +337,13 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                             <label htmlFor="toDate" className="block mb-1 text-xs font-medium text-gray-700">
                                 Hasta
                             </label>
-                            <input
+                            <DateInput
                                 id="toDate"
-                                type="date"
                                 value={filters.toDate || ''}
                                 min={dateLimits.min || undefined}
                                 max={dateLimits.max || undefined}
                                 onChange={handleToDateChange}
-                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full py-1.5 text-sm border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500"
                             />
                         </div>
                     </div>
@@ -362,7 +357,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                         </button>
                         <button
                             onClick={toggleFilterPanel}
-                            className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                            className="px-3 py-1.5 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700"
                         >
                             Aplicar
                         </button>

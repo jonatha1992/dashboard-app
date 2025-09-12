@@ -149,19 +149,19 @@ const BaseChart = ({ type = 'bar', data, options, title, className = '', height 
                                 {granularity && onGranularityChange && (
                                     <div className="flex gap-1">
                                         <button
-                                            className={`px-2 py-0.5 text-xs rounded ${granularity === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                                            className={`px-2 py-0.5 text-xs rounded ${granularity === 'month' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                                             onClick={() => onGranularityChange('month')}
                                         >
                                             Mes
                                         </button>
                                         <button
-                                            className={`px-2 py-0.5 text-xs rounded ${granularity === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                                            className={`px-2 py-0.5 text-xs rounded ${granularity === 'week' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                                             onClick={() => onGranularityChange('week')}
                                         >
                                             Semana
                                         </button>
                                         <button
-                                            className={`px-2 py-0.5 text-xs rounded ${granularity === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                                            className={`px-2 py-0.5 text-xs rounded ${granularity === 'day' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                                             onClick={() => onGranularityChange('day')}
                                         >
                                             Día
@@ -170,7 +170,7 @@ const BaseChart = ({ type = 'bar', data, options, title, className = '', height 
                                 )}
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
+                                    className="px-3 py-1 text-sm text-white bg-primary-600 rounded hover:bg-primary-700"
                                 >
                                     Cerrar
                                 </button>

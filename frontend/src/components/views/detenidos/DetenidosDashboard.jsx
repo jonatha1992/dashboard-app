@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDashboard } from '../../../contexts/DashboardContext';
 import DetenidosKPIs from './DetenidosKPIs';
+import DetenidosTable from './DetenidosTable';
 import DynamicChartsByCategory from '../../charts/DynamicChartsByCategory';
 import DashboardLayout from '../../common/DashboardLayout';
 import FilterPanel from '../../dashboard/FilterPanel';
@@ -58,7 +59,12 @@ const DetenidosDashboard = () => {
                 </div>
 
                 {/* Gráficos dinámicos */}
-                <DynamicChartsByCategory category="detenidos" />
+                <div className="mb-8">
+                    <DynamicChartsByCategory category="detenidos" />
+                </div>
+
+                {/* Tabla especializada de detenidos */}
+                <DetenidosTable data={detenidosData} />
             </div>
         </DashboardLayout>
     );
