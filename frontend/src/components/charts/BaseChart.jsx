@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -8,10 +8,12 @@ import {
     Tooltip,
     Legend,
     ArcElement,
-    PointElement,
     LineElement,
+    PointElement,
 } from 'chart.js';
-import { Bar, Pie, Line } from 'react-chartjs-2';
+import { Chart, Bar, Line, Pie } from 'react-chartjs-2';
+import { abbreviateName, getEnhancedTooltipConfig, getChartClickHandler } from '../../utils/chartUtils';
+import ChartModal from '../common/ChartModal';
 
 // Register Chart.js components
 ChartJS.register(
@@ -28,6 +30,7 @@ ChartJS.register(
 
 const BaseChart = ({ type = 'bar', data, options, title, className = '', height = 300, granularity, onGranularityChange, chartKey }) => {
     const [showModal, setShowModal] = useState(false);
+    const [modalData, setModalData] = useState(null);
     // Paleta en tonos de azul
     const bluePalette = [
         '#0ea5e9', // sky-500
@@ -58,52 +61,134 @@ const BaseChart = ({ type = 'bar', data, options, title, className = '', height 
         }
     };
 
-    const safeData = ensureDatasetColors(data);
+    // Procesar datos con abreviaciones
+    const processDataWithAbbreviations = (incoming) => {
+        if (!incoming || !incoming.labels) return incoming;
+        
+        const abbreviatedLabels = incoming.labels.map(label => abbreviateName(label, 12));
+        
+        return {
+            ...incoming,
+            labels: abbreviatedLabels,
+            originalLabels: incoming.labels // Guardar etiquetas originales para el modal
+        };
+    };
+
+    const processedData = processDataWithAbbreviations(data);
+    const safeData = ensureDatasetColors(processedData);
+
+    // Handler para clics en el gráfico
+    const handleChartClick = (clickData) => {
+        console.log('Chart clicked:', clickData); // Debug
+        const { index } = clickData;
+        
+        if (index !== undefined && index !== null) {
+            setModalData({
+                labels: processedData.originalLabels || processedData.labels,
+                datasets: safeData.datasets,
+                clickedIndex: index,
+                clickedLabel: (processedData.originalLabels || processedData.labels)[index]
+            });
+            setShowModal(true);
+        }
+    };
 
     const defaultOptions = {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 10,
+                right: 10,
+                bottom: 10,
+                left: 10
+            }
+        },
         plugins: {
             legend: {
                 position: 'top',
                 labels: {
-                    color: '#0f172a', // slate-900
+                    color: '#e5e7eb', // gris más claro (gray-200)
+                    font: {
+                        size: 12,
+                        weight: '500'
+                    },
                     boxWidth: 12,
+                    padding: 15
                 }
             },
             title: {
                 display: !!title,
                 text: title,
+                color: '#e5e7eb', // gris más claro (gray-200)
                 font: {
                     size: 16,
                     weight: 'bold'
+                },
+                padding: {
+                    top: 10,
+                    bottom: 20
                 }
             },
             tooltip: {
-                titleColor: '#0f172a',
-                bodyColor: '#0f172a'
+                ...getEnhancedTooltipConfig(title),
+                callbacks: {
+                    label: function(context) {
+                        const value = context.parsed.y || context.parsed;
+                        const dataset = context.dataset;
+                        const total = dataset.data.reduce((sum, val) => sum + val, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                        
+                        return `${context.dataset.label || 'Valor'}: ${value} (${percentage}%)`;
+                    },
+                    afterLabel: function(context) {
+                        const dataset = context.dataset;
+                        const total = dataset.data.reduce((sum, val) => sum + val, 0);
+                        return `Total del dataset: ${total}`;
+                    }
+                }
             }
         },
         scales: {
             x: {
                 ticks: {
-                    color: '#334155',
+                    color: '#d1d5db', // gris más claro (gray-300)
+                    font: {
+                        size: 12,
+                        weight: '600'
+                    },
                     maxRotation: 0,
                     autoSkip: true,
-                    callback: (val, idx, ticks) => {
-                        const label = (ticks && ticks[idx] && ticks[idx].label) ? String(ticks[idx].label) : '';
-                        const s = label.length > 14 ? label.slice(0, 12) + '…' : label; // truncado para etiquetas largas (provincias)
-                        return s;
-                    }
+                    padding: 8
                 },
-                grid: { color: 'rgba(203,213,225,0.3)' }
+                grid: { 
+                    color: 'rgba(209, 213, 219, 0.2)', // gris claro con transparencia
+                    lineWidth: 1
+                },
+                border: {
+                    color: 'rgba(209, 213, 219, 0.4)' // gris claro con transparencia
+                }
             },
             y: {
-                ticks: { color: '#334155' },
-                grid: { color: 'rgba(203,213,225,0.3)' }
+                ticks: { 
+                    color: '#d1d5db', // gris más claro (gray-300)
+                    font: {
+                        size: 12,
+                        weight: '600'
+                    },
+                    padding: 10
+                },
+                grid: { 
+                    color: 'rgba(209, 213, 219, 0.2)', // gris claro con transparencia
+                    lineWidth: 1
+                },
+                border: {
+                    color: 'rgba(209, 213, 219, 0.4)' // gris claro con transparencia
+                }
             }
         },
         ...options,
+        onClick: getChartClickHandler(handleChartClick),
     };
 
     const renderChart = () => {
@@ -121,67 +206,26 @@ const BaseChart = ({ type = 'bar', data, options, title, className = '', height 
     return (
         <div className={`group relative ${className}`}>
             <div
-                style={{ height, cursor: 'zoom-in' }}
-                onClick={() => setShowModal(true)}
-                title="click para ampliar"
+                className="w-full overflow-hidden"
+                style={{ height }}
+                title="click en elementos para detalles"
             >
-                {renderChart()}
+                <div className="w-full h-full">
+                    {renderChart()}
+                </div>
             </div>
             {/* Overlay hint on hover */}
             <div className="pointer-events-none absolute top-2 right-2 hidden items-center gap-1 rounded bg-black/60 px-2 py-1 text-xs text-white shadow-md group-hover:flex">
-                <span>⬆ doble clic</span>
+                <span>📊 clic para detalles</span>
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    {/* Backdrop */}
-                    <div
-                        className="absolute inset-0 bg-black bg-opacity-50"
-                        onClick={() => setShowModal(false)}
-                    />
-                    {/* Modal content */}
-                    <div className="relative z-10 w-11/12 max-w-5xl p-4 bg-white rounded-lg shadow-xl">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="text-sm font-semibold text-gray-700">
-                                {title || 'Vista ampliada'}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {granularity && onGranularityChange && (
-                                    <div className="flex gap-1">
-                                        <button
-                                            className={`px-2 py-0.5 text-xs rounded ${granularity === 'month' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                                            onClick={() => onGranularityChange('month')}
-                                        >
-                                            Mes
-                                        </button>
-                                        <button
-                                            className={`px-2 py-0.5 text-xs rounded ${granularity === 'week' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                                            onClick={() => onGranularityChange('week')}
-                                        >
-                                            Semana
-                                        </button>
-                                        <button
-                                            className={`px-2 py-0.5 text-xs rounded ${granularity === 'day' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                                            onClick={() => onGranularityChange('day')}
-                                        >
-                                            Día
-                                        </button>
-                                    </div>
-                                )}
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="px-3 py-1 text-sm text-white bg-primary-600 rounded hover:bg-primary-700"
-                                >
-                                    Cerrar
-                                </button>
-                            </div>
-                        </div>
-                        <div style={{ height: 500 }}>
-                            {renderChart()}
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ChartModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                data={modalData}
+                title={title}
+                type={type}
+            />
         </div>
     );
 };

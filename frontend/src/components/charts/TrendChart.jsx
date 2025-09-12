@@ -1,14 +1,16 @@
+import React from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
   LineElement,
   Title,
   Tooltip,
   Legend,
+  PointElement,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import BaseChart from './BaseChart';
 
 ChartJS.register(
   CategoryScale,
@@ -43,31 +45,7 @@ const TrendChart = ({ data, title, color = '#3B82F6' }) => {
     ],
   };
 
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: `Tendencia ${title}`,
-        font: {
-          size: 16,
-          weight: 'bold'
-        }
-      },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: function (context) {
-            return `${context.dataset.label}: ${context.parsed.y}`;
-          }
-        }
-      }
-    },
+  const customOptions = {
     interaction: {
       mode: 'nearest',
       axis: 'x',
@@ -76,23 +54,19 @@ const TrendChart = ({ data, title, color = '#3B82F6' }) => {
     scales: {
       y: {
         beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-        }
-      },
-      x: {
-        grid: {
-          display: false,
-        }
       }
     },
   };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <div style={{ height: '400px' }}>
-        <Line data={chartData} options={options} />
-      </div>
+      <BaseChart
+        type="line"
+        data={chartData}
+        options={customOptions}
+        title={`Tendencia ${title}`}
+        height={400}
+      />
     </div>
   );
 };

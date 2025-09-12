@@ -37,10 +37,7 @@ export default function Login() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background-primary">
-            {/* Fondo con patrón sutil */}
-            <div className="absolute inset-0 bg-gradient-to-br from-background-primary via-background-secondary to-background-primary opacity-50"></div>
-            
-            <div className="relative z-10 w-full max-w-md">
+            <div className="relative w-full max-w-md">
                 {/* Header con branding */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-500 rounded-full mb-4 shadow-lg">

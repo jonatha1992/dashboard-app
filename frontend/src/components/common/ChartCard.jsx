@@ -24,7 +24,7 @@ const ChartCard = ({ title, subtitle, children, alert = null }) => (
                     {alert.message}
                 </div>
             )}
-            <div className="h-64 w-full">
+            <div className="w-full" style={{ height: '300px' }}>
                 {children}
             </div>
         </div>

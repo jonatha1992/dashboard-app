@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Grid, Box, Typography } from '@mui/material';
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import BaseChart from './BaseChart';
+import { abbreviateName } from '../../utils/chartUtils';
 import { useDashboard } from '../../contexts/DashboardContext';
 import { normalizeProvinceKey, getDepartamentoFromItem } from '../../utils/dataUtils';
 import ChartCard from '../common/ChartCard';
@@ -13,15 +13,18 @@ const DynamicChartsByCategory = ({ category }) => {
         return filteredCategorizedData[category] || [];
     }, [filteredCategorizedData, category]);
 
-    // Configuración base para gráficos
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'top',
+    // Configuración base para gráficos (ahora se maneja en BaseChart)
+    const baseChartOptions = {
+        scales: {
+            x: {
+                ticks: {
+                    maxRotation: 45,
+                }
             },
-        },
+            y: {
+                beginAtZero: true,
+            }
+        }
     };
 
     // Gráfico de distribución por provincia
@@ -161,67 +164,91 @@ const DynamicChartsByCategory = ({ category }) => {
     // Mostrar mensaje si no hay datos
     if (!categoryData.length) {
         return (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant="h6" color="textSecondary">
+            <div className="p-8 text-center">
+                <h6 className="text-lg font-semibold text-gray-400 mb-2">
                     No hay datos disponibles para {category}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                </h6>
+                <p className="text-sm text-gray-500">
                     Intenta ajustar los filtros o verifica que haya datos cargados
-                </Typography>
-            </Box>
+                </p>
+            </div>
         );
     }
 
     return (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Gráfico de Provincias */}
             {provinceChart && (
-                <Grid item xs={12} lg={6}>
+                <div>
                     <ChartCard
                         title={`${category} por Provincia`}
                         subtitle={`Distribución geográfica de ${categoryData.length} registros`}
                     >
-                        <Bar data={provinceChart} options={chartOptions} />
+                        <BaseChart
+                            type="bar"
+                            data={provinceChart}
+                            options={baseChartOptions}
+                            title={`${category} por Provincia`}
+                            height={300}
+                        />
                     </ChartCard>
-                </Grid>
+                </div>
             )}
 
             {/* Gráfico de Departamentos */}
             {departmentChart && (
-                <Grid item xs={12} lg={6}>
+                <div>
                     <ChartCard
                         title={`${category} por Departamento`}
                         subtitle="Top departamentos con más actividad"
                     >
-                        <Bar data={departmentChart} options={chartOptions} />
+                        <BaseChart
+                            type="bar"
+                            data={departmentChart}
+                            options={baseChartOptions}
+                            title={`${category} por Departamento`}
+                            height={300}
+                        />
                     </ChartCard>
-                </Grid>
+                </div>
             )}
 
             {/* Tendencia Mensual */}
             {monthlyTrendChart && (
-                <Grid item xs={12} lg={6}>
+                <div>
                     <ChartCard
                         title={`Tendencia Mensual - ${category}`}
                         subtitle="Evolución temporal de la actividad"
                     >
-                        <Line data={monthlyTrendChart} options={chartOptions} />
+                        <BaseChart
+                            type="line"
+                            data={monthlyTrendChart}
+                            options={baseChartOptions}
+                            title={`Tendencia Mensual - ${category}`}
+                            height={300}
+                        />
                     </ChartCard>
-                </Grid>
+                </div>
             )}
 
             {/* Distribución por Unidad */}
             {unitChart && (
-                <Grid item xs={12} lg={6}>
+                <div>
                     <ChartCard
                         title={`${category} por Unidad`}
                         subtitle="Distribución por fuerza interviniente"
                     >
-                        <Doughnut data={unitChart} options={chartOptions} />
+                        <BaseChart
+                            type="pie"
+                            data={unitChart}
+                            options={baseChartOptions}
+                            title={`${category} por Unidad`}
+                            height={300}
+                        />
                     </ChartCard>
-                </Grid>
+                </div>
             )}
-        </Grid>
+        </div>
     );
 };
 
