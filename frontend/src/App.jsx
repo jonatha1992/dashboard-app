@@ -4,6 +4,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Dashboard from './components/dashboard/Dashboard'
 import AdminDashboard from './components/admin/AdminDashboard'
 import ErrorBoundary from './components/common/ErrorBoundary'
+import MainDashboard from './components/views/main/MainDashboard'
+import DetenidosDashboard from './components/views/detenidos/DetenidosDashboard'
+import AfectadosDashboard from './components/views/afectados/AfectadosDashboard'
+import ControladosDashboard from './components/views/controlados/ControladosDashboard'
+import ProcedimientosDashboard from './components/views/procedimientos/ProcedimientosDashboard'
+import IncautacionesDashboard from './components/views/incautaciones/IncautacionesDashboard'
 
 // Componente para proteger rutas - COMENTADO PARA DESARROLLO
 // const ProtectedRoute = ({ children }) => {
@@ -31,7 +37,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard/main" replace />} />
         {/* <Route path="/login" element={<Login />} /> */} {/* Comentado para desarrollo */}
         <Route
           path="/dashboard"
@@ -40,6 +46,54 @@ function App() {
               <Dashboard />
             </ErrorBoundary>
           } // Sin ProtectedRoute para desarrollo
+        />
+        <Route
+          path="/dashboard/main"
+          element={
+            <ErrorBoundary>
+              <MainDashboard />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/dashboard/detenidos"
+          element={
+            <ErrorBoundary>
+              <DetenidosDashboard />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/dashboard/afectados"
+          element={
+            <ErrorBoundary>
+              <AfectadosDashboard />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/dashboard/controlados"
+          element={
+            <ErrorBoundary>
+              <ControladosDashboard />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/dashboard/procedimientos"
+          element={
+            <ErrorBoundary>
+              <ProcedimientosDashboard />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/dashboard/incautaciones"
+          element={
+            <ErrorBoundary>
+              <IncautacionesDashboard />
+            </ErrorBoundary>
+          }
         />
         <Route
           path="/admin"
