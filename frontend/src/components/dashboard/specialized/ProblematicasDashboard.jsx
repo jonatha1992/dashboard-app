@@ -27,7 +27,7 @@ import {
 
 import DetenidosChart from '../../charts/specialized/DetenidosChart';
 import IncautacionesChart from '../../charts/specialized/IncautacionesChart';
-import OperacionesChart from '../../charts/specialized/OperacionesChart';
+// import OperacionesChart from '../../charts/specialized/OperacionesChart';
 import AbatidosChart from '../../charts/specialized/AbatidosChart';
 import TrataChart from '../../charts/specialized/TrataChart';
 import ProcedimientosChart from '../../charts/specialized/ProcedimientosChart';
@@ -260,9 +260,9 @@ const ProblematicasDashboard = () => {
             case 'incautaciones':
                 return <IncautacionesChart {...chartProps} variant="doughnut" />;
             case 'controlados':
-                return <OperacionesChart {...chartProps} variant="radar" />;
+                return <div className="p-4 text-center text-gray-500">Gráfico de operaciones no disponible</div>;
             case 'afectados':
-                return <OperacionesChart {...chartProps} variant="kpis" />;
+                return <div className="p-4 text-center text-gray-500">KPIs de operaciones no disponibles</div>;
             case 'abatidos':
                 return <AbatidosChart {...chartProps} variant="bars" />;
             case 'trata':

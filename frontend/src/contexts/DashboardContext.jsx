@@ -162,9 +162,11 @@ export const DashboardProvider = ({ children }) => {
         
         // Try to load from API first
         try {
+          console.log('🔄 DashboardContext: Intentando cargar desde API...');
           const allCategorizedData = await apiService.getCategorizedData();
           
           if (allCategorizedData && Object.keys(allCategorizedData).length > 0) {
+            console.log('✅ DashboardContext: API data loaded successfully');
             const rawData = allCategorizedData.general || [];
             setData(rawData);
             setCategorizedData(allCategorizedData);
@@ -174,17 +176,23 @@ export const DashboardProvider = ({ children }) => {
             return;
           }
         } catch (apiError) {
-          console.error('Error loading from API:', apiError);
+          console.warn('⚠️ DashboardContext: Error loading from API, falling back to local data:', apiError.message);
           // Fall through to local data loading
         }
         
         // Fallback to local data
         try {
+          console.log('🔄 DashboardContext: Cargando datos locales...');
           const localData = await loadData();
           
+          console.log('📊 DashboardContext: Local data loaded:', localData ? localData.length : 0, 'records');
+          
           if (localData && localData.length > 0) {
+            console.log('✅ DashboardContext: Setting local data to state...');
             setData(localData);
+            
             const categorizedDataLocal = getCategorizedData(localData);
+            console.log('📂 DashboardContext: Categorized data:', Object.keys(categorizedDataLocal).map(k => `${k}: ${categorizedDataLocal[k].length}`).join(', '));
             setCategorizedData(categorizedDataLocal);
             
             // Create basic stats

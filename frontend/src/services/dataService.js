@@ -91,36 +91,21 @@ const processJsonData = (jsonData) => {
     // LOGGING TEMPORAL para diagnosticar pérdida de datos
     console.log(`🔍 DIAGNÓSTICO: Procesando ${jsonData.length} registros iniciales`);
     
-    // Filtrar registros con datos válidos (sin valores "-" o vacíos en campos clave)
+    // Filtrar registros con datos válidos - CRITERIOS SIMPLIFICADOS
     const validData = jsonData.filter((item, index) => {
-        // Criterio 1: Filtrar registros con fechas inválidas
+        // Solo filtrar registros completamente vacíos o con datos obviamente inválidos
         const fecha = item.FECHA || '';
-        if (!fecha || fecha.toString().trim() === '-' || fecha.toString().trim() === '') {
-            if (Math.random() < 0.01) console.log(`❌ Registro ${index} excluido por fecha vacía:`, fecha);
-            return false;
-        }
-        
-        // Criterio 2: Validar formato de fecha dd/MM/yyyy (día/mes/año)
-        if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fecha.toString().trim())) {
-            if (Math.random() < 0.01) console.log(`❌ Registro ${index} excluido por formato de fecha inválido:`, fecha);
-            return false;
-        }
-        
-        // Criterio 3: Filtrar registros sin descripción válida (SIENDO MENOS ESTRICTO)
         const desc = item.DESCRIPCIÓN || item.DESCRIPCION || '';
-        if (!desc || desc.toString().trim() === '-') {
-            if (Math.random() < 0.01) console.log(`❌ Registro ${index} excluido por descripción vacía`);
-            return false;
-        }
-        
-        // Criterio 4: Filtrar registros sin provincia válida (SIENDO MENOS ESTRICTO)
         const provincia = item.PROVINCIA || '';
-        if (!provincia || provincia.toString().trim() === '-') {
-            if (Math.random() < 0.01) console.log(`❌ Registro ${index} excluido por provincia vacía:`, provincia);
-            return false;
+        
+        // Mantener registro si tiene al menos fecha Y (descripción O provincia)
+        const tieneDataMinima = fecha && (desc || provincia);
+        
+        if (!tieneDataMinima && Math.random() < 0.01) {
+            console.log(`❌ Registro ${index} excluido por falta de datos mínimos:`, {fecha, desc, provincia});
         }
         
-        return true;
+        return tieneDataMinima;
     });
 
     console.log(`✅ DIAGNÓSTICO: ${validData.length}/${jsonData.length} registros pasaron validación (${((validData.length/jsonData.length)*100).toFixed(1)}%)`);

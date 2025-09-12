@@ -46,7 +46,11 @@
       "mcp__git__git_commit",
       "mcp__filesystem__edit_file",
       "mcp__filesystem__write_file",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "mcp__filesystem__read_multiple_files",
+      "Bash(rm:*)",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_evaluate"
     ],
     "deny": [],
     "ask": []

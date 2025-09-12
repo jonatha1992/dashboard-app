@@ -141,19 +141,33 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                                 />
                             </div>
                             <div>
-                                <label htmlFor="unidad-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Unidad</label>
-                                <select
-                                    id="unidad-inline"
-                                    value={filters.unidad || ''}
-                                    onChange={(e) => setFilters({ ...filters, unidad: e.target.value })}
-                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 max-w-[120px]"
-                                >
-                                    <option value="">Todas</option>
-                                    {unitList.map((u) => (
-                                        <option key={u} value={u}>{u}</option>
-                                    ))}
-                                </select>
+                            <label htmlFor="departamento-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Depto.</label>
+                            <select
+                            id="departamento-inline"
+                            value={filters.departamento || ''}
+                            onChange={(e) => setFilters({ ...filters, departamento: e.target.value })}
+                            className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 max-w-[120px]"
+                            >
+                            <option value="">Todos</option>
+                            {deptList.map((d) => (
+                            <option key={d} value={d}>{d}</option>
+                            ))}
+                            </select>
                             </div>
+                    <div>
+                        <label htmlFor="unidad-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Unidad</label>
+                        <select
+                            id="unidad-inline"
+                            value={filters.unidad || ''}
+                            onChange={(e) => setFilters({ ...filters, unidad: e.target.value })}
+                            className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 max-w-[120px]"
+                        >
+                            <option value="">Todas</option>
+                            {unitList.map((u) => (
+                                <option key={u} value={u}>{u}</option>
+                            ))}
+                        </select>
+                    </div>
                             <div className="pb-0.5">
                                 <button
                                     onClick={clearAllFilters}

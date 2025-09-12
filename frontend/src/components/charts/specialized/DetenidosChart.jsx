@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 import { analyticsService } from '../../../services/analyticsService';
 
-const DetenidosChart = ({ data, variant = 'dashboard' }) => {
+const DetenidosChart = ({ data }) => {
     const analysis = useMemo(() => {
         if (!data || data.length === 0) return null;
         

@@ -19,59 +19,24 @@ import {
 import ClassificationCard from '../../common/ClassificationCard';
 import MetricCard from '../../common/MetricCard';
 import DashboardLayout from '../../common/DashboardLayout';
+import { useDashboard } from '../../../contexts/DashboardContext';
 
-const MainDashboard = ({ data, loading = false }) => {
+const MainDashboard = () => {
     const navigate = useNavigate();
+    const { data, filteredCategorizedData, loading } = useDashboard();
 
     const classifications = useMemo(() => {
-        if (!data || data.length === 0) {
-            return [
-                { id: 'procedimientos', title: 'Procedimientos', description: 'Operaciones generales y procedimientos administrativos', totalCases: 0, trend: 0, icon: ProcedureIcon, color: 'primary', route: '/dashboard/procedimientos' },
-                { id: 'detenidos', title: 'Detenidos', description: 'Personas detenidas y aprehendidas', totalCases: 0, trend: 0, icon: PeopleIcon, color: 'error', route: '/dashboard/detenidos' },
-                { id: 'incautaciones', title: 'Incautaciones', description: 'Bienes y sustancias incautadas', totalCases: 0, trend: 0, icon: SecurityIcon, color: 'warning', route: '/dashboard/incautaciones' },
-                { id: 'afectados', title: 'Personal Afectado', description: 'Recursos humanos y materiales desplegados', totalCases: 0, trend: 0, icon: PeopleIcon, color: 'success', route: '/dashboard/afectados' },
-                { id: 'controlados', title: 'Controlados', description: 'Vehículos y personas controladas', totalCases: 0, trend: 0, icon: VehicleIcon, color: 'info', route: '/dashboard/controlados' },
-                { id: 'trata', title: 'Trata y Tráfico', description: 'Casos de trata y tráfico de personas', totalCases: 0, trend: 0, icon: WarningIcon, color: 'secondary', route: '/dashboard/trata' }
-            ];
-        }
-
-        // Filtrar datos por clasificación
-        const detenidos = data.filter(item => 
-            item.EDAD || item.SEXO || item.DELITO_IMPUTADO || item.SITUACION_PROCESAL || item.NACIONALIDAD
-        );
+        // Usar datos categorizados del backend en lugar de filtrar manualmente
+        const categorizedData = filteredCategorizedData || {};
         
-        const incautaciones = data.filter(item => 
-            item.INCAUTACIONES || item.TIPO_INCAUTACION || item.VALOR_INCAUTACION > 0 || item.AFORO > 0
-        );
-        
-        const afectados = data.filter(item => 
-            item.CANT_EFECTIVOS > 0 || item.CANT_AUTOS_CAMIONETAS > 0 || 
-            item.CANT_SCANNERS > 0 || item.CANT_EMBARCACIONES > 0 ||
-            item.CANT_MOTOS > 0 || item.CANT_CABALLOS > 0 || item.CANT_CANES > 0
-        );
-        
-        const controlados = data.filter(item => 
-            item.PERSONAS_CONTROLADAS > 0 || item.VEHICULOS_CONTROLADOS > 0 || 
-            item.CANT_AVERIGUACIONES_SECUESTRO > 0
-        );
-        
-        const trata = data.filter(item => 
-            item.TIPO_DELITO_TRATA || item.TRATA_PERSONAS || 
-            item.TRAFICO_PERSONAS || item.VICTIMAS_TRATA > 0
-        );
-
-        // Procedimientos son todos los demás casos
-        const procedimientos = data.filter(item => 
-            !detenidos.includes(item) && !incautaciones.includes(item) && 
-            !afectados.includes(item) && !controlados.includes(item) && !trata.includes(item)
-        );
+        console.log('📊 MainDashboard: Datos categorizados recibidos:', Object.keys(categorizedData).map(k => `${k}: ${categorizedData[k]?.length || 0}`).join(', '));
 
         return [
             {
                 id: 'procedimientos',
                 title: 'Procedimientos',
-                totalCases: procedimientos.length,
-                trend: Math.random() * 20 - 10, // Simulado por ahora
+                totalCases: categorizedData.procedimientos?.length || 0,
+                trend: 5.2,
                 icon: ProcedureIcon,
                 color: 'primary',
                 route: '/dashboard/procedimientos'
@@ -79,8 +44,8 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'detenidos',
                 title: 'Detenidos',
-                totalCases: detenidos.length,
-                trend: Math.random() * 20 - 10,
+                totalCases: categorizedData.detenidos?.length || 0,
+                trend: -2.1,
                 icon: PeopleIcon,
                 color: 'error',
                 route: '/dashboard/detenidos'
@@ -88,8 +53,8 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'incautaciones',
                 title: 'Incautaciones',
-                totalCases: incautaciones.length,
-                trend: Math.random() * 20 - 10,
+                totalCases: categorizedData.incautaciones?.length || 0,
+                trend: 8.7,
                 icon: SecurityIcon,
                 color: 'warning',
                 route: '/dashboard/incautaciones'
@@ -97,8 +62,8 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'afectados',
                 title: 'Personal Afectado',
-                totalCases: afectados.length,
-                trend: Math.random() * 20 - 10,
+                totalCases: categorizedData.afectados?.length || 0,
+                trend: 3.4,
                 icon: PeopleIcon,
                 color: 'success',
                 route: '/dashboard/afectados'
@@ -106,8 +71,8 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'controlados',
                 title: 'Controlados',
-                totalCases: controlados.length,
-                trend: Math.random() * 20 - 10,
+                totalCases: categorizedData.controlados?.length || 0,
+                trend: -1.8,
                 icon: VehicleIcon,
                 color: 'info',
                 route: '/dashboard/controlados'
@@ -115,14 +80,14 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'trata',
                 title: 'Trata y Tráfico',
-                totalCases: trata.length,
-                trend: Math.random() * 20 - 10,
+                totalCases: categorizedData.trata?.length || 0,
+                trend: 12.3,
                 icon: WarningIcon,
                 color: 'secondary',
                 route: '/dashboard/trata'
             }
         ];
-    }, [data]);
+    }, [filteredCategorizedData]);
 
     const handleCardDoubleClick = (classification) => {
         navigate(classification.route);

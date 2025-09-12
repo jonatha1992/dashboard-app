@@ -10,6 +10,8 @@ import AfectadosDashboard from './components/views/afectados/AfectadosDashboard'
 import ControladosDashboard from './components/views/controlados/ControladosDashboard'
 import ProcedimientosDashboard from './components/views/procedimientos/ProcedimientosDashboard'
 import IncautacionesDashboard from './components/views/incautaciones/IncautacionesDashboard'
+import AbatidosDashboard from './components/views/abatidos/AbatidosDashboard'
+import TrataDashboard from './components/views/trata/TrataDashboard'
 
 // Componente para proteger rutas - COMENTADO PARA DESARROLLO
 // const ProtectedRoute = ({ children }) => {
@@ -92,6 +94,22 @@ function App() {
           element={
             <ErrorBoundary>
               <IncautacionesDashboard />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/dashboard/abatidos"
+          element={
+            <ErrorBoundary>
+              <AbatidosDashboard />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/dashboard/trata"
+          element={
+            <ErrorBoundary>
+              <TrataDashboard />
             </ErrorBoundary>
           }
         />

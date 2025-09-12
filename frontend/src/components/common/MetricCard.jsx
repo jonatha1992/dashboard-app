@@ -69,7 +69,7 @@ const MetricCard = ({
                 </Box>
 
                 {/* Trend indicator */}
-                {trend !== undefined && (
+                {trend !== undefined && trend !== null && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                         {trend >= 0 ? (
                             <TrendingUpIcon sx={{ color: 'success.main', mr: 0.5, fontSize: 14 }} />
@@ -89,7 +89,7 @@ const MetricCard = ({
                 )}
 
                 {/* Progress bar */}
-                {progress !== undefined && (
+                {progress !== undefined && progress !== null && (
                     <Box sx={{ mb: 0.5 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                             <Typography variant="caption" color="text.secondary">

@@ -191,8 +191,11 @@ class ApiService {
   // Get all categorized data at once (sin recursión)
   async getCategorizedData() {
     try {
-      const [general, detenidos, incautaciones, trata, fallecidos, abatidos, controlados, afectados] = await Promise.all([
-        this.getDataRaw(), // Tabla maestra
+      // Primero probar solo el endpoint maestro - si falla, es que no hay backend
+      const general = await this.getDataRaw();
+      
+      // Si llegamos aquí, el backend está funcionando, intentar el resto
+      const [detenidos, incautaciones, trata, fallecidos, abatidos, controlados, afectados] = await Promise.all([
         this.getDetenidos(),
         this.getIncautaciones(), 
         this.getTrata(),
@@ -202,6 +205,7 @@ class ApiService {
         this.getFilteredAfectados()
       ]);
 
+      console.log('✅ API getCategorizedData: Backend funcionando, datos cargados');
       return {
         general: general || [],
         detenidos: detenidos || [],
@@ -214,18 +218,9 @@ class ApiService {
         procedimientos: general || [],
       };
     } catch (error) {
-      console.error('Error obteniendo datos categorizados:', error);
-      return {
-        general: [],
-        detenidos: [],
-        incautaciones: [],
-        trata: [],
-        fallecidos: [],
-        abatidos: [],
-        controlados: [],
-        afectados: [],
-        procedimientos: []
-      };
+      console.error('❌ API getCategorizedData: Backend no disponible:', error.message);
+      // Re-lanzar el error para que DashboardContext pueda usar el fallback local
+      throw error;
     }
   }
 

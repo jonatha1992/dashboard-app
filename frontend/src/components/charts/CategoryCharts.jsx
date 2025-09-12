@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useDashboard } from '../../contexts/DashboardContext';
 import BaseChart from './BaseChart';
 import StatCard from '../dashboard/StatCard';
-import DataTable from '../dashboard/DataTable';
 import { getChartData } from '../../services/dataService';
 
 const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = true, compactMode = false, defaultView = 'monthly' }) => {
@@ -442,7 +441,10 @@ const CategoryCharts = ({ data, categoryName, title, icon, color, showTable = tr
                     <h3 className="mb-4 text-lg font-semibold text-gray-800">
                         Registros de {title} ({data.length} total)
                     </h3>
-                    <DataTable data={data} />
+                    <div className="p-4 text-center text-gray-500">
+                    <p>Tabla de datos no disponible</p>
+                    <p className="text-sm">({data.length} registros)</p>
+                </div>
                 </div>
             )}
         </div>

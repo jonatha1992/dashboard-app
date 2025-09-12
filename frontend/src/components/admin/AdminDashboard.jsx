@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDashboard } from '../../contexts/DashboardContext';
 import FilterPanel from '../dashboard/FilterPanel';
-import SystemStatusView from '../dashboard/SystemStatusView';
 import FilteringStatsDashboard from '../dashboard/FilteringStatsDashboard';
-import FilteredDataTables from '../dashboard/FilteredDataTables';
 import MapComponent from '../map/MapComponent';
 import CategoryCharts from '../charts/CategoryCharts';
 
@@ -224,7 +222,8 @@ export default function AdminDashboard() {
 
           {activeSection === 'estado' && (
             <div className="bg-white rounded-lg shadow-md p-4">
-              <SystemStatusView />
+              <h3 className="text-lg font-semibold mb-4">Estado del Sistema</h3>
+              <p className="text-gray-600">Información del estado del sistema no disponible.</p>
             </div>
           )}
 
@@ -236,7 +235,8 @@ export default function AdminDashboard() {
 
           {activeSection === 'tablas' && (
             <div className="bg-white rounded-lg shadow-md p-4">
-              <FilteredDataTables />
+              <h3 className="text-lg font-semibold mb-4">Tablas Filtradas</h3>
+              <p className="text-gray-600">Vista de tablas filtradas no disponible.</p>
             </div>
           )}
         </main>

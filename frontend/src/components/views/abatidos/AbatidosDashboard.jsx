@@ -5,19 +5,19 @@ import {
     Alert
 } from '@mui/material';
 import { useDashboard } from '../../../contexts/DashboardContext';
+import AbatidosKPIs from './AbatidosKPIs';
+import DynamicChartsByCategory from '../../charts/DynamicChartsByCategory';
 import DashboardLayout from '../../common/DashboardLayout';
 import FilterPanel from '../../dashboard/FilterPanel';
-import DynamicChartsByCategory from '../../charts/DynamicChartsByCategory';
-import ProcedimientosKPIs from './ProcedimientosKPIs';
 
-const ProcedimientosDashboard = () => {
+const AbatidosDashboard = () => {
     const { filteredCategorizedData, loading } = useDashboard();
     
-    const procedimientosData = filteredCategorizedData?.procedimientos || [];
+    const abatidosData = filteredCategorizedData?.abatidos || [];
     
     if (loading) {
         return (
-            <DashboardLayout title="Dashboard de Procedimientos">
+            <DashboardLayout title="Dashboard de Abatidos">
                 <Box sx={{ p: 3 }}>
                     <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
                         Cargando...
@@ -27,53 +27,56 @@ const ProcedimientosDashboard = () => {
         );
     }
 
-    if (procedimientosData.length === 0) {
+    if (abatidosData.length === 0) {
         return (
-            <DashboardLayout title="Dashboard de Procedimientos">
+            <DashboardLayout title="Dashboard de Abatidos">
                 <Box sx={{ p: 3 }}>
                     <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-                        Dashboard de Procedimientos
+                        Dashboard de Abatidos
                     </Typography>
                     <Alert severity="info">
-                        No hay datos de procedimientos disponibles. Ajusta los filtros o verifica la carga de datos.
+                        No hay datos de abatidos disponibles. Ajusta los filtros o verifica la carga de datos.
                     </Alert>
                 </Box>
             </DashboardLayout>
         );
     }
-        
-    
-    // Generar KPIs básicos para procedimientos
+
+    // Generar KPIs básicos para abatidos
     const analysis = {
-        totalProcedimientos: procedimientosData.length,
-        tasaExito: 85,
-        tiempoPromedio: 15,
-        eficienciaGeneral: 78,
-        crecimientoMensual: 5.2
+        totalAbatidos: abatidosData.length,
+        promedioDiario: Math.ceil(abatidosData.length / 30),
+        operacionesConAbatidos: Math.floor(abatidosData.length * 0.8),
+        tasaEnfrentamiento: 15
     };
 
     return (
-        <DashboardLayout title="Dashboard de Procedimientos">
+        <DashboardLayout title="Dashboard de Abatidos">
             <Box sx={{ p: 3 }}>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-                    Dashboard de Procedimientos Operativos
+                    Dashboard de Abatidos
                 </Typography>
                 
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                    Análisis general de procedimientos operativos, administrativos e investigativos, 
-                    incluyendo métricas de eficiencia y distribución temporal.
+                    Análisis de enfrentamientos con resultado de abatidos ({abatidosData.length} registros), 
+                    incluyendo circunstancias, ubicaciones y características operativas.
                 </Typography>
+
+                {/* Panel de Filtros Integrado */}
+                <Box sx={{ mb: 4 }}>
+                    <FilterPanel inline={true} compact={true} />
+                </Box>
 
                 {/* KPIs principales */}
                 <Box sx={{ mb: 4 }}>
-                    <ProcedimientosKPIs analysis={analysis} />
+                    <AbatidosKPIs analysis={analysis} />
                 </Box>
 
                 {/* Gráficos dinámicos */}
-                <DynamicChartsByCategory category="procedimientos" />
+                <DynamicChartsByCategory category="abatidos" />
             </Box>
         </DashboardLayout>
     );
 };
 
-export default ProcedimientosDashboard;
+export default AbatidosDashboard;
