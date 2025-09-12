@@ -14,25 +14,24 @@ import {
 
 const ClassificationCard = ({ 
     title, 
-    description, 
     totalCases, 
     trend, 
     icon: Icon, 
     color = 'primary', 
-    onDoubleClick
+    onClick
 }) => {
     const theme = useTheme();
 
-    const handleDoubleClick = () => {
-        if (onDoubleClick) {
-            onDoubleClick();
+    const handleClick = () => {
+        if (onClick) {
+            onClick();
         }
     };
 
     return (
         <Card 
             elevation={2}
-            onDoubleClick={handleDoubleClick}
+            onClick={handleClick}
             sx={{ 
                 height: '100%',
                 cursor: 'pointer',
@@ -51,9 +50,6 @@ const ClassificationCard = ({
                     <Box sx={{ flex: 1 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 0.5, color: 'text.primary' }}>
                             {title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.2 }}>
-                            {description}
                         </Typography>
                     </Box>
                     <Box

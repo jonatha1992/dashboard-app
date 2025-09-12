@@ -70,7 +70,6 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'procedimientos',
                 title: 'Procedimientos',
-                description: 'Operaciones generales y procedimientos administrativos',
                 totalCases: procedimientos.length,
                 trend: Math.random() * 20 - 10, // Simulado por ahora
                 icon: ProcedureIcon,
@@ -80,7 +79,6 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'detenidos',
                 title: 'Detenidos',
-                description: 'Personas detenidas y aprehendidas',
                 totalCases: detenidos.length,
                 trend: Math.random() * 20 - 10,
                 icon: PeopleIcon,
@@ -90,7 +88,6 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'incautaciones',
                 title: 'Incautaciones',
-                description: 'Bienes y sustancias incautadas',
                 totalCases: incautaciones.length,
                 trend: Math.random() * 20 - 10,
                 icon: SecurityIcon,
@@ -100,7 +97,6 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'afectados',
                 title: 'Personal Afectado',
-                description: 'Recursos humanos y materiales desplegados',
                 totalCases: afectados.length,
                 trend: Math.random() * 20 - 10,
                 icon: PeopleIcon,
@@ -110,7 +106,6 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'controlados',
                 title: 'Controlados',
-                description: 'Vehículos y personas controladas',
                 totalCases: controlados.length,
                 trend: Math.random() * 20 - 10,
                 icon: VehicleIcon,
@@ -120,7 +115,6 @@ const MainDashboard = ({ data, loading = false }) => {
             {
                 id: 'trata',
                 title: 'Trata y Tráfico',
-                description: 'Casos de trata y tráfico de personas',
                 totalCases: trata.length,
                 trend: Math.random() * 20 - 10,
                 icon: WarningIcon,
@@ -134,9 +128,6 @@ const MainDashboard = ({ data, loading = false }) => {
         navigate(classification.route);
     };
 
-    const handleCardNavigate = (classification) => {
-        navigate(classification.route);
-    };
 
     if (loading) {
         return (
@@ -159,7 +150,7 @@ const MainDashboard = ({ data, loading = false }) => {
                         Resumen ejecutivo de todas las clasificaciones operativas
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        Haga doble clic en cualquier tarjeta para acceder al dashboard especializado
+                        Haga clic en cualquier tarjeta para acceder al dashboard especializado
                     </Typography>
                 </Box>
 
@@ -168,12 +159,11 @@ const MainDashboard = ({ data, loading = false }) => {
                     <Grid item xs={12} sm={6} md={4} key={classification.id}>
                         <ClassificationCard
                             title={classification.title}
-                            description={classification.description}
                             totalCases={classification.totalCases}
                             trend={classification.trend}
                             icon={classification.icon}
                             color={classification.color}
-                            onDoubleClick={() => handleCardDoubleClick(classification)}
+                            onClick={() => handleCardDoubleClick(classification)}
                         />
                     </Grid>
                 ))}

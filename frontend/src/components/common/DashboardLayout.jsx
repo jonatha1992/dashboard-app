@@ -15,7 +15,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const DashboardLayout = ({ children, title, showBackButton = true }) => {
+const DashboardLayout = ({ children, showBackButton = true }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -56,7 +56,7 @@ const DashboardLayout = ({ children, title, showBackButton = true }) => {
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-            <AppBar position="static" elevation={1}>
+            <AppBar position="fixed" elevation={1} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
                 <Toolbar>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         Sistema de Análisis Operativo
@@ -82,6 +82,9 @@ const DashboardLayout = ({ children, title, showBackButton = true }) => {
                     </Button>
                 </Toolbar>
             </AppBar>
+
+            {/* Spacer para compensar el AppBar fijo */}
+            <Toolbar />
 
             {breadcrumbs.length > 1 && (
                 <Box sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
