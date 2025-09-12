@@ -1,9 +1,4 @@
 import React from 'react';
-import {
-    Box,
-    Typography,
-    Alert
-} from '@mui/material';
 import { useDashboard } from '../../../contexts/DashboardContext';
 import ControladosKPIs from './ControladosKPIs';
 import DynamicChartsByCategory from '../../charts/DynamicChartsByCategory';
@@ -18,11 +13,9 @@ const ControladosDashboard = () => {
     if (loading) {
         return (
             <DashboardLayout title="Dashboard de Controlados">
-                <Box sx={{ p: 3 }}>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-                        Cargando...
-                    </Typography>
-                </Box>
+                <div className="p-6">
+                    <div className="text-white">Cargando...</div>
+                </div>
             </DashboardLayout>
         );
     }
@@ -30,14 +23,11 @@ const ControladosDashboard = () => {
     if (controladosData.length === 0) {
         return (
             <DashboardLayout title="Dashboard de Controlados">
-                <Box sx={{ p: 3 }}>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-                        Dashboard de Controlados
-                    </Typography>
-                    <Alert severity="info">
+                <div className="p-6">
+                    <div className="bg-blue-500/20 text-blue-300 border border-blue-500/30 p-4 rounded-lg">
                         No hay datos de controles disponibles. Ajusta los filtros o verifica la carga de datos.
-                    </Alert>
-                </Box>
+                    </div>
+                </div>
             </DashboardLayout>
         );
     }
@@ -53,29 +43,20 @@ const ControladosDashboard = () => {
 
     return (
         <DashboardLayout title="Dashboard de Controlados">
-            <Box sx={{ p: 3 }}>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-                    Dashboard de Controles
-                </Typography>
-                
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                    Análisis de controles preventivos y operativos ({controladosData.length} registros), 
-                    incluyendo controles vehiculares, de personas y averiguaciones de antecedentes.
-                </Typography>
-
+            <div className="p-6">
                 {/* Panel de Filtros Integrado */}
-                <Box sx={{ mb: 4 }}>
+                <div className="mb-8">
                     <FilterPanel inline={true} compact={true} />
-                </Box>
+                </div>
 
                 {/* KPIs principales */}
-                <Box sx={{ mb: 4 }}>
+                <div className="mb-8">
                     <ControladosKPIs analysis={analysis} />
-                </Box>
+                </div>
 
                 {/* Gráficos dinámicos */}
                 <DynamicChartsByCategory category="controlados" />
-            </Box>
+            </div>
         </DashboardLayout>
     );
 };

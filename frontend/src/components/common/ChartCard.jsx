@@ -1,33 +1,34 @@
 import React from 'react';
-import {
-    Box,
-    Typography,
-    Card,
-    CardContent,
-    Alert,
-    CardHeader
-} from '@mui/material';
 
 const ChartCard = ({ title, subtitle, children, alert = null }) => (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CardHeader
-            title={title}
-            subheader={subtitle}
-            sx={{ pb: 0.5, pt: 1.5, px: 2 }}
-            titleTypographyProps={{ variant: 'subtitle1', fontWeight: 'bold' }}
-            subheaderTypographyProps={{ variant: 'caption' }}
-        />
-        <CardContent sx={{ flexGrow: 1, pt: 0.5, px: 2, pb: 2 }}>
-            {alert && (
-                <Alert severity={alert.severity} sx={{ mb: 1, py: 0.5 }}>
-                    <Typography variant="caption">{alert.message}</Typography>
-                </Alert>
+    <div className="h-full flex flex-col bg-background-secondary border border-dark-600 rounded-lg shadow-card">
+        <div className="px-4 py-3 border-b border-dark-600">
+            <h3 className="text-lg font-semibold text-white mb-1">
+                {title}
+            </h3>
+            {subtitle && (
+                <p className="text-sm text-gray-400">
+                    {subtitle}
+                </p>
             )}
-            <Box sx={{ height: 250, width: '100%' }}>
+        </div>
+        <div className="flex-grow p-4">
+            {alert && (
+                <div className={`
+                    mb-3 p-2 rounded text-sm
+                    ${alert.severity === 'error' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : ''}
+                    ${alert.severity === 'warning' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' : ''}
+                    ${alert.severity === 'info' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : ''}
+                    ${alert.severity === 'success' ? 'bg-green-500/20 text-green-300 border border-green-500/30' : ''}
+                `}>
+                    {alert.message}
+                </div>
+            )}
+            <div className="h-64 w-full">
                 {children}
-            </Box>
-        </CardContent>
-    </Card>
+            </div>
+        </div>
+    </div>
 );
 
 export default ChartCard;

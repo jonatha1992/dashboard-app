@@ -1,18 +1,4 @@
 import React from 'react';
-import {
-    Box,
-    AppBar,
-    Toolbar,
-    Typography,
-    Button,
-    Container,
-    Breadcrumbs,
-    Link
-} from '@mui/material';
-import {
-    Home as HomeIcon,
-    ArrowBack as ArrowBackIcon
-} from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const DashboardLayout = ({ children, showBackButton = true }) => {
@@ -26,7 +12,7 @@ const DashboardLayout = ({ children, showBackButton = true }) => {
     const getBreadcrumbs = () => {
         const pathSegments = location.pathname.split('/').filter(Boolean);
         const breadcrumbs = [
-            { label: 'Dashboard Principal', path: '/dashboard/main', icon: HomeIcon }
+            { label: 'Dashboard Principal', path: '/dashboard/main', icon: true }
         ];
 
         if (pathSegments.length > 2) {
@@ -55,76 +41,80 @@ const DashboardLayout = ({ children, showBackButton = true }) => {
     const breadcrumbs = getBreadcrumbs();
 
     return (
-        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-            <AppBar position="fixed" elevation={1} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-                <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        Sistema de Análisis Operativo
-                    </Typography>
-                    
-                    {showBackButton && location.pathname !== '/dashboard/main' && (
-                        <Button
-                            color="inherit"
-                            startIcon={<ArrowBackIcon />}
-                            onClick={handleBackToMain}
-                            sx={{ mr: 2 }}
-                        >
-                            Volver al Principal
-                        </Button>
-                    )}
+        <div className="min-h-screen bg-background-primary">
+            {/* Header Navigation */}
+            <header className="bg-background-secondary shadow-lg border-b border-dark-600 sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center h-16">
+                        <div className="flex items-center">
+                            <h1 className="text-xl font-semibold text-white">
+                                Sistema de Análisis Operativo
+                            </h1>
+                        </div>
+                        
+                        <div className="flex items-center space-x-4">
+                            {showBackButton && location.pathname !== '/dashboard/main' && (
+                                <button
+                                    onClick={handleBackToMain}
+                                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-background-hover rounded-lg transition-colors duration-200"
+                                >
+                                    <span className="mr-2">←</span>
+                                    Volver al Principal
+                                </button>
+                            )}
 
-                    <Button
-                        color="inherit"
-                        startIcon={<HomeIcon />}
-                        onClick={handleBackToMain}
-                    >
-                        Inicio
-                    </Button>
-                </Toolbar>
-            </AppBar>
+                            <button
+                                onClick={handleBackToMain}
+                                className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-background-hover rounded-lg transition-colors duration-200"
+                            >
+                                <span className="mr-2">🏠</span>
+                                Inicio
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-            {/* Spacer para compensar el AppBar fijo */}
-            <Toolbar />
-
+            {/* Breadcrumbs */}
             {breadcrumbs.length > 1 && (
-                <Box sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
-                    <Container maxWidth="xl" sx={{ py: 1 }}>
-                        <Breadcrumbs aria-label="breadcrumb">
+                <div className="bg-background-secondary border-b border-dark-600">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                        <nav className="flex items-center space-x-2 text-sm">
                             {breadcrumbs.map((crumb, index) => {
-                                const Icon = crumb.icon;
                                 const isLast = index === breadcrumbs.length - 1;
 
-                                return isLast ? (
-                                    <Typography key={crumb.path} color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
-                                        {Icon && <Icon sx={{ mr: 0.5, fontSize: 20 }} />}
-                                        {crumb.label}
-                                    </Typography>
-                                ) : (
-                                    <Link
-                                        key={crumb.path}
-                                        underline="hover"
-                                        color="inherit"
-                                        onClick={() => navigate(crumb.path)}
-                                        sx={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        {Icon && <Icon sx={{ mr: 0.5, fontSize: 20 }} />}
-                                        {crumb.label}
-                                    </Link>
+                                return (
+                                    <React.Fragment key={crumb.path}>
+                                        {index > 0 && (
+                                            <span className="text-gray-500">/</span>
+                                        )}
+                                        {isLast ? (
+                                            <span className="flex items-center text-white font-medium">
+                                                {crumb.icon && <span className="mr-1">🏠</span>}
+                                                {crumb.label}
+                                            </span>
+                                        ) : (
+                                            <button
+                                                onClick={() => navigate(crumb.path)}
+                                                className="flex items-center text-gray-400 hover:text-white transition-colors duration-200"
+                                            >
+                                                {crumb.icon && <span className="mr-1">🏠</span>}
+                                                {crumb.label}
+                                            </button>
+                                        )}
+                                    </React.Fragment>
                                 );
                             })}
-                        </Breadcrumbs>
-                    </Container>
-                </Box>
+                        </nav>
+                    </div>
+                </div>
             )}
 
-            <Container maxWidth="xl" sx={{ py: 0 }}>
+            {/* Main Content */}
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {children}
-            </Container>
-        </Box>
+            </main>
+        </div>
     );
 };
 

@@ -1,134 +1,135 @@
 import React from 'react';
-import {
-    Box,
-    Typography,
-    Card,
-    CardContent,
-    LinearProgress,
-    Tooltip,
-    useTheme
-} from '@mui/material';
-import {
-    TrendingUp as TrendingUpIcon,
-    TrendingDown as TrendingDownIcon,
-    Info as InfoIcon
-} from '@mui/icons-material';
 
 const MetricCard = ({ 
     title, 
     value, 
     subtitle, 
-    icon: Icon, 
-    color = 'primary', 
+    icon, 
+    color = 'blue', 
     trend = null,
     progress = null,
     tooltip = null
 }) => {
-    const theme = useTheme();
+    const getColorClasses = (color) => {
+        const colorMap = {
+            blue: {
+                bg: 'bg-blue-500/10',
+                border: 'border-blue-500/30',
+                text: 'text-blue-400',
+                icon: 'bg-blue-500',
+                progress: 'bg-blue-500'
+            },
+            red: {
+                bg: 'bg-red-500/10',
+                border: 'border-red-500/30',
+                text: 'text-red-400',
+                icon: 'bg-red-500',
+                progress: 'bg-red-500'
+            },
+            yellow: {
+                bg: 'bg-yellow-500/10',
+                border: 'border-yellow-500/30',
+                text: 'text-yellow-400',
+                icon: 'bg-yellow-500',
+                progress: 'bg-yellow-500'
+            },
+            green: {
+                bg: 'bg-green-500/10',
+                border: 'border-green-500/30',
+                text: 'text-green-400',
+                icon: 'bg-green-500',
+                progress: 'bg-green-500'
+            },
+            cyan: {
+                bg: 'bg-cyan-500/10',
+                border: 'border-cyan-500/30',
+                text: 'text-cyan-400',
+                icon: 'bg-cyan-500',
+                progress: 'bg-cyan-500'
+            },
+            purple: {
+                bg: 'bg-purple-500/10',
+                border: 'border-purple-500/30',
+                text: 'text-purple-400',
+                icon: 'bg-purple-500',
+                progress: 'bg-purple-500'
+            }
+        };
+        return colorMap[color] || colorMap.blue;
+    };
+
+    const colors = getColorClasses(color);
 
     return (
-        <Card
-            sx={{
-                height: '100%',
-                background: `linear-gradient(135deg, ${theme.palette[color].light}15, ${theme.palette[color].main}25)`,
-                border: `1px solid ${theme.palette[color].light}`,
-                position: 'relative',
-                overflow: 'visible',
-                transition: 'all 0.3s ease-in-out',
-                '&:hover': {
-                    transform: 'translateY(-1px)',
-                    boxShadow: theme.shadows[2],
-                }
-            }}
-        >
-            <CardContent sx={{ p: 1.5, pb: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
-                    <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, color: 'text.primary' }}>
-                            {title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                            {subtitle}
-                        </Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: theme.palette[color].main }}>
-                            {value}
-                        </Typography>
-                    </Box>
-                    
-                    <Box
-                        sx={{
-                            p: 1,
-                            borderRadius: 1.5,
-                            backgroundColor: theme.palette[color].main,
-                            color: 'white',
-                            ml: 1
-                        }}
-                    >
-                        <Icon sx={{ fontSize: 20 }} />
-                    </Box>
-                </Box>
+        <div className={`
+            h-full relative transition-all duration-300 ease-in-out
+            ${colors.bg} ${colors.border} border rounded-lg p-4 shadow-card
+            hover:-translate-y-1 hover:shadow-card-hover
+        `}>
+            <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                    <h4 className="font-semibold text-white text-sm mb-1">
+                        {title}
+                    </h4>
+                    <p className="text-xs text-gray-400 mb-2">
+                        {subtitle}
+                    </p>
+                    <div className={`text-xl font-bold ${colors.text}`}>
+                        {value}
+                    </div>
+                </div>
+                
+                <div className={`
+                    p-2 rounded-lg ${colors.icon} text-white ml-2 text-lg
+                `}>
+                    {icon}
+                </div>
+            </div>
 
-                {/* Trend indicator */}
-                {trend !== undefined && trend !== null && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                        {trend >= 0 ? (
-                            <TrendingUpIcon sx={{ color: 'success.main', mr: 0.5, fontSize: 14 }} />
-                        ) : (
-                            <TrendingDownIcon sx={{ color: 'error.main', mr: 0.5, fontSize: 14 }} />
-                        )}
-                        <Typography 
-                            variant="caption" 
-                            sx={{ 
-                                color: trend >= 0 ? 'success.main' : 'error.main',
-                                fontWeight: 'medium'
-                            }}
-                        >
-                            {trend >= 0 ? '+' : ''}{trend.toFixed(1)}%
-                        </Typography>
-                    </Box>
-                )}
+            {/* Trend indicator */}
+            {trend !== undefined && trend !== null && (
+                <div className="flex items-center mb-2">
+                    {trend >= 0 ? (
+                        <span className="text-green-400 mr-1 text-sm">↗</span>
+                    ) : (
+                        <span className="text-red-400 mr-1 text-sm">↘</span>
+                    )}
+                    <span className={`
+                        text-xs font-medium
+                        ${trend >= 0 ? 'text-green-400' : 'text-red-400'}
+                    `}>
+                        {trend >= 0 ? '+' : ''}{trend.toFixed(1)}%
+                    </span>
+                </div>
+            )}
 
-                {/* Progress bar */}
-                {progress !== undefined && progress !== null && (
-                    <Box sx={{ mb: 0.5 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="caption" color="text.secondary">
-                                {progress}%
-                            </Typography>
-                        </Box>
-                        <LinearProgress
-                            variant="determinate"
-                            value={progress}
-                            sx={{
-                                height: 4,
-                                borderRadius: 2,
-                                backgroundColor: `${theme.palette[color].main}20`,
-                                '& .MuiLinearProgress-bar': {
-                                    backgroundColor: theme.palette[color].main,
-                                    borderRadius: 2,
-                                }
-                            }}
-                        />
-                    </Box>
-                )}
+            {/* Progress bar */}
+            {progress !== undefined && progress !== null && (
+                <div className="mb-2">
+                    <div className="flex justify-between mb-1">
+                        <span className="text-xs text-gray-400">
+                            {progress}%
+                        </span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-1">
+                        <div 
+                            className={`h-1 rounded-full ${colors.progress}`}
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                </div>
+            )}
 
-                {/* Tooltip */}
-                {tooltip && (
-                    <Tooltip title={tooltip} placement="top">
-                        <InfoIcon 
-                            sx={{ 
-                                position: 'absolute', 
-                                top: 6, 
-                                right: 6, 
-                                fontSize: 14, 
-                                color: 'text.secondary',
-                                cursor: 'help'
-                            }} 
-                        />
-                    </Tooltip>
-                )}
-            </CardContent>
-        </Card>
+            {/* Tooltip */}
+            {tooltip && (
+                <div 
+                    className="absolute top-2 right-2 text-gray-400 cursor-help text-sm"
+                    title={tooltip}
+                >
+                    ℹ️
+                </div>
+            )}
+        </div>
     );
 };
 

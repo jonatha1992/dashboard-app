@@ -1,9 +1,4 @@
 import React from 'react';
-import {
-    Box,
-    Typography,
-    Alert
-} from '@mui/material';
 import { useDashboard } from '../../../contexts/DashboardContext';
 import TrataKPIs from './TrataKPIs';
 import DynamicChartsByCategory from '../../charts/DynamicChartsByCategory';
@@ -18,11 +13,9 @@ const TrataDashboard = () => {
     if (loading) {
         return (
             <DashboardLayout title="Dashboard de Trata">
-                <Box sx={{ p: 3 }}>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-                        Cargando...
-                    </Typography>
-                </Box>
+                <div className="p-6">
+                    <div className="text-white">Cargando...</div>
+                </div>
             </DashboardLayout>
         );
     }
@@ -30,14 +23,11 @@ const TrataDashboard = () => {
     if (trataData.length === 0) {
         return (
             <DashboardLayout title="Dashboard de Trata">
-                <Box sx={{ p: 3 }}>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-                        Dashboard de Trata de Personas
-                    </Typography>
-                    <Alert severity="info">
+                <div className="p-6">
+                    <div className="bg-blue-500/20 text-blue-300 border border-blue-500/30 p-4 rounded-lg">
                         No hay datos de trata de personas disponibles. Ajusta los filtros o verifica la carga de datos.
-                    </Alert>
-                </Box>
+                    </div>
+                </div>
             </DashboardLayout>
         );
     }
@@ -53,29 +43,20 @@ const TrataDashboard = () => {
 
     return (
         <DashboardLayout title="Dashboard de Trata">
-            <Box sx={{ p: 3 }}>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-                    Dashboard de Trata de Personas
-                </Typography>
-                
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                    Análisis de casos de trata de personas ({trataData.length} registros), 
-                    incluyendo modalidades, víctimas rescatadas y patrones territoriales.
-                </Typography>
-
+            <div className="p-6">
                 {/* Panel de Filtros Integrado */}
-                <Box sx={{ mb: 4 }}>
+                <div className="mb-8">
                     <FilterPanel inline={true} compact={true} />
-                </Box>
+                </div>
 
                 {/* KPIs principales */}
-                <Box sx={{ mb: 4 }}>
+                <div className="mb-8">
                     <TrataKPIs analysis={analysis} />
-                </Box>
+                </div>
 
                 {/* Gráficos dinámicos */}
                 <DynamicChartsByCategory category="trata" />
-            </Box>
+            </div>
         </DashboardLayout>
     );
 };

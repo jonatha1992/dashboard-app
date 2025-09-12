@@ -88,97 +88,88 @@ export default function FilterPanel({ inline = false, className = '', compact = 
         if (compact) {
             return (
                 <div className={`flex items-center gap-2 ${className}`}>
-                    <button
-                        onClick={toggleFilterPanel}
-                        className="px-3 py-1.5 text-xs font-medium bg-gray-200 hover:bg-gray-300 rounded-md"
-                        title="Mostrar/Ocultar filtros"
-                    >
-                        {isOpen ? 'Ocultar Filtros' : 'Filtros'}
-                    </button>
                     {hasActiveFilters && (
-                        <span className="px-2 py-0.5 text-[10px] bg-blue-100 text-blue-700 rounded-full">
-                            Activos
+                        <span className="px-2 py-0.5 text-[10px] bg-green-500 text-white rounded-full">
+                            Filtros Activos
                         </span>
                     )}
-                    {isOpen && (
-                        <div className="flex items-end gap-2">
-                            <div>
-                                <label htmlFor="province-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Prov.</label>
-                                <select
-                                    id="province-inline"
-                                    value={filters.province || ''}
-                                    onChange={handleProvinceChange}
-                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Todas</option>
-                                    {ARGENTINE_PROVINCES.map((province) => (
-                                        <option key={province} value={province}>{province}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label htmlFor="fromDate-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Desde</label>
-                                <input
-                                    id="fromDate-inline"
-                                    type="date"
-                                    value={filters.fromDate || ''}
-                                    min={dateLimits.min || undefined}
-                                    max={dateLimits.max || undefined}
-                                    onChange={handleFromDateChange}
-                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="toDate-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Hasta</label>
-                                <input
-                                    id="toDate-inline"
-                                    type="date"
-                                    value={filters.toDate || ''}
-                                    min={dateLimits.min || undefined}
-                                    max={dateLimits.max || undefined}
-                                    onChange={handleToDateChange}
-                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-                            <div>
-                            <label htmlFor="departamento-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Depto.</label>
+                    <div className="flex items-end gap-2">
+                        <div>
+                            <label htmlFor="province-inline" className="block mb-1 text-[10px] font-medium text-white">Prov.</label>
                             <select
-                            id="departamento-inline"
-                            value={filters.departamento || ''}
-                            onChange={(e) => setFilters({ ...filters, departamento: e.target.value })}
-                            className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 max-w-[120px]"
+                                id="province-inline"
+                                value={filters.province || ''}
+                                onChange={handleProvinceChange}
+                                className="px-2 py-1 text-xs bg-blue-800 text-white border border-blue-600 rounded-md focus:ring-blue-400 focus:border-blue-400"
                             >
-                            <option value="">Todos</option>
-                            {deptList.map((d) => (
-                            <option key={d} value={d}>{d}</option>
-                            ))}
+                                <option value="">Todas</option>
+                                {ARGENTINE_PROVINCES.map((province) => (
+                                    <option key={province} value={province}>{province}</option>
+                                ))}
                             </select>
-                            </div>
-                    <div>
-                        <label htmlFor="unidad-inline" className="block mb-1 text-[10px] font-medium text-gray-700">Unidad</label>
-                        <select
-                            id="unidad-inline"
-                            value={filters.unidad || ''}
-                            onChange={(e) => setFilters({ ...filters, unidad: e.target.value })}
-                            className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 max-w-[120px]"
-                        >
-                            <option value="">Todas</option>
-                            {unitList.map((u) => (
-                                <option key={u} value={u}>{u}</option>
-                            ))}
-                        </select>
-                    </div>
-                            <div className="pb-0.5">
-                                <button
-                                    onClick={clearAllFilters}
-                                    className="mt-4 px-2 py-1 bg-gray-200 text-gray-700 text-[10px] rounded-md hover:bg-gray-300"
-                                    title="Limpiar filtros"
-                                >
-                                    Limpiar
-                                </button>
-                            </div>
                         </div>
-                    )}
+                        <div>
+                            <label htmlFor="fromDate-inline" className="block mb-1 text-[10px] font-medium text-white">Desde</label>
+                            <input
+                                id="fromDate-inline"
+                                type="date"
+                                value={filters.fromDate || ''}
+                                min={dateLimits.min || undefined}
+                                max={dateLimits.max || undefined}
+                                onChange={handleFromDateChange}
+                                className="px-2 py-1 text-xs bg-blue-800 text-white border border-blue-600 rounded-md focus:ring-blue-400 focus:border-blue-400"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="toDate-inline" className="block mb-1 text-[10px] font-medium text-white">Hasta</label>
+                            <input
+                                id="toDate-inline"
+                                type="date"
+                                value={filters.toDate || ''}
+                                min={dateLimits.min || undefined}
+                                max={dateLimits.max || undefined}
+                                onChange={handleToDateChange}
+                                className="px-2 py-1 text-xs bg-blue-800 text-white border border-blue-600 rounded-md focus:ring-blue-400 focus:border-blue-400"
+                            />
+                        </div>
+                        <div>
+                        <label htmlFor="departamento-inline" className="block mb-1 text-[10px] font-medium text-white">Depto.</label>
+                        <select
+                        id="departamento-inline"
+                        value={filters.departamento || ''}
+                        onChange={(e) => setFilters({ ...filters, departamento: e.target.value })}
+                        className="px-2 py-1 text-xs bg-blue-800 text-white border border-blue-600 rounded-md focus:ring-blue-400 focus:border-blue-400 max-w-[120px]"
+                        >
+                        <option value="">Todos</option>
+                        {deptList.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                        ))}
+                        </select>
+                        </div>
+                <div>
+                    <label htmlFor="unidad-inline" className="block mb-1 text-[10px] font-medium text-white">Unidad</label>
+                    <select
+                        id="unidad-inline"
+                        value={filters.unidad || ''}
+                        onChange={(e) => setFilters({ ...filters, unidad: e.target.value })}
+                        className="px-2 py-1 text-xs bg-blue-800 text-white border border-blue-600 rounded-md focus:ring-blue-400 focus:border-blue-400 max-w-[120px]"
+                    >
+                        <option value="">Todas</option>
+                        {unitList.map((u) => (
+                            <option key={u} value={u}>{u}</option>
+                        ))}
+                    </select>
+                </div>
+                        <div className="pb-0.5">
+                            <button
+                                onClick={clearAllFilters}
+                                className="mt-4 px-2 py-1 bg-red-600 text-white text-[10px] rounded-md hover:bg-red-700"
+                                title="Limpiar filtros"
+                            >
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
                 </div>
             );
         }

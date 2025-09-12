@@ -1,112 +1,124 @@
 import React from 'react';
-import {
-    Card,
-    CardContent,
-    Typography,
-    Box,
-    Chip,
-    useTheme
-} from '@mui/material';
-import {
-    TrendingUp as TrendingUpIcon,
-    TrendingDown as TrendingDownIcon
-} from '@mui/icons-material';
 
 const ClassificationCard = ({ 
     title, 
     totalCases, 
     trend, 
-    icon: Icon, 
-    color = 'primary', 
+    icon, 
+    color = 'blue', 
     onClick
 }) => {
-    const theme = useTheme();
-
     const handleClick = () => {
         if (onClick) {
             onClick();
         }
     };
 
+    const getColorClasses = (color) => {
+        const colorMap = {
+            blue: {
+                bg: 'bg-blue-500/10',
+                border: 'border-blue-500/30',
+                text: 'text-blue-400',
+                icon: 'bg-blue-500',
+                hover: 'hover:bg-blue-500/20'
+            },
+            red: {
+                bg: 'bg-red-500/10',
+                border: 'border-red-500/30',
+                text: 'text-red-400',
+                icon: 'bg-red-500',
+                hover: 'hover:bg-red-500/20'
+            },
+            yellow: {
+                bg: 'bg-yellow-500/10',
+                border: 'border-yellow-500/30',
+                text: 'text-yellow-400',
+                icon: 'bg-yellow-500',
+                hover: 'hover:bg-yellow-500/20'
+            },
+            green: {
+                bg: 'bg-green-500/10',
+                border: 'border-green-500/30',
+                text: 'text-green-400',
+                icon: 'bg-green-500',
+                hover: 'hover:bg-green-500/20'
+            },
+            cyan: {
+                bg: 'bg-cyan-500/10',
+                border: 'border-cyan-500/30',
+                text: 'text-cyan-400',
+                icon: 'bg-cyan-500',
+                hover: 'hover:bg-cyan-500/20'
+            },
+            purple: {
+                bg: 'bg-purple-500/10',
+                border: 'border-purple-500/30',
+                text: 'text-purple-400',
+                icon: 'bg-purple-500',
+                hover: 'hover:bg-purple-500/20'
+            }
+        };
+        return colorMap[color] || colorMap.blue;
+    };
+
+    const colors = getColorClasses(color);
+
     return (
-        <Card 
-            elevation={2}
+        <div 
             onClick={handleClick}
-            sx={{ 
-                height: '100%',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                background: `linear-gradient(135deg, ${theme.palette[color].light}15, ${theme.palette[color].main}25)`,
-                border: `1px solid ${theme.palette[color].light}`,
-                '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: theme.shadows[4],
-                    background: `linear-gradient(135deg, ${theme.palette[color].light}25, ${theme.palette[color].main}35)`,
-                }
-            }}
+            className={`
+                h-full cursor-pointer transition-all duration-300 ease-in-out
+                ${colors.bg} ${colors.border} ${colors.hover}
+                border rounded-lg p-4 shadow-card hover:shadow-card-hover
+                hover:-translate-y-1 transform
+            `}
         >
-            <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
-                    <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 0.5, color: 'text.primary' }}>
-                            {title}
-                        </Typography>
-                    </Box>
-                    <Box
-                        sx={{
-                            p: 1,
-                            borderRadius: 1.5,
-                            backgroundColor: theme.palette[color].main,
-                            color: 'white',
-                            ml: 1
-                        }}
-                    >
-                        <Icon sx={{ fontSize: 18 }} />
-                    </Box>
-                </Box>
+            <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                    <h3 className="font-semibold text-white mb-1">
+                        {title}
+                    </h3>
+                </div>
+                <div className={`
+                    p-2 rounded-lg ${colors.icon} text-white ml-2 text-lg
+                `}>
+                    {icon}
+                </div>
+            </div>
 
-                <Box sx={{ mb: 1.5 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: theme.palette[color].main, lineHeight: 1 }}>
-                        {totalCases.toLocaleString()}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                        Total de casos
-                    </Typography>
-                </Box>
+            <div className="mb-4">
+                <div className={`text-3xl font-bold ${colors.text} leading-none mb-1`}>
+                    {totalCases.toLocaleString()}
+                </div>
+                <div className="text-xs text-gray-400">
+                    Total de casos
+                </div>
+            </div>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        {trend >= 0 ? (
-                            <TrendingUpIcon sx={{ color: 'success.main', mr: 0.5, fontSize: 14 }} />
-                        ) : (
-                            <TrendingDownIcon sx={{ color: 'error.main', mr: 0.5, fontSize: 14 }} />
-                        )}
-                        <Typography 
-                            variant="caption" 
-                            sx={{ 
-                                color: trend >= 0 ? 'success.main' : 'error.main',
-                                fontWeight: 'medium',
-                                fontSize: '0.7rem'
-                            }}
-                        >
-                            {Math.abs(trend).toFixed(1)}%
-                        </Typography>
-                    </Box>
-                    
-                    <Chip
-                        label="Ver"
-                        size="small"
-                        sx={{
-                            backgroundColor: `${theme.palette[color].main}20`,
-                            color: theme.palette[color].main,
-                            fontWeight: 'medium',
-                            fontSize: '0.65rem',
-                            height: 18
-                        }}
-                    />
-                </Box>
-            </CardContent>
-        </Card>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                    {trend >= 0 ? (
+                        <span className="text-green-400 mr-1">↗</span>
+                    ) : (
+                        <span className="text-red-400 mr-1">↘</span>
+                    )}
+                    <span className={`
+                        text-xs font-medium
+                        ${trend >= 0 ? 'text-green-400' : 'text-red-400'}
+                    `}>
+                        {Math.abs(trend).toFixed(1)}%
+                    </span>
+                </div>
+                
+                <div className={`
+                    px-2 py-1 rounded text-xs font-medium
+                    ${colors.bg} ${colors.text}
+                `}>
+                    Ver
+                </div>
+            </div>
+        </div>
     );
 };
 

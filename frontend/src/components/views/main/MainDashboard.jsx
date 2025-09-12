@@ -1,21 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-    Box,
-    Typography,
-    Grid,
-    Container,
-    Paper,
-    Chip
-} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import {
-    Security as SecurityIcon,
-    People as PeopleIcon,
-    DirectionsCar as VehicleIcon,
-    Assignment as ProcedureIcon,
-    MonetizationOn as MoneyIcon,
-    Warning as WarningIcon
-} from '@mui/icons-material';
 import ClassificationCard from '../../common/ClassificationCard';
 import MetricCard from '../../common/MetricCard';
 import DashboardLayout from '../../common/DashboardLayout';
@@ -37,8 +21,8 @@ const MainDashboard = () => {
                 title: 'Procedimientos',
                 totalCases: categorizedData.procedimientos?.length || 0,
                 trend: 5.2,
-                icon: ProcedureIcon,
-                color: 'primary',
+                icon: '📋',
+                color: 'blue',
                 route: '/dashboard/procedimientos'
             },
             {
@@ -46,8 +30,8 @@ const MainDashboard = () => {
                 title: 'Detenidos',
                 totalCases: categorizedData.detenidos?.length || 0,
                 trend: -2.1,
-                icon: PeopleIcon,
-                color: 'error',
+                icon: '👥',
+                color: 'red',
                 route: '/dashboard/detenidos'
             },
             {
@@ -55,8 +39,8 @@ const MainDashboard = () => {
                 title: 'Incautaciones',
                 totalCases: categorizedData.incautaciones?.length || 0,
                 trend: 8.7,
-                icon: SecurityIcon,
-                color: 'warning',
+                icon: '🔒',
+                color: 'yellow',
                 route: '/dashboard/incautaciones'
             },
             {
@@ -64,8 +48,8 @@ const MainDashboard = () => {
                 title: 'Personal Afectado',
                 totalCases: categorizedData.afectados?.length || 0,
                 trend: 3.4,
-                icon: PeopleIcon,
-                color: 'success',
+                icon: '🚑',
+                color: 'green',
                 route: '/dashboard/afectados'
             },
             {
@@ -73,8 +57,8 @@ const MainDashboard = () => {
                 title: 'Controlados',
                 totalCases: categorizedData.controlados?.length || 0,
                 trend: -1.8,
-                icon: VehicleIcon,
-                color: 'info',
+                icon: '🚗',
+                color: 'cyan',
                 route: '/dashboard/controlados'
             },
             {
@@ -82,8 +66,8 @@ const MainDashboard = () => {
                 title: 'Trata y Tráfico',
                 totalCases: categorizedData.trata?.length || 0,
                 trend: 12.3,
-                icon: WarningIcon,
-                color: 'secondary',
+                icon: '⚠️',
+                color: 'purple',
                 route: '/dashboard/trata'
             }
         ];
@@ -96,33 +80,28 @@ const MainDashboard = () => {
 
     if (loading) {
         return (
-            <Container maxWidth="xl" sx={{ py: 4 }}>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 4 }}>
-                    Dashboard Principal - Cargando...
-                </Typography>
-            </Container>
+            <div className="min-h-screen bg-background-primary flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+                    <h2 className="text-2xl font-bold text-white mt-4">Dashboard Principal - Cargando...</h2>
+                </div>
+            </div>
         );
     }
 
     return (
         <DashboardLayout title="Dashboard Principal" showBackButton={false}>
-            <Box sx={{ py: 4 }}>
-                <Box sx={{ mb: 4 }}>
-                    <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 2 }}>
+            <div className="py-8">
+                <div className="mb-8">
+                    <h1 className="text-4xl font-bold text-white mb-4">
                         Dashboard Operativo
-                    </Typography>
-                    <Typography variant="h6" color="text.secondary">
-                        Resumen ejecutivo de todas las clasificaciones operativas
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        Haga clic en cualquier tarjeta para acceder al dashboard especializado
-                    </Typography>
-                </Box>
+                    </h1>
+                </div>
 
-            <Grid container spacing={2}>
-                {classifications.map((classification) => (
-                    <Grid item xs={12} sm={6} md={4} key={classification.id}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    {classifications.map((classification) => (
                         <ClassificationCard
+                            key={classification.id}
                             title={classification.title}
                             totalCases={classification.totalCases}
                             trend={classification.trend}
@@ -130,67 +109,58 @@ const MainDashboard = () => {
                             color={classification.color}
                             onClick={() => handleCardDoubleClick(classification)}
                         />
-                    </Grid>
-                ))}
-            </Grid>
+                    ))}
+                </div>
 
-                <Box sx={{ mt: 4, p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
+                <div className="bg-background-secondary rounded-lg p-6 shadow-card">
+                    <h3 className="text-xl font-semibold text-white mb-6">
                         Métricas Generales del Sistema
-                    </Typography>
-                    <Grid container spacing={2}>
-                        <Grid item xs={6} sm={3}>
-                            <Box sx={{ textAlign: 'center', p: 1 }}>
-                                <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                                    {data?.length?.toLocaleString() || '0'}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Total Registros
-                                </Typography>
-                            </Box>
-                        </Grid>
-                        <Grid item xs={6} sm={3}>
-                            <Box sx={{ textAlign: 'center', p: 1 }}>
-                                <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                                    {classifications.filter(c => c.totalCases > 0).length}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Clasificaciones Activas
-                                </Typography>
-                            </Box>
-                        </Grid>
-                        <Grid item xs={6} sm={3}>
-                            <Box sx={{ textAlign: 'center', p: 1 }}>
-                                <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'warning.main' }}>
-                                    {Math.max(...classifications.map(c => c.totalCases), 0).toLocaleString()}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Mayor Volumen
-                                </Typography>
-                            </Box>
-                        </Grid>
-                        <Grid item xs={6} sm={3}>
-                            <Box sx={{ textAlign: 'center', p: 1 }}>
-                                <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'info.main' }}>
-                                    {new Date().toLocaleDateString('es-AR')}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Última Actualización
-                                </Typography>
-                            </Box>
-                        </Grid>
-                    </Grid>
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                        <div className="text-center p-4">
+                            <div className="text-3xl font-bold text-primary-400 mb-2">
+                                {data?.length?.toLocaleString() || '0'}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                                Total Registros
+                            </div>
+                        </div>
+                        <div className="text-center p-4">
+                            <div className="text-3xl font-bold text-green-400 mb-2">
+                                {classifications.filter(c => c.totalCases > 0).length}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                                Clasificaciones Activas
+                            </div>
+                        </div>
+                        <div className="text-center p-4">
+                            <div className="text-3xl font-bold text-yellow-400 mb-2">
+                                {Math.max(...classifications.map(c => c.totalCases), 0).toLocaleString()}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                                Mayor Volumen
+                            </div>
+                        </div>
+                        <div className="text-center p-4">
+                            <div className="text-3xl font-bold text-cyan-400 mb-2">
+                                {new Date().toLocaleDateString('es-AR')}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                                Última Actualización
+                            </div>
+                        </div>
+                    </div>
                     
-                    <Box sx={{ mt: 2, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    <div className="bg-background-card rounded-lg p-4">
+                        <div className="text-sm text-gray-400 mb-1">
                             📊 Período de datos: Enero 2024 - {new Date().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                        </div>
+                        <div className="text-sm text-gray-400">
                             🔄 Datos actualizados automáticamente cada 24 horas
-                        </Typography>
-                    </Box>
-                </Box>
-            </Box>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </DashboardLayout>
     );
 };
