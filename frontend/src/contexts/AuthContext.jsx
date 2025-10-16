@@ -1,8 +1,8 @@
-// Contexto de autenticación para manejar el inicio de sesión
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useContext, useEffect } from 'react';
 import apiService from '../services/apiService';
 
+const AUTH_USER_KEY = 'auth_user';
 const AuthContext = createContext();
 
 export function useAuth() {
@@ -15,46 +15,108 @@ export function AuthProvider({ children }) {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
 
-    // Check if user is already logged in on app start
+    const persistUser = (incomingUser) => {
+        if (!incomingUser) return;
+        try {
+            localStorage.setItem(AUTH_USER_KEY, JSON.stringify(incomingUser));
+        } catch (storageError) {
+            console.warn('AuthContext: no se pudo guardar el usuario en localStorage', storageError);
+        }
+    };
+
+    const loadPersistedUser = () => {
+        try {
+            const stored = localStorage.getItem(AUTH_USER_KEY);
+            if (!stored) return null;
+            return JSON.parse(stored);
+        } catch (storageError) {
+            console.warn('AuthContext: no se pudo leer el usuario en localStorage', storageError);
+            localStorage.removeItem(AUTH_USER_KEY);
+            return null;
+        }
+    };
+
+    const clearPersistedUser = () => {
+        localStorage.removeItem(AUTH_USER_KEY);
+    };
+
     useEffect(() => {
-        const checkAuth = async () => {
+        let isMounted = true;
+
+        const bootstrapAuth = async () => {
+            const storedUser = loadPersistedUser();
+            if (storedUser && isMounted) {
+                setUser(storedUser);
+                setAuthenticated(true);
+            }
+
+            if (!apiService.isAuthenticated()) {
+                if (isMounted) {
+                    setLoading(false);
+                }
+                return;
+            }
+
             try {
-                if (apiService.isAuthenticated()) {
-                    const userData = await apiService.getCurrentUser();
-                    setUser(userData.user);
+                const userData = await apiService.getCurrentUser();
+                if (!isMounted) return;
+                const resolvedUser = userData?.user || userData || storedUser;
+                if (resolvedUser) {
+                    setUser(resolvedUser);
+                    setAuthenticated(true);
+                    persistUser(resolvedUser);
+                }
+            } catch (err) {
+                console.error('AuthContext: auth check failed', err);
+                const message = (err?.message || '').toLowerCase();
+                if (message.includes('401') || message.includes('unauthorized')) {
+                    apiService.logout();
+                    clearPersistedUser();
+                    if (isMounted) {
+                        setAuthenticated(false);
+                        setUser(null);
+                    }
+                } else if (storedUser && isMounted) {
+                    setUser(storedUser);
                     setAuthenticated(true);
                 }
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                apiService.logout();
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
-        checkAuth();
+        bootstrapAuth();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
-    // Función para iniciar sesión
     const login = async (username, password) => {
         try {
             setError('');
             const response = await apiService.login(username, password);
-            setUser(response.user);
+            const resolvedUser = response?.user || null;
+            if (resolvedUser) {
+                setUser(resolvedUser);
+                persistUser(resolvedUser);
+            }
             setAuthenticated(true);
             return true;
-        } catch (error) {
-            setError(error.message || 'Error al iniciar sesión');
+        } catch (err) {
+            setError(err?.message || 'Error al iniciar sesion');
             return false;
         }
     };
 
-    // Función para cerrar sesión
     const logout = () => {
         apiService.logout();
         setAuthenticated(false);
         setUser(null);
         setError('');
+        clearPersistedUser();
     };
 
     const value = {
@@ -63,7 +125,7 @@ export function AuthProvider({ children }) {
         error,
         loading,
         login,
-        logout
+        logout,
     };
 
     return (
@@ -72,3 +134,4 @@ export function AuthProvider({ children }) {
         </AuthContext.Provider>
     );
 }
+

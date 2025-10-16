@@ -1,5 +1,4 @@
 import { useDashboard } from '../../contexts/DashboardContext';
-import { getDepartamentoFromItem } from '../../utils/dataUtils';
 import { useMemo } from 'react';
 
 const ARGENTINE_PROVINCES = [
@@ -30,22 +29,7 @@ const ARGENTINE_PROVINCES = [
 ].sort();
 
 export default function UnifiedFilter() {
-    const { filters, setFilters, dataStats, data } = useDashboard();
-    
-    // Generar lista de departamentos disponibles basada en datos actuales
-    const availableDepartamentos = useMemo(() => {
-        if (!data || data.length === 0) return [];
-        
-        const departamentos = new Set();
-        data.forEach(item => {
-            const dept = getDepartamentoFromItem(item);
-            if (dept && dept !== 'Sin especificar') {
-                departamentos.add(dept);
-            }
-        });
-        
-        return [...departamentos].sort();
-    }, [data]);
+    const { filters, setFilters, dataStats } = useDashboard();
     
     // Obtener límites de fechas reales desde dataStats
     const getDateLimits = () => {
@@ -72,12 +56,7 @@ export default function UnifiedFilter() {
         setFilters({ ...filters, toDate: e.target.value });
     };
     const handleProvinceChange = (e) => {
-        // Al cambiar provincia, limpiar departamento para evitar combinaciones imposibles
-        setFilters({ ...filters, province: e.target.value, departamento: '' });
-    };
-    
-    const handleDepartamentoChange = (e) => {
-        setFilters({ ...filters, departamento: e.target.value });
+        setFilters({ ...filters, province: e.target.value });
     };
     const clearAllFilters = () => {
         // Usar las fechas reales disponibles en lugar de vacío
@@ -87,11 +66,10 @@ export default function UnifiedFilter() {
         
         setFilters({
             ...realDateRange,
-            province: '',
-            departamento: ''
+            province: ''
         });
     };
-    const hasActiveFilters = filters.fromDate || filters.toDate || filters.province || filters.departamento;
+    const hasActiveFilters = filters.fromDate || filters.toDate || filters.province;
 
     return (
         <div className="p-4 mb-6 bg-white rounded-lg shadow-md">
@@ -116,30 +94,6 @@ export default function UnifiedFilter() {
                     </select>
                 </div>
                 
-                {/* Departamento */}
-                <div>
-                    <label htmlFor="departamento" className="block mb-1 text-sm font-medium text-gray-700">
-                        Departamento
-                    </label>
-                    <select
-                        id="departamento"
-                        value={filters.departamento || ''}
-                        onChange={handleDepartamentoChange}
-                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        disabled={availableDepartamentos.length === 0}
-                    >
-                        <option value="">Todos los departamentos</option>
-                        {availableDepartamentos.map((dept) => (
-                            <option key={dept} value={dept}>
-                                {dept}
-                            </option>
-                        ))}
-                    </select>
-                    {availableDepartamentos.length === 0 && (
-                        <p className="mt-1 text-xs text-gray-500">No hay departamentos disponibles</p>
-                    )}
-                </div>
-
                 {/* Desde */}
                 <div>
                     <label htmlFor="fromDate" className="block mb-1 text-sm font-medium text-gray-700">

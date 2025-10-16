@@ -1,3 +1,5 @@
+import { DEFAULT_OPERATIVE_CODE, OPERATIVE_CODE_MAP } from '../constants/operativeCodes';
+
 // Utility functions for data processing
 export const parseDateToISO = (dateStr) => {
   if (!dateStr) return null;
@@ -118,7 +120,64 @@ export const getDepartamentoFromItem = (item) => {
   if (!item) return '';
   
   // Try different possible field names for department
-  const depto = item.departamento || item.DEPARTAMENTO || item.Departamento || 
-                item.depto || item.DEPTO || item.Departamento || '';
-  return String(depto).trim();
+  const candidates = [
+    item.departamento,
+    item.DEPARTAMENTO,
+    item.Departamento,
+    item.departamento_o_partido,
+    item.DEPARTAMENTO_O_PARTIDO,
+    item['DEPARTAMENTO O PARTIDO'],
+    item.departamentoPartido,
+    item['departamento-partido'],
+    item.depto,
+    item.DEPTO,
+    item.partido,
+    item.PARTIDO,
+    item.localidad,
+    item.LOCALIDAD,
+  ];
+
+  const value = candidates.find((candidate) => {
+    if (candidate === undefined || candidate === null) return false;
+    const str = String(candidate).trim();
+    return str.length > 0 && str !== '-';
+  });
+
+  return value ? String(value).trim() : '';
+};
+
+export const getOperativoCodeFromItem = (item) => {
+  if (!item) return DEFAULT_OPERATIVE_CODE;
+
+  const candidates = [
+    item.CODIGO_OPERATIVO,
+    item.codigo_operativo,
+    item.CODIGO,
+    item.codigo,
+    item.NUMERO_OPERATIVO,
+    item.numero_operativo,
+    item.NRO_OPERATIVO,
+    item['NRO OPERATIVO'],
+    item.OPERATIVO,
+    item.operativo
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate === undefined || candidate === null) continue;
+    const str = String(candidate).trim();
+    if (!str || str === '-') continue;
+    if (OPERATIVE_CODE_MAP[str]) {
+      return str;
+    }
+    const numeric = str.replace(/\D+/g, '');
+    if (numeric && OPERATIVE_CODE_MAP[numeric]) {
+      return numeric;
+    }
+    if (numeric) {
+      return numeric;
+    }
+    return str;
+  }
+
+  return DEFAULT_OPERATIVE_CODE;
 };

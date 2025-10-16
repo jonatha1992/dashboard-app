@@ -1,9 +1,14 @@
 import React, { useMemo } from 'react';
 import BaseChart from './BaseChart';
-import { abbreviateName } from '../../utils/chartUtils';
 import { useDashboard } from '../../contexts/DashboardContext';
 import { normalizeProvinceKey, getDepartamentoFromItem } from '../../utils/dataUtils';
 import ChartCard from '../common/ChartCard';
+
+const NoChartDataMessage = ({ message }) => (
+    <div className="flex h-full items-center justify-center rounded-md border border-dashed border-dark-600 bg-dark-700/40 px-4 text-center text-sm text-gray-400">
+        {message}
+    </div>
+);
 
 const DynamicChartsByCategory = ({ category }) => {
     const { filteredCategorizedData } = useDashboard();
@@ -12,6 +17,11 @@ const DynamicChartsByCategory = ({ category }) => {
         if (!filteredCategorizedData || !category) return [];
         return filteredCategorizedData[category] || [];
     }, [filteredCategorizedData, category]);
+
+    const readableCategory = useMemo(() => {
+        if (!category) return 'Categoria';
+        return category.charAt(0).toUpperCase() + category.slice(1);
+    }, [category]);
 
     // Configuración base para gráficos (ahora se maneja en BaseChart)
     const baseChartOptions = {
@@ -175,81 +185,99 @@ const DynamicChartsByCategory = ({ category }) => {
         );
     }
 
+
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Gráfico de Provincias */}
-            {provinceChart && (
-                <div>
-                    <ChartCard
-                        title={`${category} por Provincia`}
-                        subtitle={`Distribución geográfica de ${categoryData.length} registros`}
-                    >
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Grafico de Provincias */}
+            <div>
+                <ChartCard
+                    title={`${readableCategory} por Provincia`}
+                    subtitle={`Distribucion geografica de ${categoryData.length} registros`}
+                >
+                    {provinceChart ? (
                         <BaseChart
                             type="bar"
                             data={provinceChart}
                             options={baseChartOptions}
-                            title={`${category} por Provincia`}
+                            title={`${readableCategory} por Provincia`}
                             height={300}
                         />
-                    </ChartCard>
-                </div>
-            )}
+                    ) : (
+                        <NoChartDataMessage
+                            message={`No hay datos de ${readableCategory.toLowerCase()} por provincia para los filtros aplicados.`}
+                        />
+                    )}
+                </ChartCard>
+            </div>
 
-            {/* Gráfico de Departamentos */}
-            {departmentChart && (
-                <div>
-                    <ChartCard
-                        title={`${category} por Departamento`}
-                        subtitle="Top departamentos con más actividad"
-                    >
+            {/* Grafico de Departamentos */}
+            <div>
+                <ChartCard
+                    title={`${readableCategory} por Departamento`}
+                    subtitle="Top departamentos con mas actividad"
+                >
+                    {departmentChart ? (
                         <BaseChart
                             type="bar"
                             data={departmentChart}
                             options={baseChartOptions}
-                            title={`${category} por Departamento`}
+                            title={`${readableCategory} por Departamento`}
                             height={300}
                         />
-                    </ChartCard>
-                </div>
-            )}
+                    ) : (
+                        <NoChartDataMessage
+                            message={`No hay datos de ${readableCategory.toLowerCase()} por departamento para los filtros aplicados.`}
+                        />
+                    )}
+                </ChartCard>
+            </div>
 
             {/* Tendencia Mensual */}
-            {monthlyTrendChart && (
-                <div>
-                    <ChartCard
-                        title={`Tendencia Mensual - ${category}`}
-                        subtitle="Evolución temporal de la actividad"
-                    >
+            <div>
+                <ChartCard
+                    title={`Tendencia Mensual - ${readableCategory}`}
+                    subtitle="Evolucion temporal de la actividad"
+                >
+                    {monthlyTrendChart ? (
                         <BaseChart
                             type="line"
                             data={monthlyTrendChart}
                             options={baseChartOptions}
-                            title={`Tendencia Mensual - ${category}`}
+                            title={`Tendencia Mensual - ${readableCategory}`}
                             height={300}
                         />
-                    </ChartCard>
-                </div>
-            )}
+                    ) : (
+                        <NoChartDataMessage
+                            message={`No hay datos temporales recientes para ${readableCategory.toLowerCase()} con los filtros seleccionados.`}
+                        />
+                    )}
+                </ChartCard>
+            </div>
 
-            {/* Distribución por Unidad */}
-            {unitChart && (
-                <div>
-                    <ChartCard
-                        title={`${category} por Unidad`}
-                        subtitle="Distribución por fuerza interviniente"
-                    >
+            {/* Distribucion por Unidad */}
+            <div>
+                <ChartCard
+                    title={`${readableCategory} por Unidad`}
+                    subtitle="Distribucion por fuerza interviniente"
+                >
+                    {unitChart ? (
                         <BaseChart
                             type="pie"
                             data={unitChart}
                             options={baseChartOptions}
-                            title={`${category} por Unidad`}
+                            title={`${readableCategory} por Unidad`}
                             height={300}
                         />
-                    </ChartCard>
-                </div>
-            )}
+                    ) : (
+                        <NoChartDataMessage
+                            message={`No hay datos de ${readableCategory.toLowerCase()} por unidad para los filtros aplicados.`}
+                        />
+                    )}
+                </ChartCard>
+            </div>
         </div>
     );
+
 };
 
 export default DynamicChartsByCategory;

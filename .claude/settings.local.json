@@ -50,7 +50,12 @@
       "mcp__filesystem__read_multiple_files",
       "Bash(rm:*)",
       "mcp__playwright__browser_snapshot",
-      "mcp__playwright__browser_evaluate"
+      "mcp__playwright__browser_evaluate",
+      "Bash(for dir in components/admin components/auth components/charts components/charts/specialized components/common components/dashboard components/map components/security components/views contexts services utils)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(ls:*)",
+      "Bash(awk:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
