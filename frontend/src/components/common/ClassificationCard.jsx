@@ -70,28 +70,28 @@ const ClassificationCard = ({
             className={`
                 h-full cursor-pointer transition-all duration-300 ease-in-out
                 ${colors.bg} ${colors.border} ${colors.hover}
-                border rounded-lg p-4 shadow-card hover:shadow-card-hover
-                hover:-translate-y-1 transform
+                border border-white/5 rounded-xl p-2 shadow-card hover:shadow-card-hover
+                hover:-translate-y-0.5 transform
             `}
         >
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
-                    <h3 className="font-semibold text-white mb-1">
+                    <h3 className="text-sm font-semibold text-white mb-0.5 tracking-wide">
                         {title}
                     </h3>
                 </div>
                 <div className={`
-                    p-2 rounded-lg ${colors.icon} text-white ml-2 text-lg
+                    px-1.5 py-1 rounded-lg ${colors.icon} text-white ml-2 text-xs
                 `}>
                     {icon}
                 </div>
             </div>
 
-            <div className="mb-4">
-                <div className={`text-3xl font-bold ${colors.text} leading-none mb-1`}>
+            <div className="mb-2">
+                <div className={`text-lg font-semibold ${colors.text} leading-snug`}>
                     {totalCases.toLocaleString()}
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-[11px] text-gray-400 uppercase tracking-wide">
                     Total de casos
                 </div>
             </div>
@@ -99,12 +99,12 @@ const ClassificationCard = ({
             <div className="flex items-center justify-between">
                 <div className="flex items-center">
                     {trend >= 0 ? (
-                        <span className="text-green-400 mr-1">↗</span>
+                        <span className="text-green-400 mr-1 text-xs">↗</span>
                     ) : (
-                        <span className="text-red-400 mr-1">↘</span>
+                        <span className="text-red-400 mr-1 text-xs">↘</span>
                     )}
                     <span className={`
-                        text-xs font-medium
+                        text-[11px] font-medium
                         ${trend >= 0 ? 'text-green-400' : 'text-red-400'}
                     `}>
                         {Math.abs(trend).toFixed(1)}%
@@ -112,7 +112,7 @@ const ClassificationCard = ({
                 </div>
                 
                 <div className={`
-                    px-2 py-1 rounded text-xs font-medium
+                    px-2 py-0.5 rounded text-[11px] font-medium
                     ${colors.bg} ${colors.text}
                 `}>
                     Ver
@@ -123,3 +123,13 @@ const ClassificationCard = ({
 };
 
 export default ClassificationCard;
+
+
+
+
+
+
+
+
+
+

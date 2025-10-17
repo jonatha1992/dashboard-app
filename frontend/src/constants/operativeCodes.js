@@ -105,6 +105,11 @@ export const OPERATIVE_CODE_ENTRIES = [
     code: '2011',
     name: 'PROCEDIMIENTOS GENERALES',
     description: 'Procedimientos generales no encuadrados en programas especificos.'
+  },
+  {
+    code: '2100',
+    name: 'OPERATIVO DESPLAZAMIENTO TERRITORIAL',
+    description: 'Operativo de despliegue territorial con énfasis en control y presencia en terreno.'
   }
 ];
 

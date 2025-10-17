@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDashboard } from '../../contexts/DashboardContext';
 
@@ -23,12 +23,14 @@ const DashboardLayout = ({ children, showBackButton = true }) => {
         const segments = location.pathname.split('/').filter(Boolean);
         const crumbs = [{ label: 'Dashboard Principal', path: '/dashboard/main', icon: true }];
 
-        if (segments.length > 2) {
-            const current = segments[2];
-            crumbs.push({
-                label: PATH_LABELS[current] || current,
-                path: location.pathname
-            });
+        if (segments.length >= 2) {
+            const current = segments[segments.length - 1];
+            if (current !== 'main') {
+                crumbs.push({
+                    label: PATH_LABELS[current] || current,
+                    path: location.pathname
+                });
+            }
         }
 
         return crumbs;
@@ -56,7 +58,10 @@ const DashboardLayout = ({ children, showBackButton = true }) => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center">
-                            <h1 className="text-xl font-semibold text-white">
+                            <h1
+                                onClick={handleBackToMain}
+                                className="text-xl font-semibold text-white cursor-pointer select-none"
+                            >
                                 Sistema de Analisis Operativo
                                 {currentCategory !== 'Dashboard Principal' && (
                                     <span className="ml-2 text-sm font-normal text-gray-300">
@@ -81,44 +86,35 @@ const DashboardLayout = ({ children, showBackButton = true }) => {
                                 onClick={handleBackToMain}
                                 className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-background-hover rounded-lg transition-colors duration-200"
                             >
-                                <span className="mr-2">🏠</span>
+                                <svg
+                                    className="w-4 h-4 mr-2 text-white"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                    focusable="false"
+                                >
+                                    <path
+                                        d="M3 10.5L12 3l9 7.5"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                    <path
+                                        d="M5.25 9.75V21h5.25v-6h3v6H18.7V9.75"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
                                 Inicio
                             </button>
                         </div>
                     </div>
                 </div>
             </header>
-
-            {breadcrumbs.length > 1 && (
-                <div className="bg-background-secondary border-b border-dark-600">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-                        <nav className="flex items-center space-x-2 text-sm">
-                            {breadcrumbs.map((crumb, index) => {
-                                const isLast = index === breadcrumbs.length - 1;
-                                return (
-                                    <React.Fragment key={crumb.path}>
-                                        {index > 0 && <span className="text-gray-500">/</span>}
-                                        {isLast ? (
-                                            <span className="flex items-center text-white font-medium">
-                                                {crumb.icon && <span className="mr-1">🏠</span>}
-                                                {crumb.label}
-                                            </span>
-                                        ) : (
-                                            <button
-                                                onClick={() => navigate(crumb.path)}
-                                                className="flex items-center text-gray-400 hover:text-white transition-colors duration-200"
-                                            >
-                                                {crumb.icon && <span className="mr-1">🏠</span>}
-                                                {crumb.label}
-                                            </button>
-                                        )}
-                                    </React.Fragment>
-                                );
-                            })}
-                        </nav>
-                    </div>
-                </div>
-            )}
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {children}
@@ -128,3 +124,8 @@ const DashboardLayout = ({ children, showBackButton = true }) => {
 };
 
 export default DashboardLayout;
+
+
+
+
+

@@ -14,7 +14,7 @@ const DetenidosDashboard = () => {
     if (loading) {
         return (
             <DashboardLayout title="Dashboard de Detenidos">
-                <div className="p-6">
+                <div className="p-4">
                     <div className="text-white">Cargando...</div>
                 </div>
             </DashboardLayout>
@@ -24,7 +24,7 @@ const DetenidosDashboard = () => {
     if (detenidosData.length === 0) {
         return (
             <DashboardLayout title="Dashboard de Detenidos">
-                <div className="p-6">
+                <div className="p-4">
                     <div className="bg-blue-500/20 text-blue-300 border border-blue-500/30 p-4 rounded-lg">
                         No hay datos de detenidos disponibles. Ajusta los filtros o verifica la carga de datos.
                     </div>
@@ -47,19 +47,19 @@ const DetenidosDashboard = () => {
 
     return (
         <DashboardLayout title="Dashboard de Detenidos">
-            <div className="p-6">
+            <div className="p-4">
                 {/* Panel de Filtros Integrado */}
-                <div className="mb-8">
+                <div className="mb-5">
                     <FilterPanel inline={true} compact={true} />
                 </div>
 
                 {/* KPIs principales */}
-                <div className="mb-8">
+                <div className="mb-5">
                     <DetenidosKPIs analysis={analysis} />
                 </div>
 
                 {/* Gráficos dinámicos */}
-                <div className="mb-8">
+                <div className="mb-5">
                     <DynamicChartsByCategory category="detenidos" />
                 </div>
 
@@ -71,3 +71,4 @@ const DetenidosDashboard = () => {
 };
 
 export default DetenidosDashboard;
+

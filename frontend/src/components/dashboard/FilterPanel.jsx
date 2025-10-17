@@ -12,6 +12,11 @@ const ARGENTINE_PROVINCES = [
     'Tierra del Fuego', 'Tucuman'
 ].sort();
 
+const PROVINCE_DISPLAY_MAP = ARGENTINE_PROVINCES.reduce((acc, province) => {
+    acc[normalizeProvinceKey(province)] = province;
+    return acc;
+}, {});
+
 const getUnitFromItem = (item) => {
     const unit = item.UNIDAD_INTERVINIENTE ||
         item.unidad_interviniente ||
@@ -36,10 +41,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
         data,
         filters,
         setFilters,
-        dataStats,
-        availableOperativeCodes,
-        unitsByProvince,
-        availableUnits
+        dataStats
     } = useDashboard();
 
     const [isOpen, setIsOpen] = useState(false);
@@ -60,13 +62,31 @@ export default function FilterPanel({ inline = false, className = '', compact = 
         [filters.province]
     );
 
-    const datasetForSelectors = useMemo(() => {
-        if (!Array.isArray(data) || data.length === 0) return [];
-        return data.filter((item) => {
-            const dateIso = item.FECHA_ISO || item.fecha_iso || parseDateToISO(item.FECHA || item.fecha || item['FECHA - DETALLE']);
-            if (filters.fromDate && (!dateIso || dateIso < filters.fromDate)) return false;
-            if (filters.toDate && (!dateIso || dateIso > filters.toDate)) return false;
-            if (normalizedProvince) {
+    const baseData = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+
+    const recordMatches = useCallback(
+        (item, omitKeys = []) => {
+            if (!item) return false;
+            const shouldCheck = (key) => !omitKeys.includes(key);
+            const dateIso =
+                item.FECHA_ISO ||
+                item.fecha_iso ||
+                parseDateToISO(item.FECHA || item.fecha || item['FECHA - DETALLE']);
+
+            if (shouldCheck('fromDate') && filters.fromDate) {
+                if (!dateIso || dateIso < filters.fromDate) return false;
+            }
+
+            if (shouldCheck('toDate') && filters.toDate) {
+                if (!dateIso || dateIso > filters.toDate) return false;
+            }
+
+            if (shouldCheck('operativoCodigo') && filters.operativoCodigo) {
+                const itemCode = String(getOperativoCodeFromItem(item) || '').trim();
+                if (!itemCode || itemCode !== String(filters.operativoCodigo).trim()) return false;
+            }
+
+            if (shouldCheck('province') && filters.province) {
                 const itemProvince = normalizeProvinceKey(
                     item.PROVINCIA ||
                     item.provincia ||
@@ -75,41 +95,112 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                     item.PROV ||
                     item.prov
                 );
-                if (itemProvince !== normalizedProvince) return false;
+                if (!itemProvince || itemProvince !== normalizedProvince) return false;
             }
-            return true;
-        });
-    }, [data, filters.fromDate, filters.toDate, normalizedProvince]);
 
-    const unitOptions = useMemo(() => {
-        if (filters.province && unitsByProvince?.[filters.province]?.length) {
-            return unitsByProvince[filters.province];
-        }
-        const derived = datasetForSelectors.map(getUnitFromItem).filter(Boolean);
-        const combined = derived.length ? derived : availableUnits;
-        return Array.from(new Set(combined)).sort((a, b) => a.localeCompare(b, 'es'));
-    }, [datasetForSelectors, filters.province, unitsByProvince, availableUnits]);
+            if (shouldCheck('unidad') && filters.unidad) {
+                const itemUnit = getUnitFromItem(item);
+                if (!itemUnit || itemUnit !== filters.unidad) return false;
+            }
+
+            return true;
+        },
+        [
+            filters.fromDate,
+            filters.toDate,
+            filters.operativoCodigo,
+            filters.province,
+            filters.unidad,
+            normalizedProvince
+        ]
+    );
+
+    const datasetWithoutOperativo = useMemo(
+        () => baseData.filter((item) => recordMatches(item, ['operativoCodigo'])),
+        [baseData, recordMatches]
+    );
+
+    const datasetWithoutProvince = useMemo(
+        () => baseData.filter((item) => recordMatches(item, ['province'])),
+        [baseData, recordMatches]
+    );
+
+    const datasetWithoutUnit = useMemo(
+        () => baseData.filter((item) => recordMatches(item, ['unidad'])),
+        [baseData, recordMatches]
+    );
 
     const operativeOptions = useMemo(() => {
-        const knownOptions = OPERATIVE_CODE_ENTRIES.map(({ code, name }) => ({ code, name }));
-        const knownCodes = new Set(knownOptions.map((item) => item.code));
+        const codes = new Set(
+            datasetWithoutOperativo
+                .map((item) => String(getOperativoCodeFromItem(item) || '').trim())
+                .filter((code) => code && code !== '-')
+        );
 
-        const dynamicCodes = (availableOperativeCodes || [])
-            .map((code) => String(code).trim())
-            .filter((code) => code && !knownCodes.has(code));
+        if (filters.operativoCodigo) {
+            codes.add(String(filters.operativoCodigo).trim());
+        }
 
-        const inferredCodes = datasetForSelectors
-            .map((item) => getOperativoCodeFromItem(item))
-            .map((code) => String(code).trim())
-            .filter((code) => code && !knownCodes.has(code) && !dynamicCodes.includes(code));
+        if (codes.size === 0) {
+            return [];
+        }
 
-        const extras = [...dynamicCodes, ...inferredCodes].map((code) => ({
+        const knownOrdered = OPERATIVE_CODE_ENTRIES
+            .filter(({ code }) => codes.has(code))
+            .map(({ code, name }) => ({ code, name }));
+
+        const remaining = Array.from(codes).filter((code) => !OPERATIVE_CODE_MAP[code]);
+        remaining.sort((a, b) => a.localeCompare(b, 'es'));
+
+        const dynamicOptions = remaining.map((code) => ({
             code,
             name: OPERATIVE_CODE_MAP[code]?.name || code
         }));
 
-        return [...knownOptions, ...extras];
-    }, [availableOperativeCodes, datasetForSelectors]);
+        return [...knownOrdered, ...dynamicOptions];
+    }, [datasetWithoutOperativo, filters.operativoCodigo]);
+
+    const unitOptions = useMemo(() => {
+        const units = datasetWithoutUnit
+            .map((item) => getUnitFromItem(item))
+            .filter(Boolean);
+        const uniqueUnits = Array.from(new Set(units)).sort((a, b) => a.localeCompare(b, 'es'));
+        if (filters.unidad && filters.unidad !== '' && !uniqueUnits.includes(filters.unidad)) {
+            uniqueUnits.unshift(filters.unidad);
+        }
+        return uniqueUnits;
+    }, [datasetWithoutUnit, filters.unidad]);
+
+    const provinceOptions = useMemo(() => {
+        const entries = new Map();
+        datasetWithoutProvince.forEach((item) => {
+            const rawProvince =
+                item.PROVINCIA ||
+                item.provincia ||
+                item.Provincia ||
+                item.province ||
+                item.PROV ||
+                item.prov;
+            if (!rawProvince || rawProvince === '-') return;
+            const key = normalizeProvinceKey(rawProvince);
+            if (!key) return;
+            if (!entries.has(key)) {
+                const display = PROVINCE_DISPLAY_MAP[key] || String(rawProvince).trim();
+                entries.set(key, display);
+            }
+        });
+
+        if (filters.province) {
+            const currentKey = normalizeProvinceKey(filters.province);
+            if (currentKey && !entries.has(currentKey)) {
+                entries.set(currentKey, filters.province);
+            }
+        }
+
+        return Array.from(entries.entries())
+            .map(([key, label]) => ({ key, label }))
+            .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+    }, [datasetWithoutProvince, filters.province]);
 
     const applyFilterPatch = useCallback((patch) => {
         const next = { ...filters, ...patch };
@@ -139,7 +230,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                 id={props.id ?? 'operativo-codigo'}
                 value={filters.operativoCodigo || ''}
                 onChange={handleOperativoChange}
-                className={props.selectClassName ?? 'w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500'}
+                className={props.selectClassName ?? 'w-[360px] min-w-[360px] flex-shrink-0 px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500'}
             >
                 <option value="">Todos los codigos</option>
                 {operativeOptions.map(({ code, name }) => {
@@ -164,11 +255,11 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                 id={props.id ?? 'province'}
                 value={filters.province || ''}
                 onChange={handleProvinceChange}
-                className={props.selectClassName ?? 'w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500'}
+                className={props.selectClassName ?? 'min-w-[200px] px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500'}
             >
                 <option value="">Todas las provincias</option>
-                {ARGENTINE_PROVINCES.map((province) => (
-                    <option key={province} value={province}>{province}</option>
+                {provinceOptions.map(({ key, label }) => (
+                    <option key={key} value={label}>{label}</option>
                 ))}
             </select>
         </div>
@@ -183,7 +274,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                 id={props.id ?? 'unidad'}
                 value={filters.unidad || ''}
                 onChange={handleUnitChange}
-                className={props.selectClassName ?? 'w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500'}
+                className={props.selectClassName ?? 'min-w-[200px] px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500'}
             >
                 <option value="">Todas las unidades</option>
                 {unitOptions.map((unit) => (
@@ -196,53 +287,53 @@ export default function FilterPanel({ inline = false, className = '', compact = 
     if (inline) {
         if (compact) {
             return (
-                <div className={`flex items-center gap-2 ${className}`}>
-                    {hasActiveFilters && (<span className="px-2 py-0.5 text-[10px] bg-green-500 text-white rounded-full">Filtros</span>)}
-                    <div className="flex items-end gap-2">
-                        {renderOperativoSelect({
-                            id: 'operativo-inline',
-                            wrapperClassName: 'flex flex-col',
-                            labelClassName: 'block mb-1 text-[10px] font-medium text-white',
-                            selectClassName: 'px-2 py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400 max-w-[140px]'
-                        })}
-                        {renderProvinceSelect({
-                            id: 'province-inline',
-                            wrapperClassName: 'flex flex-col',
-                            labelClassName: 'block mb-1 text-[10px] font-medium text-white',
-                            selectClassName: 'px-2 py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400'
-                        })}
-                        {renderUnitSelect({
-                            id: 'unidad-inline',
-                            wrapperClassName: 'flex flex-col',
-                            labelClassName: 'block mb-1 text-[10px] font-medium text-white',
-                            selectClassName: 'px-2 py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400 max-w-[140px]'
-                        })}
-                        <div>
-                            <label htmlFor="fromDate-inline" className="block mb-1 text-[10px] font-medium text-white">Desde</label>
-                            <DateInput
-                                id="fromDate-inline"
-                                value={filters.fromDate || ''}
-                                min={dateLimits.min || undefined}
-                                max={dateLimits.max || undefined}
-                                onChange={handleFromDateChange}
-                                className="bg-primary-800 text-white border-primary-600"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="toDate-inline" className="block mb-1 text-[10px] font-medium text-white">Hasta</label>
-                            <DateInput
-                                id="toDate-inline"
-                                value={filters.toDate || ''}
-                                min={dateLimits.min || undefined}
-                                max={dateLimits.max || undefined}
-                                onChange={handleToDateChange}
-                                className="bg-primary-800 text-white border-primary-600"
-                            />
-                        </div>
-                        <button onClick={clearAllFilters} className="mt-auto px-2 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700">
-                            Limpiar
-                        </button>
+                <div className={`flex flex-wrap items-end justify-center gap-3 ${className}`}>
+                    {renderOperativoSelect({
+                        id: 'operativo-inline',
+                        wrapperClassName: 'flex flex-col',
+                        labelClassName: 'block mb-1 text-[10px] font-medium text-white',
+                        selectClassName: 'w-[360px] min-w-[360px] flex-shrink-0 px-3 py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400'
+                    })}
+                    {renderProvinceSelect({
+                        id: 'province-inline',
+                        wrapperClassName: 'flex flex-col',
+                        labelClassName: 'block mb-1 text-[10px] font-medium text-white',
+                        selectClassName: 'px-2 py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400 min-w-[170px]'
+                    })}
+                    {renderUnitSelect({
+                        id: 'unidad-inline',
+                        wrapperClassName: 'flex flex-col',
+                        labelClassName: 'block mb-1 text-[10px] font-medium text-white',
+                        selectClassName: 'px-2 py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400 min-w-[170px]'
+                    })}
+                    <div className="flex flex-col">
+                        <label htmlFor="fromDate-inline" className="block mb-1 text-[10px] font-medium text-white">Desde</label>
+                        <DateInput
+                            id="fromDate-inline"
+                            value={filters.fromDate || ''}
+                            min={dateLimits.min || undefined}
+                            max={dateLimits.max || undefined}
+                            onChange={handleFromDateChange}
+                            className="w-[140px] py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400"
+                        />
                     </div>
+                    <div className="flex flex-col">
+                        <label htmlFor="toDate-inline" className="block mb-1 text-[10px] font-medium text-white">Hasta</label>
+                        <DateInput
+                            id="toDate-inline"
+                            value={filters.toDate || ''}
+                            min={dateLimits.min || undefined}
+                            max={dateLimits.max || undefined}
+                            onChange={handleToDateChange}
+                            className="w-[140px] py-1 text-xs bg-primary-800 text-white border border-primary-600 rounded-md focus:ring-primary-400 focus:border-primary-400"
+                        />
+                    </div>
+                    <button
+                        onClick={clearAllFilters}
+                        className="px-2.5 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700"
+                    >
+                        Limpiar
+                    </button>
                 </div>
             );
         }
@@ -252,41 +343,45 @@ export default function FilterPanel({ inline = false, className = '', compact = 
                 {renderOperativoSelect({
                     wrapperClassName: 'flex flex-col',
                     labelClassName: 'block mb-1 text-xs font-medium text-gray-200',
-                    selectClassName: 'px-2 py-1.5 text-sm bg-primary-900 text-white border border-primary-700 rounded-md focus:ring-primary-400 focus:border-primary-400'
+                    selectClassName: 'w-[360px] min-w-[360px] flex-shrink-0 px-3 py-1.5 text-sm bg-primary-900 text-white border border-primary-700 rounded-md focus:ring-primary-400 focus:border-primary-400'
                 })}
                 {renderProvinceSelect({
                     wrapperClassName: 'flex flex-col',
                     labelClassName: 'block mb-1 text-xs font-medium text-gray-200',
-                    selectClassName: 'px-2 py-1.5 text-sm bg-primary-900 text-white border border-primary-700 rounded-md focus:ring-primary-400 focus:border-primary-400'
+                    selectClassName: 'px-2 py-1.5 text-sm bg-primary-900 text-white border border-primary-700 rounded-md focus:ring-primary-400 focus:border-primary-400 max-w-[200px]'
                 })}
                 {renderUnitSelect({
                     wrapperClassName: 'flex flex-col',
                     labelClassName: 'block mb-1 text-xs font-medium text-gray-200',
-                    selectClassName: 'px-2 py-1.5 text-sm bg-primary-900 text-white border border-primary-700 rounded-md focus:ring-primary-400 focus:border-primary-400'
+                    selectClassName: 'px-2 py-1.5 text-sm bg-primary-900 text-white border border-primary-700 rounded-md focus:ring-primary-400 focus:border-primary-400 max-w-[200px]'
                 })}
                 <div>
                     <label htmlFor="fromDate" className="block mb-1 text-xs font-medium text-gray-200">Desde</label>
-                    <DateInput
-                        id="fromDate"
-                        value={filters.fromDate || ''}
-                        min={dateLimits.min || undefined}
-                        max={dateLimits.max || undefined}
-                        onChange={handleFromDateChange}
-                        className="py-1.5 text-sm bg-primary-900 text-white border-primary-700"
-                    />
+                    <div className="w-full">
+                        <DateInput
+                            id="fromDate"
+                            value={filters.fromDate || ''}
+                            min={dateLimits.min || undefined}
+                            max={dateLimits.max || undefined}
+                            onChange={handleFromDateChange}
+                            className="w-[140px] py-1.5 text-sm bg-primary-900 text-white border-primary-700"
+                        />
+                    </div>
                 </div>
                 <div>
                     <label htmlFor="toDate" className="block mb-1 text-xs font-medium text-gray-200">Hasta</label>
-                    <DateInput
-                        id="toDate"
-                        value={filters.toDate || ''}
-                        min={dateLimits.min || undefined}
-                        max={dateLimits.max || undefined}
-                        onChange={handleToDateChange}
-                        className="py-1.5 text-sm bg-primary-900 text-white border-primary-700"
-                    />
+                    <div className="w-full">
+                        <DateInput
+                            id="toDate"
+                            value={filters.toDate || ''}
+                            min={dateLimits.min || undefined}
+                            max={dateLimits.max || undefined}
+                            onChange={handleToDateChange}
+                            className="w-[140px] py-1.5 text-sm bg-primary-900 text-white border-primary-700"
+                        />
+                    </div>
                 </div>
-                <div className="md:col-span-5 flex gap-2">
+                <div className="flex gap-2 md:col-span-5">
                     <button onClick={clearAllFilters} className="px-3 py-1.5 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300">
                         Limpiar
                     </button>
@@ -308,7 +403,7 @@ export default function FilterPanel({ inline = false, className = '', compact = 
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 z-50 p-4 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg w-72 space-y-3">
+                <div className="absolute right-0 z-50 p-4 mt-2 space-y-3 bg-white border border-gray-200 rounded-lg shadow-lg w-72">
                     {renderOperativoSelect()}
                     {renderProvinceSelect()}
                     {renderUnitSelect()}
@@ -351,3 +446,13 @@ export default function FilterPanel({ inline = false, className = '', compact = 
         </div>
     );
 }
+
+
+
+
+
+
+
+
+
+

@@ -5,7 +5,7 @@ const AfectadosKPIs = ({ analysis }) => {
     if (!analysis) return null;
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
                 title="Total Efectivos"
                 value={analysis.totalEfectivos?.toLocaleString() || '0'}
@@ -44,3 +44,4 @@ const AfectadosKPIs = ({ analysis }) => {
 };
 
 export default AfectadosKPIs;
+

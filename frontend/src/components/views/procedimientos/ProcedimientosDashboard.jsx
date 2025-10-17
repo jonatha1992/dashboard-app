@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useDashboard } from '../../../contexts/DashboardContext';
 import DashboardLayout from '../../common/DashboardLayout';
 import FilterPanel from '../../dashboard/FilterPanel';
@@ -8,34 +8,11 @@ import LoadingSpinner from '../../common/LoadingSpinner';
 
 const ProcedimientosDashboard = () => {
     const { filteredCategorizedData, loading, filters, clearFilters } = useDashboard();
-    const [autoCleared, setAutoCleared] = useState(false);
-    
     const procedimientosData = filteredCategorizedData?.procedimientos || [];
     const hasActiveFilters = useMemo(
         () => Object.values(filters || {}).some((value) => Boolean(value)),
         [filters]
     );
-    const handleDismissNotice = () => setAutoCleared(false);
-
-    useEffect(() => {
-        if (!loading && procedimientosData.length === 0 && hasActiveFilters && !autoCleared) {
-            clearFilters();
-            setAutoCleared(true);
-        }
-    }, [loading, procedimientosData.length, hasActiveFilters, clearFilters, autoCleared]);
-
-    useEffect(() => {
-        if (hasActiveFilters) {
-            setAutoCleared(false);
-        }
-    }, [hasActiveFilters]);
-
-    useEffect(() => {
-        if (procedimientosData.length > 0 && autoCleared) {
-            setAutoCleared(false);
-        }
-    }, [procedimientosData.length, autoCleared]);
-    
     useEffect(() => {
         console.groupCollapsed('ProcedimientosDashboard: estado de datos');
         console.debug('Registros filtrados', procedimientosData.length);
@@ -47,7 +24,7 @@ const ProcedimientosDashboard = () => {
     if (loading) {
         return (
             <DashboardLayout title="Dashboard de Procedimientos">
-                <div className="p-6">
+                <div className="p-4">
                     <LoadingSpinner label="Cargando datos de procedimientos" />
                 </div>
             </DashboardLayout>
@@ -58,26 +35,15 @@ const ProcedimientosDashboard = () => {
         console.warn('ProcedimientosDashboard: no hay datos para los filtros', filters);
         return (
             <DashboardLayout title="Dashboard de Procedimientos">
-                <div className="p-6 space-y-6">
-                    <div className="rounded-lg border border-blue-500/30 bg-blue-500/20 p-4 text-blue-200">
-                        <p className="font-medium">
-                            No hay datos de procedimientos disponibles para los filtros seleccionados.
+                <div className="p-4 space-y-5">
+                    <FilterPanel inline={true} compact={true} />
+                    <div className="rounded-lg border border-blue-500/30 bg-blue-500/15 p-4 text-blue-100">
+                        <p className="font-semibold text-blue-50">
+                            No hay datos que coincidan con los criterios seleccionados.
                         </p>
-                        <p className="mt-2 text-sm text-blue-100">
-                            Ajusta los filtros o verifica la carga de datos.
+                        <p className="mt-2 text-sm text-blue-200">
+                            Ajusta los filtros para ver resultados disponibles.
                         </p>
-                        {autoCleared && (
-                            <div className="mt-3 flex flex-wrap items-center gap-3 rounded border border-blue-300/40 bg-blue-300/10 px-3 py-2 text-xs text-blue-100">
-                                <span>Restablecimos los filtros automaticamente porque no se encontraron resultados.</span>
-                                <button
-                                    type="button"
-                                    onClick={handleDismissNotice}
-                                    className="rounded bg-blue-400/30 px-2 py-1 font-semibold text-white hover:bg-blue-400/50"
-                                >
-                                    Entendido
-                                </button>
-                            </div>
-                        )}
                         {hasActiveFilters && (
                             <button
                                 type="button"
@@ -88,13 +54,11 @@ const ProcedimientosDashboard = () => {
                             </button>
                         )}
                     </div>
-                    <FilterPanel />
                 </div>
             </DashboardLayout>
         );
     }
-        
-    
+
     // Generar KPIs basicos para procedimientos
     const analysis = {
         totalProcedimientos: procedimientosData.length,
@@ -106,28 +70,14 @@ const ProcedimientosDashboard = () => {
 
     return (
         <DashboardLayout title="Dashboard de Procedimientos">
-            <div className="p-6">
-                {autoCleared && (
-                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-500/30 bg-blue-500/15 px-4 py-3 text-sm text-blue-100">
-                        <span>
-                            Se restablecieron los filtros automaticamente porque no se encontraron resultados con la busqueda anterior.
-                        </span>
-                        <button
-                            type="button"
-                            onClick={handleDismissNotice}
-                            className="rounded-md bg-blue-500/60 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-500/80"
-                        >
-                            Ocultar
-                        </button>
-                    </div>
-                )}
+            <div className="p-4">
                 {/* Panel de Filtros Integrado */}
-                <div className="mb-8">
+                <div className="mb-5">
                     <FilterPanel inline={true} compact={true} />
                 </div>
 
                 {/* KPIs principales */}
-                <div className="mb-8">
+                <div className="mb-5">
                     <ProcedimientosKPIs analysis={analysis} />
                 </div>
 
@@ -139,3 +89,5 @@ const ProcedimientosDashboard = () => {
 };
 
 export default ProcedimientosDashboard;
+
+

@@ -15,6 +15,8 @@ from .models import (
     CodigoOperativo
 )
 
+DEFAULT_OPERATIVE_CODE = '2011'
+
 
 class LoginSerializer(serializers.Serializer):
     """
@@ -82,6 +84,19 @@ class GeografiaProcedimientoSerializer(serializers.ModelSerializer):
         """
         data = super().to_representation(instance)
         
+        # Attempt to include código operativo linked via OneToOne
+        codigo_operativo_value = None
+        # Access the related CodigoOperativo record if it exists
+        codigo_obj = getattr(instance, 'codigo_operativo', None)
+        if codigo_obj and getattr(codigo_obj, 'codigo_operativo', None):
+            codigo_operativo_value = str(codigo_obj.codigo_operativo).strip()
+            numeric_only = ''.join(ch for ch in codigo_operativo_value if ch.isdigit())
+            if numeric_only:
+                try:
+                    codigo_operativo_value = str(int(numeric_only))
+                except ValueError:
+                    codigo_operativo_value = numeric_only
+
         # Map Django model fields to frontend format
         mapped_data = {
             'FUERZA_INTERVINIENTE': data.get('fuerza_interviniente'),
@@ -108,6 +123,7 @@ class GeografiaProcedimientoSerializer(serializers.ModelSerializer):
             'ARCHIVO_ORIGINAL': data.get('archivo_original'),
             'FECHA_IMPORTACION': data.get('fecha_importacion'),
             'record_key': data.get('record_key'),
+            'CODIGO_OPERATIVO': codigo_operativo_value or DEFAULT_OPERATIVE_CODE,
         }
             
         return mapped_data
@@ -278,3 +294,5 @@ class FilteredAfectadosSerializer(serializers.ModelSerializer):
     class Meta:
         model = PersonalElementosAfectados
         fields = '__all__'
+
+

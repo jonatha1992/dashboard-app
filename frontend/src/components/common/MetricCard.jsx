@@ -63,24 +63,24 @@ const MetricCard = ({
     return (
         <div className={`
             h-full relative transition-all duration-300 ease-in-out
-            ${colors.bg} ${colors.border} border rounded-lg p-4 shadow-card
-            hover:-translate-y-1 hover:shadow-card-hover
+            ${colors.bg} ${colors.border} border rounded-xl p-3 shadow-card
+            hover:-translate-y-0.5 hover:shadow-card-hover
         `}>
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
-                    <h4 className="font-semibold text-white text-sm mb-1">
+                    <h4 className="text-xs font-semibold text-white mb-0.5 tracking-wide uppercase">
                         {title}
                     </h4>
-                    <p className="text-xs text-gray-400 mb-2">
+                    <p className="text-[11px] text-gray-400 mb-1.5">
                         {subtitle}
                     </p>
-                    <div className={`text-xl font-bold ${colors.text}`}>
+                    <div className={`text-lg font-semibold ${colors.text}`}>
                         {value}
                     </div>
                 </div>
                 
                 <div className={`
-                    p-2 rounded-lg ${colors.icon} text-white ml-2 text-lg
+                    px-2 py-1.5 rounded-lg ${colors.icon} text-white ml-2 text-sm
                 `}>
                     {icon}
                 </div>
@@ -88,14 +88,14 @@ const MetricCard = ({
 
             {/* Trend indicator */}
             {trend !== undefined && trend !== null && (
-                <div className="flex items-center mb-2">
+                <div className="flex items-center mb-1.5">
                     {trend >= 0 ? (
-                        <span className="text-green-400 mr-1 text-sm">↗</span>
+                        <span className="text-green-400 mr-1 text-xs">↗</span>
                     ) : (
-                        <span className="text-red-400 mr-1 text-sm">↘</span>
+                        <span className="text-red-400 mr-1 text-xs">↘</span>
                     )}
                     <span className={`
-                        text-xs font-medium
+                        text-[11px] font-medium
                         ${trend >= 0 ? 'text-green-400' : 'text-red-400'}
                     `}>
                         {trend >= 0 ? '+' : ''}{trend.toFixed(1)}%
@@ -123,7 +123,7 @@ const MetricCard = ({
             {/* Tooltip */}
             {tooltip && (
                 <div 
-                    className="absolute top-2 right-2 text-gray-400 cursor-help text-sm"
+                    className="absolute top-2 right-2 text-gray-400 cursor-help text-xs"
                     title={tooltip}
                 >
                     ℹ️
@@ -134,3 +134,9 @@ const MetricCard = ({
 };
 
 export default MetricCard;
+
+
+
+
+
+

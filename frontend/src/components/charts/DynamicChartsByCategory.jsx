@@ -187,7 +187,7 @@ const DynamicChartsByCategory = ({ category }) => {
 
 
     return (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Grafico de Provincias */}
             <div>
                 <ChartCard
@@ -200,7 +200,7 @@ const DynamicChartsByCategory = ({ category }) => {
                             data={provinceChart}
                             options={baseChartOptions}
                             title={`${readableCategory} por Provincia`}
-                            height={300}
+                            height={220}
                         />
                     ) : (
                         <NoChartDataMessage
@@ -222,7 +222,7 @@ const DynamicChartsByCategory = ({ category }) => {
                             data={departmentChart}
                             options={baseChartOptions}
                             title={`${readableCategory} por Departamento`}
-                            height={300}
+                            height={220}
                         />
                     ) : (
                         <NoChartDataMessage
@@ -244,7 +244,7 @@ const DynamicChartsByCategory = ({ category }) => {
                             data={monthlyTrendChart}
                             options={baseChartOptions}
                             title={`Tendencia Mensual - ${readableCategory}`}
-                            height={300}
+                            height={220}
                         />
                     ) : (
                         <NoChartDataMessage
@@ -266,7 +266,7 @@ const DynamicChartsByCategory = ({ category }) => {
                             data={unitChart}
                             options={baseChartOptions}
                             title={`${readableCategory} por Unidad`}
-                            height={300}
+                            height={220}
                         />
                     ) : (
                         <NoChartDataMessage
@@ -281,3 +281,4 @@ const DynamicChartsByCategory = ({ category }) => {
 };
 
 export default DynamicChartsByCategory;
+

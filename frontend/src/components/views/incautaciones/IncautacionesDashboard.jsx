@@ -14,7 +14,7 @@ const IncautacionesDashboard = () => {
     if (loading) {
         return (
             <DashboardLayout title="Dashboard de Incautaciones">
-                <div className="p-6">
+                <div className="p-4">
                     <div className="text-white">Cargando...</div>
                 </div>
             </DashboardLayout>
@@ -24,7 +24,7 @@ const IncautacionesDashboard = () => {
     if (incautacionesData.length === 0) {
         return (
             <DashboardLayout title="Dashboard de Incautaciones">
-                <div className="p-6">
+                <div className="p-4">
                     <div className="bg-blue-500/20 text-blue-300 border border-blue-500/30 p-4 rounded-lg">
                         No hay datos de incautaciones disponibles. Ajusta los filtros o verifica la carga de datos.
                     </div>
@@ -44,19 +44,19 @@ const IncautacionesDashboard = () => {
 
     return (
         <DashboardLayout title="Dashboard de Incautaciones">
-            <div className="p-6">
+            <div className="p-4">
                 {/* Panel de Filtros Integrado */}
-                <div className="mb-8">
+                <div className="mb-5">
                     <FilterPanel inline={true} compact={true} />
                 </div>
 
                 {/* KPIs principales */}
-                <div className="mb-8">
+                <div className="mb-5">
                     <IncautacionesKPIs analysis={analysis} />
                 </div>
 
                 {/* Gráficos dinámicos */}
-                <div className="mb-8">
+                <div className="mb-5">
                     <DynamicChartsByCategory category="incautaciones" />
                 </div>
 
@@ -68,3 +68,4 @@ const IncautacionesDashboard = () => {
 };
 
 export default IncautacionesDashboard;
+
