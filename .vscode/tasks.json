@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Install dashboard dependencies",
+      "dependsOn": ["Install backend dependencies", "Install frontend dependencies"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Install backend dependencies",
+      "type": "shell",
+      "command": "python -m pip install -r requirements.txt",
+      "options": {"cwd": "${workspaceFolder}/backend"},
+      "problemMatcher": []
+    },
+    {
+      "label": "Install frontend dependencies",
+      "type": "shell",
+      "command": "npm install",
+      "options": {"cwd": "${workspaceFolder}/frontend"},
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Django backend",
+      "type": "shell",
+      "command": "python manage.py runserver 127.0.0.1:8000",
+      "options": {"cwd": "${workspaceFolder}/backend"},
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Vite frontend",
+      "type": "shell",
+      "command": "npm run dev -- --host 127.0.0.1",
+      "options": {"cwd": "${workspaceFolder}/frontend"},
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Test backend (pytest)",
+      "type": "shell",
+      "command": "python -m pytest tests -q",
+      "options": {"cwd": "${workspaceFolder}/backend"},
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}
