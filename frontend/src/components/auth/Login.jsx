@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 export default function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const { login, error, authenticated, loading } = useAuth();
     const navigate = useNavigate();
@@ -75,16 +76,21 @@ export default function Login() {
                             <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                                 Contraseña
                             </label>
-                            <input
-                                type="password"
-                                id="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-3 bg-background-card border border-dark-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
-                                placeholder="Ingrese su contraseña"
-                                required
-                                disabled={submitting}
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full px-4 py-3 pr-12 bg-background-card border border-dark-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                                    placeholder="Ingrese su contraseña"
+                                    required
+                                    disabled={submitting}
+                                />
+                                <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={showPassword} className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={submitting}>
+                                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d={showPassword ? "M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.2A10.8 10.8 0 0112 5c5 0 8.5 4.5 9 7-.2 1.2-1.1 2.8-2.6 4.1M6.2 6.2C3.8 7.8 2.3 10 2 12c.5 2.5 4 7 10 7 1 0 1.9-.2 2.8-.5" : "M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"} />{!showPassword && <circle cx="12" cy="12" r="3" />}</svg>
+                                </button>
+                            </div>
                         </div>
 
                         {error && (
